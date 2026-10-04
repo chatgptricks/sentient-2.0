@@ -1,0 +1,272 @@
+/* The constellation keeps its functional HTML controls over a spatial canvas. */
+body[data-page=universe] .universe-app {
+  background:
+    radial-gradient(ellipse at 52% 54%, #34513a45 0, #17281c18 34%, transparent 64%),
+    radial-gradient(ellipse at 87% 74%, #2b617427 0, transparent 46%),
+    #080d0f;
+}
+body[data-page=universe] .universe-vignette {
+  background:
+    linear-gradient(180deg, #080d0fc2, transparent 29%, transparent 76%, #080d0fe8),
+    radial-gradient(ellipse at 50% 56%, transparent 34%, #080d0f80 95%);
+}
+body[data-page=universe] .universe-vignette::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(#b7d4b708 1px, transparent 1px), linear-gradient(90deg, #b7d4b708 1px, transparent 1px);
+  background-size: 110px 110px;
+  mask-image: radial-gradient(ellipse at 50% 55%, #000, transparent 68%);
+}
+body[data-page=universe] .universe-heading {
+  left: 40px;
+  top: 36px;
+  max-width: 390px;
+  transition: opacity .4s;
+}
+body[data-page=universe] .universe-heading .eyebrow {
+  color: #a4bca4;
+  font-size: 10px;
+  letter-spacing: .13em;
+}
+body[data-page=universe] .universe-heading .eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin: 0 8px 2px 0;
+  border-radius: 50%;
+  background: var(--acid);
+  box-shadow: 0 0 12px #cfff0480;
+}
+body[data-page=universe] .universe-heading h1 {
+  font-size: clamp(52px, 4.5vw, 72px);
+  line-height: .98;
+  letter-spacing: -.015em;
+  margin: 21px 0 18px;
+}
+body[data-page=universe] .universe-heading p {
+  font-size: 13px;
+  color: #9eada1;
+}
+body[data-page=universe].universe-focused .universe-heading { opacity: .55; }
+body[data-page=universe] .universe-toolbar { top: 37px; right: 40px; gap: 13px; }
+body[data-page=universe] .universe-search {
+  border: 0;
+  border-bottom: 1px solid #a9cba459;
+  border-radius: 0;
+  background: #09100e73;
+  padding: 0 3px;
+  backdrop-filter: blur(12px);
+}
+body[data-page=universe] .universe-search input { font-size: 14px; }
+body[data-page=universe] .universe-filters {
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+body[data-page=universe] .universe-filters button {
+  border: 1px solid transparent;
+  border-radius: 30px;
+  color: #a5b5a5;
+  padding: 9px 11px;
+}
+body[data-page=universe] .universe-filters button:last-child { border: 1px solid transparent; }
+body[data-page=universe] .universe-filters button[aria-pressed=true] {
+  color: var(--acid);
+  background: #cfff0410;
+  border-color: #cfff0459;
+}
+body[data-page=universe] .universe-list-toggle {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #8f9e8659;
+  border-radius: 0;
+  padding: 7px 0;
+  margin-left: 8px;
+}
+body[data-page=universe] .universe-node {
+  width: 76px;
+  min-width: 0;
+  max-width: none;
+  gap: 0;
+  border-radius: 50%;
+  opacity: var(--node-depth, 1);
+  transition: opacity .35s, filter .35s;
+}
+body[data-page=universe] .node-orbit {
+  padding: 6px;
+  border: 1px solid #ceff0470;
+  background: #0c1516;
+  box-shadow: 0 0 0 4px #121f1680, 0 9px 32px #0009;
+  transition: transform .35s, border-color .35s, box-shadow .35s;
+}
+body[data-page=universe] .node-orbit img { width: 62px; height: 62px; filter: saturate(.85); }
+body[data-page=universe] .universe-node.partner .node-orbit {
+  border-color: #8adde899;
+  box-shadow: 0 0 0 4px #17313a55, 0 9px 32px #0009;
+}
+body[data-page=universe] .node-handle {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  width: max-content;
+  max-width: 205px;
+  padding: 5px 9px;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: -.02em;
+  background: #0a1312ef;
+  border: 1px solid #829b6333;
+  border-radius: 3px;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+body[data-page=universe] .universe-node:is(:hover, :focus-visible, .is-selected) {
+  opacity: 1;
+  filter: none;
+}
+body[data-page=universe] .universe-node:is(:hover, :focus-visible, .is-selected) .node-handle {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+body[data-page=universe] .universe-node:is(:hover, :focus-visible) .node-orbit {
+  transform: scale(1.1);
+  border-color: #e3ff8f;
+  box-shadow: 0 0 0 6px #cfff0410, 0 0 38px #a5eb0038, 0 10px 35px #000a;
+}
+body[data-page=universe].universe-focused .universe-node:not(.is-selected) { opacity: .2; filter: saturate(.45); }
+body[data-page=universe].universe-focused .universe-node:not(.is-selected):is(:hover, :focus-visible) { opacity: .9; filter: none; }
+body[data-page=universe] .universe-node.is-selected .node-orbit {
+  transform: scale(1.14);
+  border-color: #e3ff8f;
+  box-shadow: 0 0 0 7px #cfff0410, 0 0 0 19px #cfff0408, 0 0 65px #b5ff004a, 0 18px 40px #000a;
+}
+body[data-page=universe] .universe-node.is-selected .node-handle { color: #e4f7be; top: calc(100% + 17px); }
+body[data-page=universe] .node-discovered { width: 15px; height: 15px; font-size: 10px; line-height: 15px; }
+body[data-page=universe] .universe-directory,
+body[data-page=universe] .account-panel {
+  right: 40px;
+  border-radius: 3px;
+  background: #0a1413f0;
+  border-color: #aac69a47;
+  box-shadow: 0 25px 70px #0007;
+  backdrop-filter: blur(24px);
+}
+body[data-page=universe] .universe-directory { top: 151px; padding: 19px; }
+body[data-page=universe] .directory-heading { font-size: 10px; letter-spacing: .05em; }
+body[data-page=universe] .directory-account { padding: 13px 0; }
+body[data-page=universe] .directory-account strong { font-size: 14px; }
+body[data-page=universe] .directory-account small { font-size: 11px; color: #a0b19c; }
+body[data-page=universe] .account-panel { top: 154px; padding: 27px; border-top: 2px solid var(--acid); }
+body[data-page=universe] .account-portrait { padding: 0; border: 0; width: 82px; height: 82px; margin-bottom: 23px; }
+body[data-page=universe] .account-panel h2 { font-size: 25px; line-height: 1.2; }
+body[data-page=universe] .account-topic { font-size: 13px; line-height: 1.5; color: #b2c99e; }
+body[data-page=universe] .account-audience strong { font-size: 48px; }
+body[data-page=universe] .account-audience small { font-size: 11px; }
+body[data-page=universe] .account-panel .button { border-radius: 3px; }
+body[data-page=universe] .universe-bottom { left: 40px; right: 40px; bottom: 30px; }
+body[data-page=universe] .exploration-progress { width: 215px; }
+body[data-page=universe] .exploration-progress>div:first-child { font-size: 9px; letter-spacing: .12em; }
+body[data-page=universe] .exploration-progress strong { font-size: 15px; }
+body[data-page=universe] .exploration-bar { background: #40513a80; }
+body[data-page=universe] .flight-controls { gap: 10px; }
+body[data-page=universe] .flight-controls button { border-radius: 30px; border-color: #8da27a47; background: #0a1413c7; }
+body[data-page=universe] .flight-controls #surprise-account { padding-inline: 20px; box-shadow: 0 0 24px #cfff0413; }
+body[data-page=universe] .universe-hint { color: #acbca0; }
+body[data-page=universe] .universe-warning { background: #0a1413ee; padding: 12px 15px; border-left: 2px solid var(--acid); }
+body[data-page=universe].universe-focused .universe-warning { display: none; }
+body[data-page=universe].universe-fallback .universe-canvas { pointer-events: none; }
+body[data-page=universe].universe-fallback #reset-universe,
+body[data-page=universe].universe-fallback #zoom-in,
+body[data-page=universe].universe-fallback #zoom-out { display: none; }
+
+@media (hover: none), (pointer: coarse) {
+  body[data-page=universe] .node-handle { opacity: 1; transform: translate(-50%, 0); font-size: 11px; pointer-events: auto; }
+}
+@media (max-width: 1100px) {
+  body[data-page=universe] .universe-heading { left: 25px; top: 27px; max-width: 320px; }
+  body[data-page=universe] .universe-heading h1 { font-size: 51px; }
+  body[data-page=universe] .universe-toolbar { top: 28px; right: 25px; }
+  body[data-page=universe] .universe-directory,
+  body[data-page=universe] .account-panel { right: 25px; top: 145px; }
+  body[data-page=universe] .universe-bottom { left: 25px; right: 25px; bottom: 27px; }
+  body[data-page=universe] .flight-controls { gap: 6px; }
+  body[data-page=universe] .flight-controls #surprise-account { padding-inline: 14px; }
+}
+@media (max-width: 850px) and (min-width: 651px) {
+  body[data-page=universe] .universe-heading { max-width: 270px; }
+  body[data-page=universe] .universe-heading h1 { font-size: 43px; }
+  body[data-page=universe] .universe-heading .eyebrow { font-size: 8px; }
+  body[data-page=universe] .universe-heading p { font-size: 12px; }
+  body[data-page=universe] .exploration-progress { width: 180px; }
+}
+@media (max-width: 650px) {
+  body[data-page=universe] .universe-canvas,
+  body[data-page=universe] .universe-nodes { top: 201px; bottom: 142px; overflow: hidden; }
+  body[data-page=universe] .universe-heading { left: 20px; right: 20px; top: 19px; max-width: none; }
+  body[data-page=universe] .universe-heading h1 { font-size: 33px; margin: 0; line-height: 1.02; }
+  body[data-page=universe] .universe-heading p { font-size: 10px; max-width: 120px; }
+  body[data-page=universe] .universe-toolbar { top: 101px; left: 20px; right: 20px; gap: 9px; }
+  body[data-page=universe] .universe-search { padding: 0 3px; }
+  body[data-page=universe] .universe-search input { font-size: 16px; }
+  body[data-page=universe] .universe-filters button { font-size: 10px; padding: 8px; }
+  body[data-page=universe] .universe-list-toggle { font-size: 10px; margin-left: 4px; }
+  body[data-page=universe] .universe-node { width: 52px; }
+  body[data-page=universe] .node-orbit { padding: 5px; }
+  body[data-page=universe] .node-orbit img { width: 40px; height: 40px; }
+  body[data-page=universe] .node-handle { opacity: 0; transform: translate(-50%, 0); top: calc(100% + 7px); padding: 3px 5px; font-size: 11px; max-width: 180px; pointer-events: none; }
+  body[data-page=universe] .universe-node:is(:hover, :focus-visible, .is-selected) .node-handle { opacity: 1; pointer-events: auto; }
+  body[data-page=universe] .universe-node.is-selected .node-handle { top: calc(100% + 13px); }
+  body[data-page=universe] .universe-directory { top: 201px; left: 20px; right: 20px; padding: 15px; }
+  body[data-page=universe] .account-panel { top: 201px; bottom: 147px; left: 20px; right: 20px; padding: 20px; }
+  body[data-page=universe] .account-portrait { width: 52px; height: 52px; margin-bottom: 13px; }
+  body[data-page=universe] .account-panel h2 { font-size: 21px; }
+  body[data-page=universe] .account-topic { clear: both; font-size: 12px; margin-top: 17px; }
+  body[data-page=universe] .account-audience strong { font-size: 37px; }
+  body[data-page=universe] .universe-bottom { left: 20px; right: 20px; bottom: 50px; }
+  body[data-page=universe] .exploration-progress { width: 220px; }
+  body[data-page=universe] .exploration-progress>div:first-child { font-size: 9px; }
+  body[data-page=universe] .flight-controls { gap: 7px; }
+  body[data-page=universe] .flight-controls #surprise-account { padding-inline: 13px; gap: 12px; }
+  body[data-page=universe] .universe-warning { left: 20px; right: 20px; padding: 8px 10px; }
+  body[data-page=universe].universe-fallback .universe-warning { top: 205px; bottom: auto; }
+  body[data-page=universe].universe-fallback .universe-directory { top: 270px; max-height: calc(100% - 395px); }
+}
+@media (max-width: 650px) and (max-height: 650px) {
+  body[data-page=universe] .universe-canvas,
+  body[data-page=universe] .universe-nodes { top: 180px; bottom: 126px; }
+  body[data-page=universe] .universe-node { width: 42px; }
+  body[data-page=universe] .node-orbit { padding: 4px; }
+  body[data-page=universe] .node-orbit img { width: 32px; height: 32px; }
+  body[data-page=universe] .universe-heading h1 { font-size: 27px; }
+  body[data-page=universe] .universe-heading p { font-size: 9px; }
+  body[data-page=universe] .universe-toolbar { top: 83px; }
+  body[data-page=universe] .universe-directory,
+  body[data-page=universe] .account-panel { top: 180px; }
+  body[data-page=universe] .account-panel { bottom: 128px; }
+  body[data-page=universe] .universe-bottom { bottom: 43px; }
+}
+@media (max-width: 370px) {
+  body[data-page=universe] .flight-controls { gap: 5px; }
+  body[data-page=universe] .flight-controls #surprise-account { padding-inline: 10px; gap: 8px; }
+}
+html.motion-paused body[data-page=universe] .universe-app *,
+html.motion-paused body[data-page=universe] .universe-app *::before,
+html.motion-paused body[data-page=universe] .universe-app *::after { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  body[data-page=universe] .universe-app *,
+  body[data-page=universe] .universe-app *::before,
+  body[data-page=universe] .universe-app *::after { transition: none; }
+}
+
+/* Fit Lovelo's wider brand lettering above the interaction controls. */
+body[data-page=universe] .universe-heading h1{font-family:var(--display);font-weight:900;font-size:42px;letter-spacing:-.035em;line-height:1.12}
+@media(max-width:1100px){body[data-page=universe] .universe-heading h1{font-size:34px}}
+@media(max-width:850px){body[data-page=universe] .universe-heading h1{font-size:29px}}
+@media(max-width:650px){body[data-page=universe] .universe-heading h1{font-size:23px;line-height:1.14;white-space:nowrap}}
+@media(max-width:370px){body[data-page=universe] .universe-heading h1{font-size:24px}}

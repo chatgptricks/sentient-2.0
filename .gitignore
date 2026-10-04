@@ -1,0 +1,17 @@
+# Generated builds, dependencies, local inquiries and visual review captures.
+node_modules/
+dist/
+.local/
+.DS_Store
+*.log
+*.pid
+.env
+.env.*
+!.env.example
+
+# Internal briefs and source provenance remain only in the local workspace.
+/plan-website-sentient.md
+/site/CONTENT-NOTES.md
+/site/BRIEF-COMPARISON.md
+/site/src/*provenance.json
+/site/src/source-manifest.json

@@ -1,0 +1,20 @@
+{
+  "name": "sentient-website-local",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/server.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node --check src/pages.mjs && node --check public/app.js && node --check scripts/server.mjs && node scripts/check.mjs",
+    "start": "node scripts/server.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "gsap": "^3.15.0",
+    "three": "^0.186.1"
+  }
+}

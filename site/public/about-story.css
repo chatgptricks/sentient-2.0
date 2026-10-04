@@ -1,0 +1,203 @@
+/* Founder and team presentation. All rules stay within the About story. */
+.about-story {
+  background: radial-gradient(ellipse at 80% 8%, #334a2224, transparent 39%), #0a0e0b;
+  color: var(--text);
+}
+.about-story .about-story-intro {
+  display: grid;
+  grid-template-columns: 1.35fr .65fr;
+  align-items: end;
+  gap: 70px;
+  padding-top: 55px;
+  padding-bottom: 40px;
+}
+.about-story .eyebrow {
+  color: #a7b59c;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+}
+.about-story h1,
+.about-story h2 {
+  font-family: 'Lovelo', Arial, sans-serif;
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: -.03em;
+}
+.about-story .about-story-intro h1 {
+  font-size: clamp(38px, 4.35vw, 67px);
+  line-height: 1.13;
+  margin-top: 21px;
+}
+.about-story .about-story-intro h1>span { display: block; }
+.about-story .about-story-intro h1 em { color: var(--acid); font-style: normal; }
+.about-story .about-story-intro>p {
+  font-family: var(--font);
+  color: #b6c1ad;
+  font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: -.015em;
+  max-width: 380px;
+  padding-bottom: 7px;
+}
+.about-story .story-founders {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 36px;
+  padding-bottom: 82px;
+}
+.about-story .story-founder { min-width: 0; }
+.about-story .story-portrait {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 1.16;
+  overflow: hidden;
+  margin: 0;
+  background: #353631;
+  border: 1px solid #e0edce21;
+  border-radius: 3px;
+}
+.about-story .story-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 40% 0 0;
+  background: linear-gradient(transparent, #060906c7);
+  z-index: 1;
+  pointer-events: none;
+}
+.about-story .story-portrait>img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 20%;
+  filter: none;
+}
+/* The source portraits have different head sizes. These crops align the eyes
+   and keep both people at the same apparent scale without changing the assets. */
+.about-story .story-founder--ivan .story-portrait>img {
+  width: 128%;
+  height: 128%;
+  left: -14%;
+  top: -12%;
+  right: auto;
+  bottom: auto;
+  object-position: 50% 0;
+}
+.about-story .story-portrait-caption {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 25px;
+  z-index: 2;
+}
+.about-story .story-founder-role {
+  display: block;
+  font-family: var(--font);
+  color: #dcf0c4;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+.about-story .story-portrait-caption h2 {
+  color: #f8faee;
+  font-size: clamp(29px, 3.05vw, 48px);
+  line-height: 1.12;
+  margin: 0;
+}
+.about-story .story-founder-bio {
+  padding: 27px 0 0;
+  font-family: var(--font);
+}
+.about-story .story-founder-bio p {
+  font-size: 16px;
+  line-height: 1.8;
+  letter-spacing: -.015em;
+  color: #bac4b2;
+  margin: 0 0 15px;
+  max-width: 570px;
+}
+.about-story .story-founder-bio .story-founder-specialty {
+  color: #d9e9c8;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: .015em;
+  margin-bottom: 18px;
+}
+.about-story .story-person-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  border-top: 1px solid #daebc52b;
+  margin-top: 24px;
+  padding: 17px 0 0;
+  font-size: 13px;
+  color: #edf2e4;
+}
+.about-story .story-person-link small {
+  color: #91a283;
+  font-size: 11px;
+  margin-left: 13px;
+}
+.about-story .story-person-link>span:last-child {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  flex: none;
+  border: 1px solid #caff0052;
+  border-radius: 50%;
+  color: var(--acid);
+  font-size: 21px;
+  transition: color .2s, background .2s;
+}
+.about-story .story-person-link:hover>span:last-child { color: #142009; background: var(--acid); }
+@media (max-width: 1100px) {
+  .about-story .about-story-intro { grid-template-columns: 1.25fr .75fr; gap: 35px; padding-top: 42px; }
+  .about-story .about-story-intro h1 { font-size: 4.6vw; }
+  .about-story .about-story-intro>p { font-size: 14px; }
+  .about-story .story-founders { gap: 25px; }
+  .about-story .story-portrait-caption { left: 23px; right: 23px; bottom: 23px; }
+  .about-story .story-portrait-caption h2 { font-size: 3.25vw; }
+  .about-story .story-founder-bio p { font-size: 15px; }
+}
+@media (max-width: 760px) {
+  .about-story .about-story-intro { grid-template-columns: 1fr; gap: 22px; padding-top: 40px; padding-bottom: 32px; }
+  .about-story .about-story-intro h1 { font-size: clamp(34px, 6.7vw, 49px); }
+  .about-story .about-story-intro>p { max-width: 580px; font-size: 15px; padding: 0; }
+  .about-story .story-portrait-caption { left: 18px; right: 18px; bottom: 18px; }
+  .about-story .story-portrait-caption h2 { font-size: 26px; }
+  .about-story .story-founder-role { font-size: 9px; }
+  .about-story .story-founder-bio .story-founder-specialty { font-size: 11px; }
+  .about-story .story-founder-bio p { font-size: 14px; }
+  .about-story .story-person-link { font-size: 12px; }
+  .about-story .story-person-link small { display: block; margin: 5px 0 0; }
+}
+@media (max-width: 600px) {
+  .about-story .about-story-intro { padding-top: 34px; }
+  .about-story .eyebrow { font-size: 10px; }
+  .about-story .about-story-intro h1 { font-size: clamp(32px, 8.8vw, 48px); margin-top: 19px; line-height: 1.18; }
+  .about-story .about-story-intro>p { font-size: 14px; line-height: 1.8; }
+  .about-story .story-founders { grid-template-columns: 1fr; gap: 39px; padding-bottom: 46px; }
+  .about-story .story-portrait-caption { left: 23px; right: 23px; bottom: 22px; }
+  .about-story .story-portrait-caption h2 { font-size: clamp(27px, 7.9vw, 39px); }
+  .about-story .story-founder-role { font-size: 10px; }
+  .about-story .story-founder-bio { padding-top: 22px; }
+  .about-story .story-founder-bio .story-founder-specialty { font-size: 12px; margin-bottom: 14px; }
+  .about-story .story-founder-bio p { font-size: 15px; line-height: 1.8; }
+  .about-story .story-person-link { margin-top: 21px; font-size: 13px; }
+  .about-story .story-person-link small { display: inline; margin: 0 0 0 12px; }
+}
+html.motion-paused .about-story .story-person-link>span:last-child { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .about-story .story-person-link>span:last-child { transition: none; }
+}
