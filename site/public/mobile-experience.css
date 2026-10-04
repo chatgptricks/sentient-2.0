@@ -2,7 +2,7 @@
    galleries and a compact story. Desktop compositions are left intact. */
 .mobile-only, .mobile-dock, .mobile-rail-controls, .service-mobile-description, .hero-mobile-break { display: none; }
 @media (max-width: 650px) {
-  :root { --gutter: 20px; --mobile-hero: max(520px, calc(100svh - 140px)); --section-space: 54px; }
+  :root { --gutter: 20px; --mobile-hero: max(520px, calc(100svh - 140px - env(safe-area-inset-bottom, 0px))); --section-space: 54px; }
   html { scroll-padding-top: 84px; scroll-padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
   body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   .header { z-index: 100; background: #0a0f0cf2; }
