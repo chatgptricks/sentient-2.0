@@ -59,7 +59,9 @@
 .offer:before { z-index: 0; }
 .offer-top, .offer h3, .offer-bottom { position: relative; z-index: 1; }
 .offer-top > .eyebrow { color: #c2ccb6; }
-.offer-top > .offer-arrow { color: var(--acid); border-color: #bacb9d4d; opacity: 1; }
+.offer-top > .offer-arrow { display: grid; place-items: center; flex: none; padding: 0; line-height: 0; color: var(--acid); border-color: #bacb9d4d; opacity: 1; }
+.arrow-up-right { display: block; width: 18px; height: 18px; }
+.offer:hover .offer-arrow { transform: none; background: #b9ff0010; }
 .offer h3 { font-size: clamp(36px, 3.7vw, 58px); margin-top: 30px; }
 .growth-offer h3 .type-accent { color: #d0e6b5; }
 .offer-art { display: block; height: 200px; margin: 12px calc(-1 * var(--offer-padding)) 10px; }
@@ -75,7 +77,7 @@
 .offer-bottom { align-items: end; gap: 20px; }
 .offer-bottom p { max-width: 280px; font-size: 14px; color: #b8c3ac; }
 .offer-link { min-width: max-content; font-size: 12px; color: #ecf3e2; }
-.offer-link b { color: var(--acid); }
+.offer-link b { display: grid; place-items: center; margin: 0; color: var(--acid); }
 .owned-proof { margin-top: 32px; padding-block: 34px 40px; }
 .owned-proof-intro .eyebrow, .owned-proof-note { font-size: 10px; }
 .owned-proof-accounts img { width: 42px; height: 42px; }

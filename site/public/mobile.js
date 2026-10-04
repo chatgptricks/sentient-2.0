@@ -72,28 +72,52 @@ for (const rail of document.querySelectorAll('[data-mobile-carousel]')) {
 
 const mobileDock = document.querySelector('.mobile-dock');
 const mobileContact = document.querySelector('#contact');
+const mobileTabs = Array.from(mobileDock?.querySelectorAll('[data-mobile-tab]') || []);
+const normalizeMobilePath = pathname => pathname.replace(/\/+$/, '') || '/';
 let dockFrame = 0;
 
 const updateMobileDock = () => {
   dockFrame = 0;
   if (!mobileDock) return;
+  const contact = mobileContact?.getBoundingClientRect();
+  const contactVisible = Boolean(contact && contact.top < window.innerHeight * 0.65 && contact.bottom > window.innerHeight * 0.25);
+  for (const tab of mobileTabs) {
+    const key = tab.dataset.mobileTab;
+    const current = contactVisible ? (key === 'call' ? 'location' : null) : (key === document.body.dataset.page ? 'page' : null);
+    if (current) tab.setAttribute('aria-current', current);
+    else tab.removeAttribute('aria-current');
+  }
   const active = document.activeElement;
   // Keep a focused link available until focus leaves the dock naturally.
   if (mobileDock.contains(active)) {
     mobileDock.classList.remove('is-hidden');
     return;
   }
-  const contact = mobileContact?.getBoundingClientRect();
-  const contactVisible = contact && contact.top < window.innerHeight - 120 && contact.bottom > 100;
-  const fieldFocused = active?.matches('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
-  const keyboardVisible = window.visualViewport && window.visualViewport.height < window.innerHeight * 0.75;
-  const menuOpen = document.documentElement.classList.contains('mobile-menu-open');
-  mobileDock.classList.toggle('is-hidden', mobileViewport.matches && Boolean(contactVisible || fieldFocused || keyboardVisible || menuOpen));
+  const fieldFocused = active?.matches('textarea, select, input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), [contenteditable]:not([contenteditable="false"])');
+  const viewport = window.visualViewport;
+  const keyboardVisible = viewport && viewport.scale <= 1.05 && viewport.height < window.innerHeight * 0.75;
+  mobileDock.classList.toggle('is-hidden', mobileViewport.matches && Boolean(fieldFocused || keyboardVisible));
 };
 
 const scheduleMobileDock = () => {
   if (!dockFrame) dockFrame = requestAnimationFrame(updateMobileDock);
 };
+
+for (const tab of mobileTabs) {
+  tab.addEventListener('click', event => {
+    if (!mobileViewport.matches || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (tab.dataset.mobileTab === 'call') return;
+    const destination = new URL(tab.href, window.location.href);
+    if (destination.origin !== window.location.origin || normalizeMobilePath(destination.pathname) !== normalizeMobilePath(window.location.pathname)) return;
+    event.preventDefault();
+    // Retapping the current page returns to its beginning without recreating
+    // its animations. Ignore an existing #contact when matching the route.
+    if (window.location.hash) history.replaceState(history.state, '', `${window.location.pathname}${window.location.search}`);
+    const quiet = reducedMobileMotion.matches || document.documentElement.classList.contains('motion-paused');
+    window.scrollTo({ top: 0, behavior: quiet ? 'instant' : 'smooth' });
+    scheduleMobileDock();
+  });
+}
 
 const refreshMobileLayout = () => {
   mobileRails.forEach(update => update());
@@ -103,6 +127,7 @@ const refreshMobileLayout = () => {
 window.addEventListener('resize', refreshMobileLayout, { passive: true });
 window.addEventListener('pageshow', refreshMobileLayout);
 window.addEventListener('scroll', scheduleMobileDock, { passive: true });
+window.addEventListener('hashchange', scheduleMobileDock);
 window.visualViewport?.addEventListener('resize', scheduleMobileDock, { passive: true });
 window.visualViewport?.addEventListener('scroll', scheduleMobileDock, { passive: true });
 mobileViewport.addEventListener('change', refreshMobileLayout);

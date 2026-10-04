@@ -1,7 +1,7 @@
 import sentientSymbol from '../public/assets/sentient-symbol.svg';
 import { createPointLogoArt } from './point-logo-art.mjs';
-import { createWaveSurface, surfacePalette, surfaceStemPalette, surfaceHighlightPalette, pinTone } from './wave-surface-art.mjs';
-import { createRippleTiming, startLogoReveal, revealLogoPin, springCoefficients, stepPin } from './pin-dynamics.mjs';
+import { createWaveSurface, surfacePalette, surfaceStemPalette, surfaceHighlightPalette, surfacePulsePalette, surfacePulseHighlightPalette, pinTone } from './wave-surface-art.mjs';
+import { createRippleTiming, startLogoReveal, revealLogoPin, logoPulseAt, springCoefficients, stepPin } from './pin-dynamics.mjs';
 
 let sharedArt;
 const RIPPLE_COUNT = 10;
@@ -22,7 +22,7 @@ export function createPointLogo(host, paused = false) {
   }
   const listeners = [];
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const ripples = Array.from({ length: RIPPLE_COUNT }, () => ({ u: 0, v: 0, born: -10, strength: 0 }));
+  const ripples = Array.from({ length: RIPPLE_COUNT }, () => ({ u: 0, v: 0, born: -10, strength: 0, pulsesLogo: false }));
   let observer, resizeObserver, surface, sockets;
   let disposed = false, failed = false, contextLost = false, suspended = false;
   let visible = false, hasSize = false, mobile = false, needsPaint = true;
@@ -47,7 +47,7 @@ export function createPointLogo(host, paused = false) {
   const resetPointer = () => { pointerInside = false; pointerTime = 0; };
   const clearRipples = () => {
     resetPointer(); for (const ripple of ripples) ripple.strength = 0;
-    for (const pin of surface?.pins || []) { pin.displacement = 0; pin.velocity = 0; }
+    for (const pin of surface?.pins || []) { pin.displacement = 0; pin.velocity = 0; pin.pulse = 0; }
     settling = false;
     lastEmission = -10; needsPaint = true;
   };
@@ -61,6 +61,8 @@ export function createPointLogo(host, paused = false) {
       const caps = surfacePalette.map(() => new Path2D());
       const stems = surfacePalette.map(() => new Path2D());
       const highlights = surfacePalette.map(() => new Path2D());
+      const pulseCaps = new Array(surfacePulsePalette.length);
+      const pulseHighlights = new Array(surfacePulsePalette.length);
       const shadows = new Path2D();
       const coefficients = springCoefficients(delta);
       settling = false;
@@ -72,8 +74,9 @@ export function createPointLogo(host, paused = false) {
           envelope: Math.min(1, age / .42) * Math.min(1, (lifetime - age) / .8) };
       }) : [];
       for (const pin of surface.pins) {
+        const wasLit = pin.lit;
         if (pin.logo && !revealLogoPin(pin, logoReveal)) unlitLogoPins++;
-        let energy = 0;
+        let energy = 0, pulse = 0;
         for (const ripple of waves) {
           const dx = pin.u - ripple.u, dy = pin.v - ripple.v;
           const distanceSquared = dx * dx + dy * dy;
@@ -84,7 +87,10 @@ export function createPointLogo(host, paused = false) {
           const envelope = Math.exp(-travel * travel * .8) * ripple.envelope
             / (1 + distance / (Math.max(width, height) * 3));
           energy += Math.cos(travel * 1.8) * envelope * ripple.strength;
+          if (wasLit) pulse = Math.max(pulse, logoPulseAt(pin, ripple, travel, envelope));
         }
+        if (reduced.matches) pin.pulse = 0;
+        else if (!paused) pin.pulse = pulse;
         energy = clamp(energy, -.30, 1);
         if (stepPin(pin, energy * surface.maxWave, coefficients, surface.maxWave)) settling = true;
         const lift = pin.height + pin.displacement;
@@ -97,6 +103,15 @@ export function createPointLogo(host, paused = false) {
         caps[tone].ellipse(pin.x, top, radius, radius * .65, 0, 0, Math.PI * 2);
         highlights[tone].moveTo(pin.x - radius * .6, top - radius * .22);
         highlights[tone].lineTo(pin.x + radius * .2, top - radius * .40);
+        const pulseTone = pin.logo && pin.lit ? Math.round(pin.pulse * (surfacePulsePalette.length - 1)) : 0;
+        if (pulseTone > 0) {
+          pulseCaps[pulseTone] ||= new Path2D();
+          pulseHighlights[pulseTone] ||= new Path2D();
+          pulseCaps[pulseTone].moveTo(pin.x + radius, top);
+          pulseCaps[pulseTone].ellipse(pin.x, top, radius, radius * .65, 0, 0, Math.PI * 2);
+          pulseHighlights[pulseTone].moveTo(pin.x - radius * .6, top - radius * .22);
+          pulseHighlights[pulseTone].lineTo(pin.x + radius * .2, top - radius * .40);
+        }
       }
       if (logoReveal && unlitLogoPins === 0) logoReveal.complete = true;
       // Pins slide on a fixed axis through dark sockets. Cast shadows, a
@@ -113,6 +128,11 @@ export function createPointLogo(host, paused = false) {
       for (let tone = 0; tone < caps.length; tone++) { context.fillStyle = surfacePalette[tone]; context.fill(caps[tone]); context.stroke(caps[tone]); }
       context.lineWidth = mobile ? .45 : .6;
       for (let tone = 0; tone < highlights.length; tone++) { context.strokeStyle = surfaceHighlightPalette[tone]; context.stroke(highlights[tone]); }
+      for (let tone = 1; tone < pulseCaps.length; tone++) {
+        if (!pulseCaps[tone]) continue;
+        context.fillStyle = surfacePulsePalette[tone]; context.fill(pulseCaps[tone]);
+        context.strokeStyle = surfacePulseHighlightPalette[tone]; context.stroke(pulseHighlights[tone]);
+      }
       needsPaint = false; host.classList.remove('field-unavailable'); host.classList.add('field-ready');
     } catch { failed = true; showFallback(); }
   };
@@ -164,6 +184,7 @@ export function createPointLogo(host, paused = false) {
     rippleCursor = (available + rippleCursor) % RIPPLE_COUNT;
     const ripple = ripples[rippleCursor];
     ripple.u = pointerU; ripple.v = pointerV; ripple.born = elapsed; ripple.strength = strength;
+    ripple.pulsesLogo = Boolean(logoReveal);
     logoReveal = startLogoReveal(logoReveal, surface.logoFrame, pointerU, pointerV, speed);
     rippleCursor = (rippleCursor + 1) % RIPPLE_COUNT;
     lastEmission = elapsed; lastEmissionU = pointerU; lastEmissionV = pointerV; needsPaint = true; schedule();

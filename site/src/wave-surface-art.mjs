@@ -10,6 +10,10 @@ const alpha = tone => tone <= 2 ? 0.76 : 0.98;
 export const surfacePalette = Object.freeze([...paletteRGB.map((rgb, tone) => `rgba(${rgb.join(',')},${alpha(tone)})`), 'rgba(210,255,72,0.99)']);
 export const surfaceStemPalette = Object.freeze([...paletteRGB.map((rgb, tone) => `rgba(${rgb.map(channel => Math.round(channel * 0.45)).join(',')},${alpha(tone)})`), 'rgba(66,86,38,0.98)']);
 export const surfaceHighlightPalette = Object.freeze([...paletteRGB.map((rgb, tone) => `rgba(${rgb.map(channel => Math.round(channel + (255 - channel) * .34)).join(',')},${alpha(tone) * .72})`), 'rgba(244,255,211,0.95)']);
+// Translucent cap overlays brighten the existing material locally; the stem
+// material and the pin radius stay unchanged throughout the pulse.
+export const surfacePulsePalette = Object.freeze(Array.from({ length: 17 }, (_, level) => `rgba(248,255,226,${level / 16 * .96})`));
+export const surfacePulseHighlightPalette = Object.freeze(Array.from({ length: 17 }, (_, level) => `rgba(255,255,248,${level / 16})`));
 export const pinTone = pin => pin.logo && pin.lit ? 12 : Math.round(clamp((pin.logo ? 0.28 : 0.13) * (0.86 + 0.14 * pin.shade), 0, 1) * 11);
 
 export function createWaveSurface(art, width, height, mobile = false) {
@@ -55,7 +59,7 @@ export function createWaveSurface(art, width, height, mobile = false) {
     const logo = inBox && art.contains(svgX, svgY);
     const shade = logo ? clamp(0.78 - (svgY - art.minY) / art.height * 0.28 + (svgX - art.minX) / art.width * 0.08, 0, 1)
       : clamp(0.5 + Math.sin(point.u * 0.008 + point.v * 0.005) * 0.13 + Math.cos(point.v * 0.012) * 0.09, 0, 1);
-    return { x: point.x, y: point.y, height: logo ? raisedHeight * (0.94 + shade * 0.12) : (mobile ? 5 : 7), logo, logoX: svgX, logoY: svgY, lit: false, shade, displacement: 0, velocity: 0 };
+    return { x: point.x, y: point.y, height: logo ? raisedHeight * (0.94 + shade * 0.12) : (mobile ? 5 : 7), logo, logoX: svgX, logoY: svgY, lit: false, pulse: 0, shade, displacement: 0, velocity: 0 };
   });
   const logoFrame = { u: logoCenter.u - svgCenter.u * logoScale, v: logoCenter.v - svgCenter.v * logoScale, scale: logoScale };
   return { pins, pitch, radius, maxWave, width, height, mobile, overscan: OVERSCAN, logoFrame };

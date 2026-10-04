@@ -2,10 +2,10 @@ import { build as bundle } from 'esbuild';
 import { mkdir, cp, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalizeBasePath } from '../src/social-meta.mjs';
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function build() {
-  const basePath = (process.env.BASE_PATH || '').replace(/\/+$/, '');
-  if (basePath && (!/^\/[A-Za-z0-9._/-]+$/.test(basePath) || basePath.split('/').some(part => part === '.' || part === '..'))) throw new Error('BASE_PATH must be an absolute URL path without dot segments.');
+  const basePath = normalizeBasePath(process.env.BASE_PATH || '');
   const staticHosting = process.env.STATIC_HOSTING === '1';
   const { pages } = await import(`../src/pages.mjs?v=${Date.now()}`);
   const localUrl = url => {

@@ -34,6 +34,14 @@ export function revealLogoPin(pin, reveal) {
   return Boolean(pin.lit);
 }
 
+// A later crest briefly energizes an already illuminated cap. The compact
+// smooth envelope reaches zero at both edges, without lighting the troughs.
+export function logoPulseAt(pin, ripple, travel, envelope) {
+  if (!pin.logo || !pin.lit || !ripple.pulsesLogo) return 0;
+  const edge = Math.max(0, 1 - (travel / 1.1) ** 2);
+  return Math.min(1, edge * edge * Math.max(0, envelope) * ripple.strength * 1.4);
+}
+
 // Exact critically damped integration with a target held fixed for one frame.
 // These four coefficients are shared by every pin; there is no per-pin exp().
 export function springCoefficients(dt) {
