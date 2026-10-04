@@ -16,6 +16,6 @@ const tabs = [
 
 export function mobileNavigation(active) {
   return `<nav class="mobile-dock" aria-label="Mobile navigation">${tabs.map(([id, label, href]) =>
-    `<a class="mobile-tab mobile-tab--${id}" data-mobile-tab="${id}" href="${href}"${active === id ? ' aria-current="page"' : ''}><span class="mobile-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" focusable="false">${icons[id]}</svg></span><span>${label}</span></a>`
+    `<a class="mobile-tab mobile-tab--${id}" data-mobile-tab="${id}" href="${active === 'universe' && id === 'call' ? '/#contact' : href}"${active === id ? ' aria-current="page"' : ''}><span class="mobile-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" focusable="false">${icons[id]}</svg></span><span>${label}</span></a>`
   ).join('')}</nav>`;
 }

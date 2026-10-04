@@ -218,3 +218,10 @@
 .motion-paused .mobile-dock, .motion-paused .mobile-tab-icon { transition: none; }
 .mobile-founder-name { display: none; }
 @media (max-width: 650px) { .about-story .mobile-founder-name { display: block; } }
+
+/* Keep the network inside the space between the phone header and app tabs. */
+@media (max-width: 650px) {
+  body[data-page=universe] { padding-bottom: calc(73px + env(safe-area-inset-bottom, 0px)); }
+  body[data-page=universe] .universe-app { height: calc(100svh - 138px - env(safe-area-inset-bottom, 0px)); min-height: 0; }
+  body[data-page=universe] .motion-toggle { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+}

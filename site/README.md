@@ -26,7 +26,7 @@ Run `build` after editing and reload the browser. The server builds at startup; 
 - `/viral-launch-campaigns`: launch process and four-column campaign gallery.
 - `/growth-campaigns`: ongoing campaign offer.
 - `/about`: founders and network relationships.
-- Universe is currently hidden. Its source is retained behind `features.universe` in `src/site-config.mjs`.
+- `/universe`: interactive account network, search, filters, and directory. Availability is controlled by `features.universe` in `src/site-config.mjs`.
 
 Static HTML is rendered by `src/pages.mjs`. GSAP powers motion; Three.js renders the Home symbol, Launch crowd, and account universe. Growth uses Canvas 2D for a shaded pin surface with the Sentient logo raised within it. esbuild bundles browser code. Fonts and visual assets are local. Lovelo Black is Sentient's primary display font; Space Grotesk is used for body text and controls. All typography is sans-serif. The map has a directory fallback when WebGL is unavailable, and the motion switch honors reduced-motion preferences.
 
