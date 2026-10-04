@@ -210,7 +210,7 @@ export function createScene(host, paused = false) {
   const resize = () => {
     const { width, height } = host.getBoundingClientRect();
     if (!width || !height || disposed) return;
-    mobile = width < 480;
+    mobile = window.innerWidth <= 650 || width < 480;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 1.75));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;

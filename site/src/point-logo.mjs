@@ -1,7 +1,7 @@
 import sentientSymbol from '../public/assets/sentient-symbol.svg';
 import { createPointLogoArt } from './point-logo-art.mjs';
 import { createWaveSurface, surfacePalette, surfaceStemPalette, surfaceHighlightPalette, pinTone } from './wave-surface-art.mjs';
-import { createRippleTiming, springCoefficients, stepPin } from './pin-dynamics.mjs';
+import { createRippleTiming, startLogoReveal, revealLogoPin, springCoefficients, stepPin } from './pin-dynamics.mjs';
 
 let sharedArt;
 const RIPPLE_COUNT = 10;
@@ -28,6 +28,7 @@ export function createPointLogo(host, paused = false) {
   let visible = false, hasSize = false, mobile = false, needsPaint = true;
   let width = 0, height = 0, ratio = 1, speed = 180, lifetime = 11, band = 90;
   let settling = false;
+  let logoReveal = null;
   let frame = 0, previous = 0, lastRendered = 0, elapsed = 0;
   let pointerInside = false, pointerU = 0, pointerV = 0, pointerTime = 0;
   let lastEmission = -10, lastEmissionU = 0, lastEmissionV = 0, rippleCursor = 0;
@@ -40,7 +41,7 @@ export function createPointLogo(host, paused = false) {
   const canPaint = () => !disposed && !failed && !contextLost && !suspended && visible && hasSize && !document.hidden;
   const motionEnabled = () => !paused && !reduced.matches;
   const activeRipples = () => motionEnabled() && ripples.some(ripple => ripple.strength > 0 && elapsed - ripple.born < lifetime);
-  const activeMotion = () => motionEnabled() && (activeRipples() || settling);
+  const activeMotion = () => motionEnabled() && (activeRipples() || settling || (logoReveal && !logoReveal.complete));
   const stop = () => { cancelAnimationFrame(frame); frame = 0; previous = 0; lastRendered = 0; };
   const showFallback = () => { stop(); host.classList.remove('field-ready'); host.classList.add('field-unavailable'); };
   const resetPointer = () => { pointerInside = false; pointerTime = 0; };
@@ -63,12 +64,15 @@ export function createPointLogo(host, paused = false) {
       const shadows = new Path2D();
       const coefficients = springCoefficients(delta);
       settling = false;
+      if (logoReveal && !logoReveal.complete) logoReveal.radius += delta * logoReveal.speed;
+      let unlitLogoPins = 0;
       const waves = activeRipples() ? ripples.filter(ripple => ripple.strength > 0 && elapsed - ripple.born < lifetime).map(ripple => {
         const age = elapsed - ripple.born;
         return { ...ripple, radius: age * speed,
           envelope: Math.min(1, age / .42) * Math.min(1, (lifetime - age) / .8) };
       }) : [];
       for (const pin of surface.pins) {
+        if (pin.logo && !revealLogoPin(pin, logoReveal)) unlitLogoPins++;
         let energy = 0;
         for (const ripple of waves) {
           const dx = pin.u - ripple.u, dy = pin.v - ripple.v;
@@ -85,7 +89,7 @@ export function createPointLogo(host, paused = false) {
         if (stepPin(pin, energy * surface.maxWave, coefficients, surface.maxWave)) settling = true;
         const lift = pin.height + pin.displacement;
         const top = pin.y - lift;
-        const tone = pinTone(pin, pin.displacement / surface.maxWave);
+        const tone = pinTone(pin);
         const radius = surface.radius;
         shadows.moveTo(pin.x, pin.y); shadows.lineTo(pin.x + lift * .32, pin.y + lift * .10);
         stems[tone].moveTo(pin.x, pin.y); stems[tone].lineTo(pin.x, top);
@@ -94,6 +98,7 @@ export function createPointLogo(host, paused = false) {
         highlights[tone].moveTo(pin.x - radius * .6, top - radius * .22);
         highlights[tone].lineTo(pin.x + radius * .2, top - radius * .40);
       }
+      if (logoReveal && unlitLogoPins === 0) logoReveal.complete = true;
       // Pins slide on a fixed axis through dark sockets. Cast shadows, a
       // narrow lit shaft edge and fixed-size caps give the display its depth.
       context.fillStyle = '#020604a6'; context.fill(sockets);
@@ -159,16 +164,24 @@ export function createPointLogo(host, paused = false) {
     rippleCursor = (available + rippleCursor) % RIPPLE_COUNT;
     const ripple = ripples[rippleCursor];
     ripple.u = pointerU; ripple.v = pointerV; ripple.born = elapsed; ripple.strength = strength;
+    logoReveal = startLogoReveal(logoReveal, surface.logoFrame, pointerU, pointerV, speed);
     rippleCursor = (rippleCursor + 1) % RIPPLE_COUNT;
     lastEmission = elapsed; lastEmissionU = pointerU; lastEmissionV = pointerV; needsPaint = true; schedule();
   };
   const onPointer = event => {
-    if (!canPaint() || !motionEnabled() || !surface || event.target?.closest?.('button, a, input, select, textarea, [role=button]')) return;
+    if (!canPaint() || !surface || event.target?.closest?.('button, a, input, select, textarea, [role=button]')) return;
+    if (paused && !reduced.matches) return;
     const rect = host.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
     if (x < 0 || y < 0 || x > width || y > height) { resetPointer(); return; }
     const point = planePoint(x, y), now = event.timeStamp / 1000, entering = !pointerInside;
     const velocity = !entering && pointerTime ? Math.hypot(point.u - pointerU, point.v - pointerV) / clamp(now - pointerTime, .008, .15) : 0;
     pointerU = point.u; pointerV = point.v; pointerTime = now; pointerInside = true;
+    if (!motionEnabled()) {
+      if (logoReveal?.complete) return;
+      logoReveal = startLogoReveal(logoReveal, surface.logoFrame, pointerU, pointerV, speed, true);
+      logoReveal.complete = true;
+      needsPaint = true; schedule(); return;
+    }
     const moved = Math.hypot(pointerU - lastEmissionU, pointerV - lastEmissionV) > 26;
     if (entering || event.type === 'pointerdown' || (moved && elapsed - lastEmission >= .95)) emitRipple(.72 + Math.min(.23, velocity / 1800));
   };

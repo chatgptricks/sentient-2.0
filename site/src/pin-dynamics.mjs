@@ -12,6 +12,28 @@ export function createRippleTiming(diameter, mobile = false) {
   return { speed, band, lifetime, crossingTime };
 }
 
+// Latch the first interaction in the official artwork's coordinates. Resizing
+// the pin bed can then rebuild its grid without moving or erasing the reveal.
+export function startLogoReveal(current, frame, u, v, speed, instant = false) {
+  if (current) return current;
+  return {
+    x: (u - frame.u) / frame.scale,
+    y: (v - frame.v) / frame.scale,
+    radius: 0,
+    speed: speed / frame.scale,
+    complete: instant,
+  };
+}
+
+export function revealLogoPin(pin, reveal) {
+  if (!pin.logo) return false;
+  if (!pin.lit && reveal) {
+    const dx = pin.logoX - reveal.x, dy = pin.logoY - reveal.y;
+    if (reveal.complete || dx * dx + dy * dy <= reveal.radius * reveal.radius) pin.lit = true;
+  }
+  return Boolean(pin.lit);
+}
+
 // Exact critically damped integration with a target held fixed for one frame.
 // These four coefficients are shared by every pin; there is no per-pin exp().
 export function springCoefficients(dt) {

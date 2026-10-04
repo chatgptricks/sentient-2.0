@@ -1,6 +1,6 @@
 /* Phone experience: a composed first screen, thumb navigation, native swipe
    galleries and a compact story. Desktop compositions are left intact. */
-.mobile-only, .mobile-dock, .mobile-rail-controls, .service-mobile-description { display: none; }
+.mobile-only, .mobile-dock, .mobile-rail-controls, .service-mobile-description, .hero-mobile-break { display: none; }
 @media (max-width: 650px) {
   :root { --gutter: 20px; --mobile-hero: max(520px, calc(100svh - 140px)); --section-space: 54px; }
   html { scroll-padding-top: 84px; }
@@ -35,22 +35,24 @@
   .motion-toggle .motion-label { display: none; }
   .motion-toggle .motion-icon { font-size: 13px; }
 
-  /* Home is a single viewport composition; action stays within thumb reach. */
-  .hero { height: var(--mobile-hero); min-height: var(--mobile-hero); max-height: none; }
+  /* One editorial composition: the cropped sculpture shares the headline's
+     space. Content determines the height instead of reserving a logo stage. */
+  .hero { height: auto; min-height: 0; max-height: none; }
   .hero-topline, .hero-art-label { display: none; }
-  .hero-body { padding-top: 28px; padding-bottom: 0; }
-  .hero-kicker { font-size: 10px; margin-bottom: 18px; color: #acbba0; }
-  .hero-title { font-size: clamp(30px, 9.15vw, 53px); max-width: 100%; line-height: 1.08; }
-  .hero-title .title-accent { font-size: 1.12em; }
-  .hero-bottom { margin-top: 19px; position: relative; top: auto; }
-  .hero-desc p { font-size: 16px; line-height: 1.5; }
+  .hero-body { padding-top: clamp(145px, 20svh, 180px); padding-bottom: 87px; z-index: 3; }
+  .hero-kicker { position: absolute; top: 30px; font-size: 10px; margin: 0; max-width: 170px; line-height: 1.65; color: #b6c4ab; }
+  .hero-title { font-size: clamp(39px, 13vw, 76px); max-width: 100%; line-height: 1.01; letter-spacing: -.025em; text-shadow: 0 2px 22px #080c0a55; }
+  .hero-mobile-break { display: initial; }
+  .hero-title .title-accent { font-size: 1.05em; }
+  .hero-bottom { margin-top: 24px; position: relative; top: auto; }
+  .hero-desc p { font-size: 15px; line-height: 1.5; max-width: 235px; color: #c8d1c0; }
   .hero-desc p > span, .hero-actions { display: none; }
-  .hero > .hero-scene { width: calc(100% - 16px); left: 8px; right: auto; top: auto; bottom: 43px; height: min(46%, 355px); }
-  .hero-glow { inset: 15% -40% -25%; }
-  .hero-grid { mask-image: linear-gradient(transparent 18%, #000 80%); background-size: 45px 45px; }
-  .hero-orbit { width: 120%; height: 58%; top: auto; bottom: 8%; left: -10%; }
-  .hero-orbit.orbit-offset { width: 130%; left: -15%; top: auto; bottom: 6%; }
-  .hero-foot { bottom: 18px; border-top: 0; padding-top: 0; font-size: 9px; justify-content: center; color: #a2b194; }
+  .hero > .hero-scene { width: min(145vw, 760px); height: min(145vw, 760px); left: 12%; right: auto; top: -24vw; bottom: auto; opacity: .9; mask-image: linear-gradient(145deg, #000 34%, #000b 51%, transparent 77%); }
+  .hero:after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(90deg, #080c0aaa, transparent 80%), linear-gradient(0deg, #080c0a 12%, #080c0a88 53%, transparent 82%); }
+  .hero-glow { inset: -25% -55% 15% 5%; opacity: .65; }
+  .hero-grid { opacity: .2; mask-image: linear-gradient(#000, transparent 80%); background-size: 45px 45px; }
+  .hero-orbit { display: none; }
+  .hero-foot { bottom: 26px; z-index: 3; border-top: 1px solid #dcebc71c; padding-top: 17px; font-size: 9px; justify-content: space-between; color: #a2b194; }
   .hero-foot i { margin-inline: 9px; }
 
   /* Service heroes are interactive posters with their own phone framing. */
@@ -195,7 +197,7 @@
   .mobile-dock { gap: 12px; padding-inline: 16px; }
   .mobile-dock-work { gap: 8px; font-size: 11px; }
   .mobile-dock > .button { font-size: 11px; padding-inline: 13px; gap: 7px; }
-  .hero-title { font-size: 9.2vw; }
+  .hero-title { font-size: 13vw; }
   .hero-kicker { font-size: 9px; }
   .feature-case-info { grid-template-columns: 1fr; }
   .feature-metric { display: flex; align-items: center; gap: 14px; text-align: left; }
