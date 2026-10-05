@@ -56,6 +56,7 @@ export async function build() {
     };
     await rewriteAssets(resolve(root, 'dist'));
   }
+  await writeFile(resolve(root, 'dist/comments-config.json'), JSON.stringify({apiUrl: process.env.COMMENTS_API_URL || JSON.parse(await readFile(resolve(root, 'public/comments-config.json'), 'utf8')).apiUrl}));
   await writeFile(resolve(root, 'dist/.nojekyll'), '');
   return Object.keys(pages);
 }

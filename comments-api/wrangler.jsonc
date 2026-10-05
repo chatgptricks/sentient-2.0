@@ -1,0 +1,26 @@
+{
+  "name": "sentient-proposal-comments",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-05",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sentient-proposal-comments",
+      "migrations_dir": "migrations",
+      "database_id": "25dd08bc-77a9-411e-9706-c6ed009738be"
+    }
+  ],
+  "vars": {
+    "ALLOWED_ORIGINS": "https://chatgptricks.github.io,http://localhost:4322,http://127.0.0.1:4322"
+  },
+  "ratelimits": [
+    {
+      "name": "COMMENT_RATE",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ]
+}

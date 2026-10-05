@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/server.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node --check src/pages.mjs && node --check public/app.js && node --check scripts/server.mjs && node scripts/check.mjs",
+    "check": "node --check src/pages.mjs && node --check public/app.js && node --check public/comments.js && node --check scripts/server.mjs && node scripts/check.mjs",
     "start": "node scripts/server.mjs"
   },
   "engines": {

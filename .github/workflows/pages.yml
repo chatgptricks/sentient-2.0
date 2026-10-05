@@ -31,6 +31,8 @@ jobs:
       - name: Verify the local site
         run: npm run check
         working-directory: site
+      - name: Verify comments API validation
+        run: node --test comments-api/worker.test.mjs
       - name: Build for GitHub Pages
         run: npm run build
         working-directory: site
