@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { gsap } from 'gsap';
+import { Flip } from 'gsap/Flip';
 import sentientIcon from '../public/assets/sentient-symbol.svg';
+gsap.registerPlugin(Flip);
 const dataElement=document.getElementById('universe-data');
 if(dataElement) initUniverse(JSON.parse(dataElement.textContent));
 
@@ -12,18 +14,58 @@ function initUniverse(accounts){
  const host=$('#universe-canvas'),nodeLayer=$('#universe-nodes'),panel=$('.account-panel'),directory=$('#universe-directory'),listToggle=$('.universe-list-toggle');
  let lastOpener=null,requestRender=()=>{},homeDistance=30;
  let filter='all',query='',selected=null,renderer,scene,camera,controls,frame=0,elapsed=0,last=0,disposed=false;
- let paused=document.documentElement.classList.contains('motion-paused')||matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+ let paused=document.documentElement.classList.contains('motion-paused')||motionPreference.matches;
+ let panelOpen=!panel.hidden,directoryOpen=!directory.hidden,panelTween,directoryTween,filterFlip,filterHeightTween,cameraTimeline;
+ const directoryItems=[...directory.querySelectorAll('.directory-account')],directoryResults=directory.querySelector('.directory-results');
  let visited=new Set();try{visited=new Set(JSON.parse(localStorage.getItem('sentient-universe-explored')||'[]').filter(h=>accounts.some(a=>a.handle===h)));}catch{}
  const accountMap=new Map(accounts.map(a=>[a.handle,a]));
  const nodes=[];const resources=[];
  const isMatch=a=>(filter==='all'||a.relationship===filter)&&`${a.handle} ${a.name||''} ${a.topic||''}`.toLowerCase().includes(query);
- const setDirectory=open=>{directory.hidden=!open;listToggle.setAttribute('aria-expanded',String(open));document.body.classList.toggle('universe-directory-open',open);};
+ const finishFilterMotion=()=>{
+  Flip.killFlipsOf(directoryItems,true);filterFlip=null;
+  gsap.killTweensOf(directoryItems);
+  filterHeightTween?.kill();filterHeightTween=null;
+  gsap.set(directoryItems,{clearProps:'transform,opacity'});
+  gsap.set(directoryResults,{clearProps:'height,overflow'});
+ };
+ const finishUiMotion=()=>{
+  panelTween?.progress(1).kill();directoryTween?.progress(1).kill();panelTween=directoryTween=null;
+  finishFilterMotion();
+  gsap.set([panel,directory],{clearProps:'opacity,transform'});
+  panel.hidden=!panelOpen;panel.inert=!panelOpen;directory.hidden=!directoryOpen;directory.inert=!directoryOpen;
+ };
+ const showSurface=(element,open,tween,animate=true)=>{
+  tween?.kill();
+  element.inert=!open;open?element.removeAttribute('aria-hidden'):element.setAttribute('aria-hidden','true');
+  if(paused||!animate){element.hidden=!open;gsap.set(element,{clearProps:'opacity,transform'});return null;}
+  if(open){
+   element.hidden=false;
+   return gsap.fromTo(element,{opacity:0,y:10},{opacity:1,y:0,duration:.24,ease:'power2.out',clearProps:'opacity,transform'});
+  }
+  if(element.hidden)return null;
+  return gsap.to(element,{opacity:0,y:6,duration:.2,ease:'power2.in',onComplete:()=>{element.hidden=true;gsap.set(element,{clearProps:'opacity,transform'});}});
+ };
+ const setDirectory=(open,animate=true)=>{
+  const changed=directoryOpen!==open;directoryOpen=open;
+  listToggle.setAttribute('aria-expanded',String(open));document.body.classList.toggle('universe-directory-open',open);
+  if(changed||!animate)directoryTween=showSurface(directory,open,directoryTween,animate);
+ };
+ const stopCameraMotion=()=>{cameraTimeline?.kill();cameraTimeline=null;if(camera&&controls)gsap.killTweensOf([camera.position,controls.target]);};
+ const moveCamera=(target,position,duration,ease='power3.inOut')=>{
+  if(!camera||!controls)return;
+  stopCameraMotion();
+  if(paused){controls.target.copy(target);camera.position.copy(position);requestRender();return;}
+  cameraTimeline=gsap.timeline({defaults:{duration,ease},onUpdate:()=>requestRender()})
+   .to(controls.target,{x:target.x,y:target.y,z:target.z},0)
+   .to(camera.position,{x:position.x,y:position.y,z:position.z},0);
+ };
  const reflectSelection=()=>{
   document.body.classList.toggle('universe-focused',Boolean(selected));
   nodes.forEach(node=>{const active=node.account.handle===selected;node.element.classList.toggle('is-selected',active);node.element.setAttribute('aria-pressed',String(active));});
   requestRender();
  };
- const clearSelection=()=>{panel.hidden=true;selected=null;reflectSelection();};
+ const clearSelection=()=>{if(panelOpen){panelOpen=false;panelTween=showSurface(panel,false,panelTween);}selected=null;reflectSelection();};
  const updateProgress=()=>{
   $('#explored-count').textContent=`${visited.size} / ${accounts.length}`;
   $('#explored-bar').style.width=`${visited.size/accounts.length*100}%`;
@@ -33,50 +75,66 @@ function initUniverse(accounts){
  const selectAccount=(handle,opener)=>{
   const account=accountMap.get(handle);if(!account)return;
   if(opener&&!panel.contains(opener))lastOpener=opener;
-  else if(!panel.contains(document.activeElement))lastOpener=document.activeElement;
+  else if(!panel.contains(document.activeElement))lastOpener=document.activeElement?.matches('button, a[href], input, [tabindex]')?document.activeElement:listToggle;
   selected=handle;visited.add(handle);try{localStorage.setItem('sentient-universe-explored',JSON.stringify([...visited]));}catch{}
   updateProgress();
   const date=account.followersAsOf;
   const followers=Number.isFinite(account.followerCount)&&date?`<div class="account-audience"><strong>${Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(account.followerCount)}</strong><span>followers<small>Snapshot · ${escape(date)}</small></span></div>`:'';
   $('#account-details').innerHTML=`<img class="account-portrait" src="${escape(account.avatar)}" alt="" width="74" height="74"><span class="account-relationship ${account.relationship}">${account.relationship==='owned'?'SENTIENT OWNED':'CREATOR PARTNER'}</span><h2 tabindex="-1">@${escape(account.handle)}</h2><p class="account-name">${escape(account.name||'')}</p>${account.topic?`<p class="account-topic">${escape(account.topic)}</p>`:''}${followers}<a class="button" href="${escape(account.profileUrl)}" target="_blank" rel="noopener noreferrer">Visit Instagram</a>`;
-  panel.hidden=false;
+  panelOpen=true;panelTween=showSurface(panel,true,panelTween);
   setDirectory(false);
   reflectSelection();
   const node=nodes.find(n=>n.account.handle===handle);
   if(controls&&node){
-   controls.autoRotate=false;gsap.killTweensOf([camera.position,controls.target]);
+   controls.autoRotate=false;
    const point=node.position;
-   gsap.to(controls.target,{x:point.x,y:point.y,z:point.z,duration:paused?0:1.25,ease:'power3.inOut'});
-   gsap.to(camera.position,{x:point.x+.7,y:point.y+.4,z:point.z+13.5,duration:paused?0:1.25,ease:'power3.inOut'});
+   moveCamera(point,point.clone().add(new THREE.Vector3(.7,.4,13.5)),1.25);
   }
   requestRender();
   $('#account-details h2').focus({preventScroll:true});
  };
  const updateFilter=()=>{
-  let count=0;document.querySelectorAll('.directory-account').forEach(el=>{el.hidden=!isMatch(accountMap.get(el.dataset.account));if(!el.hidden)count++;});
+  finishFilterMotion();
+  const animate=!paused&&directoryOpen&&!directory.hidden;
+  const beforeHeight=animate?directoryResults.getBoundingClientRect().height:0;
+  const state=animate?Flip.getState(directoryItems):null;
+  let count=0;directoryItems.forEach(el=>{el.hidden=!isMatch(accountMap.get(el.dataset.account));if(!el.hidden)count++;});
   $('#directory-count').textContent=`${count} account${count===1?'':'s'}`;
   $('.directory-empty').hidden=count!==0;
+  if(state){
+   const afterHeight=directoryResults.getBoundingClientRect().height;
+   // Flip only the list rows; the canvas renderer owns every 3D node transform.
+   filterFlip=Flip.from(state,{duration:.28,ease:'power2.out',simple:true,prune:true,
+    onEnter:elements=>gsap.fromTo(elements,{opacity:0,y:6},{opacity:1,y:0,duration:.22,clearProps:'opacity,transform'})});
+   if(beforeHeight!==afterHeight)filterHeightTween=gsap.fromTo(directoryResults,{height:beforeHeight,overflow:'hidden'},{height:afterHeight,duration:.28,ease:'power2.out',clearProps:'height,overflow'});
+  }
   $('#surprise-account').disabled=count===0;$('.next-account').disabled=count===0;
   nodes.forEach(node=>{node.match=isMatch(node.account);node.line.visible=node.match;node.element.hidden=!node.match;});
   if(selected&&!isMatch(accountMap.get(selected)))clearSelection();
  };
- const discoverNext=()=>{const matches=accounts.filter(isMatch);const unseen=matches.filter(a=>!visited.has(a.handle));const pool=unseen.length?unseen:matches;if(pool.length)selectAccount(pool[Math.floor(Math.random()*pool.length)].handle);};
+ const discoverNext=event=>{const matches=accounts.filter(isMatch);const unseen=matches.filter(a=>!visited.has(a.handle));const pool=unseen.length?unseen:matches;if(pool.length)selectAccount(pool[Math.floor(Math.random()*pool.length)].handle,event?.currentTarget);};
  const resetView=()=>{
   clearSelection();
   if(!controls)return;
-  gsap.killTweensOf([camera.position,controls.target]);
-  gsap.to(controls.target,{x:0,y:0,z:0,duration:paused?0:1.1,ease:'power3.inOut'});
-  gsap.to(camera.position,{x:0,y:1.5,z:homeDistance,duration:paused?0:1.1,ease:'power3.inOut'});
+  moveCamera(new THREE.Vector3(),new THREE.Vector3(0,1.5,homeDistance),1.1);
   controls.autoRotate=!paused;requestRender();
  };
- const closeDetails=()=>{clearSelection();if(controls){controls.autoRotate=false;gsap.killTweensOf([camera.position,controls.target]);}if(lastOpener?.classList.contains('directory-account'))setDirectory(true);if(lastOpener?.isConnected&&!lastOpener.hidden&&!panel.contains(lastOpener))lastOpener.focus({preventScroll:true});else listToggle.focus();};
+ const closeDetails=()=>{clearSelection();if(controls){controls.autoRotate=false;stopCameraMotion();}if(lastOpener?.classList.contains('directory-account'))setDirectory(true);if(lastOpener?.isConnected&&!lastOpener.closest('[hidden], [inert]')&&!panel.contains(lastOpener))lastOpener.focus({preventScroll:true});else listToggle.focus();};
  document.querySelectorAll('.directory-account').forEach(button=>button.addEventListener('click',()=>selectAccount(button.dataset.account,button)));
  $('.panel-close').addEventListener('click',closeDetails);
- listToggle.addEventListener('click',()=>{clearSelection();setDirectory(directory.hidden);});
+ listToggle.addEventListener('click',()=>{clearSelection();setDirectory(!directoryOpen);});
  $('#account-search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();clearSelection();updateFilter();setDirectory(true);requestRender();});
  document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateFilter();resetView();}));
  $('#surprise-account').addEventListener('click',discoverNext);$('.next-account').addEventListener('click',discoverNext);$('#reset-universe').addEventListener('click',resetView);
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!panel.hidden)closeDetails();else if(!directory.hidden){setDirectory(false);listToggle.focus();}}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(panelOpen)closeDetails();else if(directoryOpen){setDirectory(false);listToggle.focus();}}});
+ const syncMotion=()=>{
+  paused=document.documentElement.classList.contains('motion-paused')||motionPreference.matches;
+  if(paused){finishUiMotion();cameraTimeline?.progress(1);stopCameraMotion();}
+  if(controls){controls.autoRotate=!paused&&!selected;controls.enableDamping=!paused;}
+  requestRender();
+ };
+ document.addEventListener('sentient:motion',syncMotion);motionPreference.addEventListener('change',syncMotion);
+ window.addEventListener('pagehide',event=>{finishUiMotion();stopCameraMotion();if(!event.persisted){document.removeEventListener('sentient:motion',syncMotion);motionPreference.removeEventListener('change',syncMotion);}});
  updateProgress();
  try{
   renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
@@ -85,7 +143,7 @@ function initUniverse(accounts){
   scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x070b10,.014);
   camera=new THREE.PerspectiveCamera(49,1,.1,150);camera.position.set(0,1.5,30);
   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.065;controls.minDistance=6;controls.maxDistance=55;controls.autoRotate=!paused;controls.autoRotateSpeed=.2;controls.rotateSpeed=.45;controls.zoomSpeed=.6;controls.maxPolarAngle=Math.PI*.8;controls.minPolarAngle=Math.PI*.16;
-  controls.addEventListener('start',()=>{controls.autoRotate=false;gsap.killTweensOf([camera.position,controls.target]);});
+  controls.addEventListener('start',()=>{controls.autoRotate=false;stopCameraMotion();});
   const starCanvas=document.createElement('canvas');starCanvas.width=32;starCanvas.height=32;
   const starContext=starCanvas.getContext('2d');
   const starGradient=starContext.createRadialGradient(16,16,0,16,16,16);starGradient.addColorStop(0,'#ffffff');starGradient.addColorStop(.18,'#ffffffcc');starGradient.addColorStop(1,'#ffffff00');starContext.fillStyle=starGradient;starContext.fillRect(0,0,32,32);
@@ -154,7 +212,7 @@ function initUniverse(accounts){
      node.line.geometry.computeBoundingSphere();
     });
     orbitalTracks.scale.copy(layoutScale);
-    gsap.killTweensOf([camera.position,controls.target]);
+    stopCameraMotion();
     const chosen=nodes.find(node=>node.account.handle===selected);
     if(chosen){controls.target.copy(chosen.position);camera.position.copy(chosen.position).add(new THREE.Vector3(.7,.4,13.5));}
     else{controls.target.set(0,0,0);camera.position.set(0,1.5,homeDistance);}
@@ -164,11 +222,10 @@ function initUniverse(accounts){
   const tick=time=>{if(disposed||document.hidden){frame=0;last=0;return;}if(last)elapsed+=Math.min((time-last)/1000,.05);last=time;if(!paused){brand.rotation.y=Math.sin(elapsed*.3)*.2;brand.position.y=Math.sin(elapsed*.7)*.1;}render();frame=paused?0:requestAnimationFrame(tick);};
   const start=()=>{if(!frame&&!disposed&&!document.hidden)frame=requestAnimationFrame(tick);};requestRender=start;controls.enableDamping=!paused;controls.addEventListener('change',()=>{if(paused)start();});start();
   document.addEventListener('visibilitychange',start);
-  document.addEventListener('sentient:motion',event=>{paused=event.detail.paused;controls.autoRotate=!paused&&!selected;controls.enableDamping=!paused;if(paused)gsap.killTweensOf([camera.position,controls.target]);start();});
-  const zoom=factor=>{gsap.killTweensOf(camera.position);const delta=camera.position.clone().sub(controls.target).multiplyScalar(factor);const length=THREE.MathUtils.clamp(delta.length(),controls.minDistance,controls.maxDistance);delta.setLength(length).add(controls.target);gsap.to(camera.position,{x:delta.x,y:delta.y,z:delta.z,duration:paused?0:.5,ease:'power2.out'});start();};
+  const zoom=factor=>{const delta=camera.position.clone().sub(controls.target).multiplyScalar(factor);const length=THREE.MathUtils.clamp(delta.length(),controls.minDistance,controls.maxDistance);delta.setLength(length).add(controls.target);moveCamera(controls.target.clone(),delta,.5,'power2.out');start();};
   $('#zoom-in').addEventListener('click',()=>zoom(.8));$('#zoom-out').addEventListener('click',()=>zoom(1.25));
-  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();cancelAnimationFrame(frame);disposed=true;document.body.classList.add('universe-fallback');nodeLayer.hidden=true;$('.universe-warning').hidden=false;setDirectory(true);});
-  document.body.classList.add('universe-ready');setDirectory(false);updateProgress();
+  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();stopCameraMotion();cancelAnimationFrame(frame);disposed=true;document.body.classList.add('universe-fallback');nodeLayer.hidden=true;$('.universe-warning').hidden=false;setDirectory(true);});
+  document.body.classList.add('universe-ready');setDirectory(false,false);updateProgress();
   window.addEventListener('pagehide',event=>{cancelAnimationFrame(frame);frame=0;if(event.persisted)return;disposed=true;controls.dispose();resizeObserver.disconnect();resources.forEach(r=>r.dispose());renderer.dispose();});
   window.addEventListener('pageshow',event=>{if(event.persisted){last=0;start();}});
  }catch(error){disposed=true;cancelAnimationFrame(frame);controls?.dispose();controls=null;document.body.classList.add('universe-fallback');nodeLayer.hidden=true;$('.universe-warning').hidden=false;setDirectory(true);$('#reset-universe').hidden=true;$('#zoom-in').hidden=true;$('#zoom-out').hidden=true;resources.forEach(r=>r.dispose());renderer?.dispose();renderer?.domElement.remove();}

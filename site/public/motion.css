@@ -1,0 +1,24 @@
+/* GSAP owns the combined scroll/hover transform while this class is active. */
+.gsap-feature-art > img { transition: none; }
+
+/* Leave the motion switch reachable beside the proposal review controls. */
+body:has(.review-toolbar) .motion-toggle { bottom: 94px; }
+@media (max-width: 650px) {
+  body:has(.review-toolbar) .motion-toggle {
+    left: 16px; right: auto;
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Highlight the existing process numbers and rules without dimming body copy. */
+.gsap-process > li,
+.gsap-process > div {
+  border-color: color-mix(in srgb, var(--surface-line), var(--acid) calc(var(--step-progress, 0) * 45%));
+}
+.gsap-process > li::before,
+.gsap-process > div > span {
+  opacity: calc(.62 + var(--step-progress, 0) * .38);
+  text-shadow: 0 0 calc(var(--step-progress, 0) * 14px) #cfff0044;
+}
+.motion-paused .gsap-process > li::before,
+.motion-paused .gsap-process > div > span { opacity: 1; text-shadow: none; }
