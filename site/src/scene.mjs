@@ -133,7 +133,8 @@ function createDistributionField() {
   };
 }
 
-export function createScene(host, paused = false) {
+export function createScene(host, paused = false, options = {}) {
+  const upright = options.upright === true;
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
@@ -161,17 +162,22 @@ export function createScene(host, paused = false) {
   const field = createDistributionField();
   scene.add(field.field);
 
-  const neutral = { x: -0.14, y: -0.42, z: -0.035 };
+  const neutral = upright ? { x: 0, y: 0, z: 0 } : { x: -0.14, y: -0.42, z: -0.035 };
   group.rotation.set(neutral.x, neutral.y, neutral.z);
   // Fit the entire range of motion, including the bevel and thickness. In a
   // narrow mobile host, horizontal FOV determines distance instead of cropping.
   const motionBounds = new THREE.Box3();
-  for (const x of [-0.32, neutral.x, 0.04]) {
-    for (const y of [-0.78, neutral.y, -0.06]) {
-      for (const z of [-0.08, neutral.z, 0.01]) {
-        group.rotation.set(x, y, z);
-        group.updateMatrixWorld(true);
-        motionBounds.union(new THREE.Box3().setFromObject(group));
+  if (upright) {
+    group.updateMatrixWorld(true);
+    motionBounds.setFromObject(group);
+  } else {
+    for (const x of [-0.32, neutral.x, 0.04]) {
+      for (const y of [-0.78, neutral.y, -0.06]) {
+        for (const z of [-0.08, neutral.z, 0.01]) {
+          group.rotation.set(x, y, z);
+          group.updateMatrixWorld(true);
+          motionBounds.union(new THREE.Box3().setFromObject(group));
+        }
       }
     }
   }
@@ -197,11 +203,13 @@ export function createScene(host, paused = false) {
     previous = now;
     lastRendered = now;
     eased.lerp(pointer, 1 - Math.exp(-dt * 3.8));
-    group.rotation.set(
-      neutral.x + Math.sin(elapsed * 0.42) * 0.095 + eased.y * 0.085,
-      neutral.y + Math.sin(elapsed * 0.34) * 0.25 + eased.x * 0.11,
-      neutral.z + Math.sin(elapsed * 0.29) * 0.045,
-    );
+    if (!upright) {
+      group.rotation.set(
+        neutral.x + Math.sin(elapsed * 0.42) * 0.095 + eased.y * 0.085,
+        neutral.y + Math.sin(elapsed * 0.34) * 0.25 + eased.x * 0.11,
+        neutral.z + Math.sin(elapsed * 0.29) * 0.045,
+      );
+    }
     group.position.y = Math.sin(elapsed * 0.7) * 0.115;
     field.update(elapsed);
     render();

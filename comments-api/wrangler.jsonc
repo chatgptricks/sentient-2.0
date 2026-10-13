@@ -11,12 +11,20 @@
     }
   ],
   "vars": {
-    "ALLOWED_ORIGINS": "https://chatgptricks.github.io,http://localhost:4322,http://127.0.0.1:4322"
+    "ALLOWED_ORIGINS": "https://chatgptricks.github.io,http://localhost:4322,http://127.0.0.1:4322,http://localhost:14323,http://127.0.0.1:14323"
   },
   "ratelimits": [
     {
       "name": "COMMENT_RATE",
       "namespace_id": "1001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "DECK_EDIT_RATE",
+      "namespace_id": "1002",
       "simple": {
         "limit": 10,
         "period": 60

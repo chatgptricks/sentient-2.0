@@ -1,5 +1,4 @@
-const script = document.querySelector('script[src$="/comments.js"]');
-const base = new URL('.', script.src);
+const base = new URL('.', import.meta.url);
 const page = document.body.dataset.page;
 const ui = document.createElement('div');
 ui.className = 'review-ui';

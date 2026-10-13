@@ -52,6 +52,12 @@ The root GitHub Actions workflow checks the site and deploys pushes to `main` at
 
 Private local data, visual review captures, internal briefs, and provenance manifests are excluded from Git.
 
+## Presentation decks
+
+Presentation sources live in the repository's `Decks/` folder and use the same fonts, assets and GitHub Pages deployment. The placeholder campaign deck opens at https://chatgptricks.github.io/sentient-2.0/#/campaign-deck; append `/2` to link to slide two. Local preview uses `http://localhost:4322/#/campaign-deck`.
+
+The root page reserves `#/…` for presentations and keeps normal website anchors such as `#contact`. Website scripts and review comments do not run inside a deck. Add a deck module to `Decks/registry.mjs`, rebuild from `site/`, and publish through the existing workflow. See [`Decks/README.md`](../Decks/README.md) for the authoring and runtime details.
+
 ## Shared links
 
 Every route includes an absolute canonical URL, Open Graph metadata, and a large Twitter/X card. The shared 1200×630 artwork is `public/assets/social-preview.jpg`; route titles and descriptions come from the page definitions. Public share URLs default to the GitHub Pages deployment. `PUBLIC_ORIGIN` and `PUBLIC_BASE_PATH` can override them for a future domain.
