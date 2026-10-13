@@ -1,8 +1,6 @@
 import { decks } from './registry.mjs';
 import './player.css';
-import { initDeckVisuals } from './visuals.mjs';
 import { initDeckEditor } from './editor.mjs';
-import { campaignExamples } from './examples.mjs';
 import { initDeckFit } from './fit.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
@@ -11,9 +9,6 @@ const paragraphs = slide => (slide.paragraphs ?? []).map(text => `<p>${escape(te
 const statement = slide => slide.emphasis ? `<p class="deck-statement">${escape(slide.emphasis)}</p>` : '';
 const rows = (slide, className='') => `<ol class="deck-rows ${className}">${(slide.items ?? []).map((item, i) => `<li><span class="deck-row-number">${String(i+1).padStart(2,'0')}</span><div><h3>${escape(item.title)}</h3>${item.description ? `<p>${escape(item.description)}</p>` : ''}</div></li>`).join('')}</ol>`;
 const heading = slide => `<h2 class="deck-title">${escape(slide.title)}</h2>`;
-const portrait = (file, label, className='') => `<img class="${className}" src="${asset(file)}" alt="${escape(label)}" loading="lazy" decoding="async">`;
-const art = type => `<div class="deck-art deck-art-${type}" data-deck-visual="${type}" aria-hidden="true"><img class="deck-art-fallback" data-deck-fallback src="${asset('/assets/sentient-symbol.svg')}" alt=""></div>`;
-const accounts = () => `<div class="deck-account-cloud" aria-hidden="true">${['chatgptricks','theartificialintelligence','theaipage','mindset.therapy','blueviper.ai','aitrendz.xyz','traselveloreal','planet.ai_'].map((name,i) => `<span style="--account:${i}">${portrait(`/assets/universe/avatar-${name}.jpg`,'')}<small>@${name}</small></span>`).join('')}</div>`;
 
 function registerEditableFields(root, deck) {
   const field = (element, name) => { if (element) element.dataset.editField = name; };
@@ -39,55 +34,28 @@ function registerEditableFields(root, deck) {
     field(slide.querySelector('.deck-cpm'), 'cpm');
     field(slide.querySelector('.deck-compensation>span'), 'compensation-label');
     field(slide.querySelector('.deck-compensation>p'), 'compensation');
-    field(slide.querySelector('.deck-art-caption'), 'art-caption');
-    slide.querySelectorAll('.deck-audience-words>span').forEach((element, index) => field(element, `audience-action-${index}`));
-    slide.querySelectorAll('.deck-iteration>span').forEach((element, index) => field(element, `cycle-${index}`));
-    slide.querySelectorAll('.deck-phase-map section').forEach((phase, index) => {
-      field(phase.querySelector('h3>span'), `phase-${index}-title`);
-      field(phase.querySelector('small'), `phase-${index}-condition`);
-    });
-    field(slide.querySelector('.deck-period strong>span:first-child'), 'duration-number');
-    field(slide.querySelector('.deck-period strong>span:last-child'), 'duration-unit');
-    field(slide.querySelector('.deck-period>p'), 'duration-condition');
-    field(slide.querySelector('.deck-contact>span:first-child'), 'contact-label');
-    slide.querySelectorAll('.deck-example').forEach((example, index) => {
-      field(example.querySelector('h3'), `example-${index}-name`);
-      field(example.querySelector('.deck-example-date'), `example-${index}-date`);
-      field(example.querySelector('.deck-example-metrics'), `example-${index}-metrics`);
-    });
+
   });
 }
 
 function composition(slide) {
   switch (slide.layout) {
     case 'cover':
-      return `<div class="deck-opening-copy"><div class="deck-cover-mark"></div><h1 class="deck-opening-title" data-edit-field="title">${escape(slide.title)}</h1><div class="deck-copy">${paragraphs(slide)}</div></div>`;
-    case 'examples':
-      return `${heading(slide)}<div class="deck-example-rail">${[campaignExamples[2], campaignExamples[1], campaignExamples[0]].map(example => `<section class="deck-example"><a href="${escape(example.sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escape(example.label)} promotional post">${portrait(example.image,`${example.label}, @chatgptricks promotional post`)}</a><div class="deck-example-caption"><h3>${escape(example.label)}</h3><span class="deck-example-date">${new Date(example.publishedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})}</span><p class="deck-example-metrics">${[example.metrics.likes !== null ? `${example.metrics.likes.toLocaleString('en-US')} likes` : '', example.metrics.comments !== null ? `${example.metrics.comments.toLocaleString('en-US')} comments` : ''].filter(Boolean).join(' · ')}</p></div></section>`).join('')}</div>`;
-    case 'network':
-      return `<div class="deck-cover-art">${art('sculpture')}</div><div class="deck-cover-copy"><h1 class="deck-cover-title"><span data-edit-field="cover-intro">A media network with</span><span class="deck-cover-metric"><span data-edit-field="cover-metric">25–30</span><span class="deck-million" data-edit-field="cover-unit">million</span></span><span data-edit-field="cover-audience">followers</span></h1><div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div>`;
+      return `<div class="deck-cover-mark"></div><div class="deck-cover-grid"><h1 class="deck-cover-title"><span data-edit-field="cover-intro">A media network with</span> <strong data-edit-field="cover-metric">25–30</strong> <span class="deck-cover-audience"><span data-edit-field="cover-unit">million</span> <span data-edit-field="cover-audience">followers</span></span></h1><div class="deck-cover-copy"><div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div></div>`;
     case 'founders':
-      return `${heading(slide)}<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-photo">${portrait(founder.image, founder.name)}</div><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
+      return `${heading(slide)}<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
     case 'approach':
       return `${heading(slide)}<div class="deck-phase-map">${slide.paragraphs.map(text => `<section><p>${escape(text)}</p></section>`).join('')}</div>${statement(slide)}`;
     case 'selection':
-      return `${heading(slide)}<div class="deck-selection-body"><div class="deck-selection-story"><div class="deck-copy">${paragraphs(slide)}</div>${accounts()}</div>${rows(slide)}</div>${statement(slide)}`;
-    case 'relevance':
-      return `<div class="deck-relevance-art">${art('crowd')}</div>${heading(slide)}<div class="deck-relevance-copy">${paragraphs(slide)}${statement(slide)}</div>`;
-    case 'audience':
-      return `<div class="deck-audience-copy">${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div><div class="deck-audience-field"><div class="deck-audience-orrery">${accounts()}<div class="deck-audience-words" aria-hidden="true"><span>Follow</span><span>Consume</span><span>Engage</span></div></div></div>`;
+      return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${rows(slide)}${statement(slide)}`;
     case 'process':
-      return `${heading(slide)}<ol class="deck-process-steps">${slide.items.map((item,i) => `<li><span>0${i+1}</span><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p></li>`).join('')}</ol>${statement(slide)}`;
+      return `${heading(slide)}<ol class="deck-process-steps">${slide.items.map((item,i) => `<li><span aria-hidden="true">0${i+1}</span><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p></li>`).join('')}</ol>${statement(slide)}`;
     case 'commitment':
       return `${heading(slide)}<div class="deck-commitment-body"><div class="deck-commitment-main"><p class="deck-cpm-label">Guaranteed maximum organic campaign CPM</p><div class="deck-cpm">${escape(slide.cpm)}</div></div><div class="deck-editorial-copy">${paragraphs(slide)}<div class="deck-compensation"><span>If delivery falls short</span><p>${escape(slide.compensation)}</p></div></div></div>`;
     case 'analysis':
-      return `<div class="deck-analysis-story">${heading(slide)}<div class="deck-copy"><p>${escape(slide.paragraphs[0])}</p></div></div>${rows(slide, 'deck-analysis-rows')}<div class="deck-analysis-conclusion"><div class="deck-copy"><p>${escape(slide.paragraphs[1])}</p></div>${statement(slide)}</div>`;
-    case 'paid':
-      return `<div class="deck-paid-story">${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div><div class="deck-paid-visual"><div class="deck-period"><strong><span class="deck-duration-number">12</span><span class="deck-duration-unit">months</span></strong><p>Previous engagement\nwhere supported</p></div>${accounts()}</div>`;
-    case 'optimisation':
-      return `${heading(slide)}<div class="deck-optimisation-body"><div class="deck-iteration" aria-hidden="true"><b>↻</b></div><div class="deck-editorial-copy">${paragraphs(slide)}${statement(slide)}</div></div>`;
+      return `${heading(slide)}<div class="deck-copy"><p>${escape(slide.paragraphs[0])}</p></div>${rows(slide, 'deck-analysis-rows')}<div class="deck-copy"><p>${escape(slide.paragraphs[1])}</p></div>${statement(slide)}`;
     case 'closing':
-      return `<div class="deck-closing-story">${heading(slide)}</div><div class="deck-closing-copy"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}</div>${statement(slide)}`;
+      return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}${statement(slide)}`;
     default:
       return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
   }
@@ -129,8 +97,7 @@ export function mountDeck(hash) {
     editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:fit.update });
   };
   void configureEditor();
-  const visuals = initDeckVisuals(root);
-  window.addEventListener('pagehide', () => { visuals.dispose(); editor?.dispose(); fit.dispose(); }, { once:true });
+  window.addEventListener('pagehide', () => { editor?.dispose(); fit.dispose(); }, { once:true });
   window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
   const slides = [...root.querySelectorAll('.deck-slide')];
   const dialog = root.querySelector('dialog');
@@ -141,7 +108,7 @@ export function mountDeck(hash) {
   const fullscreenButton = root.querySelector('[data-deck-action="fullscreen"]');
   const sync = (index, speak = true) => {
     current = Math.max(0, Math.min(index, slides.length - 1));
-    root.dataset.theme = ['cover','process','commitment','optimisation'].includes(deck.slides[current].layout) ? 'light' : 'dark';
+    root.dataset.theme = ['founders','selection','relevance','audience','commitment','analysis','optimisation'].includes(deck.slides[current].layout) ? 'light' : 'dark';
     root.dataset.layout = deck.slides[current].layout;
     if (root.dataset.layout === 'cover') coverMark?.append(brand);
     else header.prepend(brand);
@@ -154,7 +121,6 @@ export function mountDeck(hash) {
     prev.disabled = current === 0;
     next.disabled = current === slides.length - 1;
     fit.update();
-    visuals.update();
     if (speak) announce.textContent = `Slide ${current+1} of ${slides.length}. ${deck.slides[current].title}`;
   };
   const go = index => {

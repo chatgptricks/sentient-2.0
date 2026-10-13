@@ -1,37 +1,14 @@
-# Sentient decks
+# Sentient campaign deck
 
-Web presentations share the Sentient website's Lovelo display font, Space Grotesk body font, local assets and GitHub Pages deployment. Their source lives here, beside `site/`.
+The presentation has exactly the twelve slides from the supplied campaign brief. Its first slide is the cover. Content, conditions and placeholders come from that brief; there are no additional account lists or promotional examples.
 
-Slides fill the viewport with floating controls. Keep the Sentient logo and wordmark upright, preserve their proportions, and use the `upright` scene option for dimensional brand artwork.
+The deck has its own layouts, system typography and styles. It uses the original upright Sentient logo as its brand identity. It does not use website scenes, animations, photos or visual components.
 
-Open the campaign deck at:
+Every slide shares the same viewport dimensions and margins. The complete content, including notes, is fitted within the space between the floating controls. Printed pages share the same 16:9 dimensions.
 
 - Local: `http://localhost:4322/#/campaign-deck`
 - Published: https://chatgptricks.github.io/sentient-2.0/#/campaign-deck
-- A specific slide: https://chatgptricks.github.io/sentient-2.0/#/campaign-deck/2
 
-## Add a deck
+`campaign-deck.mjs` owns content; `player.mjs` owns rendering and navigation; `fit.mjs` owns responsive fitting. Rebuild and reload after edits using `npm run build` from `site/`. Run `npm run check` before publishing. A push to `main` deploys through the existing GitHub Pages workflow.
 
-1. Create a module in this folder following the structure in `campaign-deck.mjs`. Use a unique lowercase slug, such as `partner-proposal`, for its URL.
-2. Import that deck in `registry.mjs` and add it to the exported `decks` array.
-3. Reuse website images from `site/public/assets/`. New public deck images can be added there too; keep private briefs and internal source material outside tracked public files.
-4. Run `npm run build` and `npm run check` from `site/`, then review `/#/<slug>` in the local browser. The preview server builds at startup and does not watch files, so rebuild and reload after changes.
-5. Publishing a push to `main` runs the existing GitHub Pages workflow. No separate host or Pages configuration is needed.
-
-`campaign-deck.mjs` contains a cover, the twelve slides from the supplied campaign brief, and a gallery of recent promotional examples selected from Sentient Dash. `examples.mjs` retains their source links and stored engagement measurements. The CPM and delivery compensation remain placeholders for proposal-specific terms.
-
-## Runtime and build
-
-`router.mjs` owns the root page's `#/…` namespace. Normal website anchors such as `#contact` keep their existing behavior. Deck links do not require server rewrites because GitHub Pages receives the same root document.
-
-For a deck hash, the router calls `mountDeck(hash)` from `player.mjs`. The player owns slide hash changes and clears the initial `document.documentElement.dataset.deck` marker once it has rendered. The initial marker hides the website while the deck is loading.
-
-For normal Home visits, the router imports the website's navigation, comments and animation scripts. Changing between Home and a deck reloads the document so each mode starts cleanly; slide changes stay within the player. The other website pages keep their existing entry scripts.
-
-The site build bundles this router to `site/dist/Decks/router.js`. The player's CSS import produces `router.css`; the existing build rewrites resource paths for `/sentient-2.0` in public builds.
-
-To check the public build locally, run from `site/`:
-
-```sh
-BASE_PATH=/sentient-2.0 STATIC_HOSTING=1 npm run build
-```
+The `#/…` hash namespace selects a deck from `registry.mjs`. Crossing between the normal website and the presentation reloads the document so each starts with its own styles and behavior. Public builds use `BASE_PATH=/sentient-2.0 STATIC_HOSTING=1 npm run build`.

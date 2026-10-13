@@ -54,7 +54,7 @@ Private local data, visual review captures, internal briefs, and provenance mani
 
 ## Presentation decks
 
-Presentation sources live in the repository's `Decks/` folder and use the same fonts, assets and GitHub Pages deployment. The placeholder campaign deck opens at https://chatgptricks.github.io/sentient-2.0/#/campaign-deck; append `/2` to link to slide two. Local preview uses `http://localhost:4322/#/campaign-deck`.
+Presentation sources live in the repository's `Decks/` folder, with their own design and styles and the same GitHub Pages deployment. The twelve-slide campaign deck follows the supplied brief and opens at https://chatgptricks.github.io/sentient-2.0/#/campaign-deck; append `/2` to link to slide two. Local preview uses `http://localhost:4322/#/campaign-deck`.
 
 The root page reserves `#/…` for presentations and keeps normal website anchors such as `#contact`. Website scripts and review comments do not run inside a deck. Add a deck module to `Decks/registry.mjs`, rebuild from `site/`, and publish through the existing workflow. See [`Decks/README.md`](../Decks/README.md) for the authoring and runtime details.
 

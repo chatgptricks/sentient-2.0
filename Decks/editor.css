@@ -2,7 +2,7 @@
 .deck-access-dialog {
   width:min(340px, calc(100vw - 40px)); padding:28px; color:#f3f2e9;
   border:1px solid #d0ff0038; border-radius:18px; background:#10180feb;
-  box-shadow:0 24px 100px #0008; font-family:'Space Grotesk',Arial,sans-serif;
+  box-shadow:0 24px 100px #0008; font-family:inherit;
 }
 .deck-access-dialog::backdrop { background:#030803a3; backdrop-filter:blur(12px); }
 .deck-access-form { display:grid; gap:14px; }
