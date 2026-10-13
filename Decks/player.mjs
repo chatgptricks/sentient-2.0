@@ -8,7 +8,7 @@ const asset = path => new URL(`..${path}`, import.meta.url).href;
 const paragraphs = slide => (slide.paragraphs ?? []).map(text => `<p>${escape(text)}</p>`).join('');
 const statement = slide => slide.emphasis ? `<p class="deck-statement">${escape(slide.emphasis)}</p>` : '';
 const rows = (slide, className='') => `<ol class="deck-rows ${className}">${(slide.items ?? []).map((item, i) => `<li><span class="deck-row-number">${String(i+1).padStart(2,'0')}</span><div><h3>${escape(item.title)}</h3>${item.description ? `<p>${escape(item.description)}</p>` : ''}</div></li>`).join('')}</ol>`;
-const heading = slide => `<h2 class="deck-title">${escape(slide.title)}</h2>`;
+const heading = slide => `<h2 class="deck-title">${escape(['approach','closing'].includes(slide.layout) ? slide.title.replaceAll('. ', '.\n') : slide.title)}</h2>`;
 
 function registerEditableFields(root, deck) {
   const field = (element, name) => { if (element) element.dataset.editField = name; };
@@ -40,14 +40,16 @@ function registerEditableFields(root, deck) {
 
 function composition(slide) {
   switch (slide.layout) {
-    case 'cover':
-      return `<div class="deck-cover-mark"></div><div class="deck-cover-grid"><h1 class="deck-cover-title"><span data-edit-field="cover-intro">A media network with</span> <strong data-edit-field="cover-metric">25–30</strong> <span class="deck-cover-audience"><span data-edit-field="cover-unit">million</span> <span data-edit-field="cover-audience">followers</span></span></h1><div class="deck-cover-copy"><div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div></div>`;
+    case 'opening':
+      return `<div class="deck-cover-mark"></div><h1 class="deck-opening-title" data-edit-field="title">${escape(slide.title.replaceAll('. ', '.\n'))}</h1>`;
+    case 'network':
+      return `<div class="deck-cover-grid"><h1 class="deck-cover-title"><span data-edit-field="cover-intro">A media network with</span> <strong data-edit-field="cover-metric">25–30</strong> <span class="deck-cover-audience"><span data-edit-field="cover-unit">million</span> <span data-edit-field="cover-audience">followers</span></span></h1><div class="deck-cover-copy"><div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div></div>`;
     case 'founders':
-      return `${heading(slide)}<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
+      return `${heading(slide)}<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-photo"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="1024" height="1024" decoding="async"></div><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
     case 'approach':
       return `${heading(slide)}<div class="deck-phase-map">${slide.paragraphs.map(text => `<section><p>${escape(text)}</p></section>`).join('')}</div>${statement(slide)}`;
     case 'selection':
-      return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${rows(slide)}${statement(slide)}`;
+      return `${heading(slide)}<div class="deck-selection-body"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide)}</div>${statement(slide)}`;
     case 'process':
       return `${heading(slide)}<ol class="deck-process-steps">${slide.items.map((item,i) => `<li><span aria-hidden="true">0${i+1}</span><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p></li>`).join('')}</ol>${statement(slide)}`;
     case 'commitment':
@@ -55,7 +57,7 @@ function composition(slide) {
     case 'analysis':
       return `${heading(slide)}<div class="deck-copy"><p>${escape(slide.paragraphs[0])}</p></div>${rows(slide, 'deck-analysis-rows')}<div class="deck-copy"><p>${escape(slide.paragraphs[1])}</p></div>${statement(slide)}`;
     case 'closing':
-      return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}${statement(slide)}`;
+      return `<div class="deck-closing-head">${heading(slide)}</div><div class="deck-closing-list"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}</div>${statement(slide)}`;
     default:
       return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
   }
@@ -108,9 +110,9 @@ export function mountDeck(hash) {
   const fullscreenButton = root.querySelector('[data-deck-action="fullscreen"]');
   const sync = (index, speak = true) => {
     current = Math.max(0, Math.min(index, slides.length - 1));
-    root.dataset.theme = ['founders','selection','relevance','audience','commitment','analysis','optimisation'].includes(deck.slides[current].layout) ? 'light' : 'dark';
+    root.dataset.theme = ['opening','founders','selection','relevance','audience','commitment','analysis','optimisation'].includes(deck.slides[current].layout) ? 'light' : 'dark';
     root.dataset.layout = deck.slides[current].layout;
-    if (root.dataset.layout === 'cover') coverMark?.append(brand);
+    if (root.dataset.layout === 'opening') coverMark?.append(brand);
     else header.prepend(brand);
     slides.forEach((slide,i) => { slide.hidden = i !== current; if (i === current) slide.scrollTop = 0; });
     root.querySelector('[data-deck-current]').textContent = String(current+1).padStart(2,'0');

@@ -1,8 +1,8 @@
 # Sentient campaign deck
 
-The presentation has exactly the twelve slides from the supplied campaign brief. Its first slide is the cover. Content, conditions and placeholders come from that brief; there are no additional account lists or promotional examples.
+The presentation has an opening cover followed by the twelve slides from the supplied campaign brief. Content, conditions and placeholders come from that brief; there are no additional account lists or promotional examples.
 
-The deck has its own layouts, system typography and styles. It uses the original upright Sentient logo as its brand identity. It does not use website scenes, animations, photos or visual components.
+The deck has its own layouts, system typography and styles. It uses the original upright Sentient logo as its brand identity. It does not use website scenes, animations or visual components. The only photographs are the authorised Louis Gleeson and Ivan portraits, with matched framing.
 
 Every slide shares the same viewport dimensions and margins. The complete content, including notes, is fitted within the space between the floating controls. Printed pages share the same 16:9 dimensions.
 

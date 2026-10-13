@@ -4,8 +4,16 @@ export const campaignDeck = {
   description: 'Sentient’s approach to audience selection, managed organic campaigns, campaign analysis and optional paid amplification.',
   slides: [
     {
+      id: 'cover',
+      layout: 'opening',
+      section: 'Sentient',
+      title: 'The right accounts. A managed campaign. Clear results.',
+      paragraphs: [],
+      emphasis: '',
+    },
+    {
       id: 'sentient',
-      layout: 'cover',
+      layout: 'network',
       section: 'Sentient',
       title: 'A media network with 25–30 million followers',
       paragraphs: [
@@ -26,11 +34,13 @@ export const campaignDeck = {
           name: 'Louis Gleeson',
           role: 'Co-Founder',
           description: 'Leads client relationships and growth strategy, helping brands turn Sentient’s distribution network into campaigns built around their objectives.',
+          image: '/assets/louis.png',
         },
         {
           name: 'Ivan',
           role: 'Co-Founder',
           description: 'Leads media growth and content operations, including ChatGPTTricks, with experience building and monetising established AI communities.',
+          image: '/assets/ivan.png',
         },
       ],
       emphasis: 'Our experience comes from building audiences ourselves and working directly with brands to reach them.',
