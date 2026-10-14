@@ -1,5 +1,6 @@
 import { decks } from './registry.mjs';
 import './player.css';
+import './cover.css';
 import { initDeckEditor } from './editor.mjs';
 import { initDeckFit } from './fit.mjs';
 
@@ -8,13 +9,16 @@ const asset = path => new URL(`..${path}`, import.meta.url).href;
 const paragraphs = slide => (slide.paragraphs ?? []).map(text => `<p>${escape(text)}</p>`).join('');
 const statement = slide => slide.emphasis ? `<p class="deck-statement">${escape(slide.emphasis)}</p>` : '';
 const rows = (slide, className='') => `<ol class="deck-rows ${className}">${(slide.items ?? []).map((item, i) => `<li><span class="deck-row-number">${String(i+1).padStart(2,'0')}</span><div><h3>${escape(item.title)}</h3>${item.description ? `<p>${escape(item.description)}</p>` : ''}</div></li>`).join('')}</ol>`;
-const heading = slide => `<h2 class="deck-title">${escape(['approach','closing'].includes(slide.layout) ? slide.title.replaceAll('. ', '.\n') : slide.title)}</h2>`;
+const heading = slide => slide.layout === 'network'
+  ? `<h2 class="deck-title"><span data-edit-field="cover-intro">A media network with</span> <span data-edit-field="cover-metric">25–30</span> <span data-edit-field="cover-unit">million</span> <span data-edit-field="cover-audience">followers</span></h2>`
+  : `<h2 class="deck-title">${escape(slide.title)}</h2>`;
 
 function registerEditableFields(root, deck) {
   const field = (element, name) => { if (element) element.dataset.editField = name; };
   root.querySelectorAll('.deck-slide').forEach((slide, i) => {
     slide.dataset.slideId = deck.slides[i].id;
-    field(slide.querySelector('.deck-title'), 'title');
+    const title = slide.querySelector('.deck-title');
+    if (!title.querySelector('[data-edit-field]')) field(title, 'title');
     field(slide.querySelector('.deck-slide-top>span'), 'section');
     field(slide.querySelector('.deck-statement'), 'emphasis');
     field(slide.querySelector('.deck-note'), 'note');
@@ -41,25 +45,25 @@ function registerEditableFields(root, deck) {
 function composition(slide) {
   switch (slide.layout) {
     case 'opening':
-      return `<div class="deck-cover-mark"></div><h1 class="deck-opening-title" data-edit-field="title">${escape(slide.title.replaceAll('. ', '.\n'))}</h1>`;
+      return `<div class="deck-cover-mark"></div>`;
     case 'network':
-      return `<div class="deck-cover-grid"><h1 class="deck-cover-title"><span data-edit-field="cover-intro">A media network with</span> <strong data-edit-field="cover-metric">25–30</strong> <span class="deck-cover-audience"><span data-edit-field="cover-unit">million</span> <span data-edit-field="cover-audience">followers</span></span></h1><div class="deck-cover-copy"><div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}</div></div>`;
+      return `<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
     case 'founders':
-      return `${heading(slide)}<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-photo"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="1024" height="1024" decoding="async"></div><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
+      return `<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-photo"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="1024" height="1024" decoding="async"></div><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
     case 'approach':
-      return `${heading(slide)}<div class="deck-phase-map">${slide.paragraphs.map(text => `<section><p>${escape(text)}</p></section>`).join('')}</div>${statement(slide)}`;
+      return `<div class="deck-phase-map">${slide.paragraphs.map(text => `<section><p>${escape(text)}</p></section>`).join('')}</div>${statement(slide)}`;
     case 'selection':
-      return `${heading(slide)}<div class="deck-selection-body"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide)}</div>${statement(slide)}`;
+      return `<div class="deck-selection-body"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide)}</div>${statement(slide)}`;
     case 'process':
-      return `${heading(slide)}<ol class="deck-process-steps">${slide.items.map((item,i) => `<li><span aria-hidden="true">0${i+1}</span><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p></li>`).join('')}</ol>${statement(slide)}`;
+      return `<ol class="deck-process-steps">${slide.items.map((item,i) => `<li><span aria-hidden="true">0${i+1}</span><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p></li>`).join('')}</ol>${statement(slide)}`;
     case 'commitment':
-      return `${heading(slide)}<div class="deck-commitment-body"><div class="deck-commitment-main"><p class="deck-cpm-label">Guaranteed maximum organic campaign CPM</p><div class="deck-cpm">${escape(slide.cpm)}</div></div><div class="deck-editorial-copy">${paragraphs(slide)}<div class="deck-compensation"><span>If delivery falls short</span><p>${escape(slide.compensation)}</p></div></div></div>`;
+      return `<div class="deck-commitment-body"><div class="deck-commitment-main"><p class="deck-cpm-label">Guaranteed maximum organic campaign CPM</p><div class="deck-cpm">${escape(slide.cpm)}</div></div><div class="deck-editorial-copy">${paragraphs(slide)}<div class="deck-compensation"><span>If delivery falls short</span><p>${escape(slide.compensation)}</p></div></div></div>`;
     case 'analysis':
-      return `${heading(slide)}<div class="deck-copy"><p>${escape(slide.paragraphs[0])}</p></div>${rows(slide, 'deck-analysis-rows')}<div class="deck-copy"><p>${escape(slide.paragraphs[1])}</p></div>${statement(slide)}`;
+      return `<div class="deck-copy"><p>${escape(slide.paragraphs[0])}</p></div>${rows(slide, 'deck-analysis-rows')}<div class="deck-copy"><p>${escape(slide.paragraphs[1])}</p></div>${statement(slide)}`;
     case 'closing':
-      return `<div class="deck-closing-head">${heading(slide)}</div><div class="deck-closing-list"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}</div>${statement(slide)}`;
+      return `<div class="deck-closing-list"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}</div>${statement(slide)}`;
     default:
-      return `${heading(slide)}<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
+      return `<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
   }
 }
 
@@ -84,7 +88,7 @@ export function mountDeck(hash) {
   }
   document.title = deck.title;
   let current = Math.min(route.slide, deck.slides.length - 1);
-  document.body.innerHTML = `<main class="deck-player" aria-label="${escape(deck.title)}"><header class="deck-header"><button class="deck-brand" type="button" aria-label="Sentient"><img src="${asset('/assets/sentient-logo.svg')}" width="180" height="38" alt="Sentient"></button><span class="deck-name">Campaign deck</span><div class="deck-tools"><button type="button" data-deck-action="overview" aria-haspopup="dialog" title="Slide overview (G)">Overview <span aria-hidden="true">▦</span></button><button type="button" data-deck-action="print" title="Print all slides">Print <span aria-hidden="true">↗</span></button><button type="button" data-deck-action="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen <span aria-hidden="true">⛶</span></button></div></header><div class="deck-stage">${deck.slides.map((slide,i) => `<article class="deck-slide deck-${escape(slide.layout)}" data-slide="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} of ${deck.slides.length}: ${escape(slide.title)}" ${i !== current ? 'hidden' : ''}><div class="deck-fit-area"><div class="deck-content"><div class="deck-slide-top"><span>${escape(slide.section)}</span><span class="deck-slide-id">${String(i+1).padStart(2,'0')}</span></div><div class="deck-composition">${composition(slide)}</div>${slide.note ? `<p class="deck-note">${escape(slide.note)}</p>` : ''}</div></div></article>`).join('')}</div><footer class="deck-controls"><div class="deck-counter"><span data-deck-current>${String(current+1).padStart(2,'0')}</span><span> / ${String(deck.slides.length).padStart(2,'0')}</span></div><div class="deck-progress" aria-label="Choose a slide">${deck.slides.map((slide,i) => `<button type="button" data-go="${i}" aria-label="Slide ${i+1}: ${escape(slide.section)}" ${i === current ? 'aria-current="step"' : ''}><span></span></button>`).join('')}</div><div class="deck-navigation"><span class="deck-key-hint">← → to navigate</span><button type="button" data-deck-action="previous" aria-label="Previous slide">←</button><button type="button" data-deck-action="next" aria-label="Next slide">→</button></div></footer><span class="deck-announcement" role="status" aria-live="polite" aria-atomic="true"></span><dialog class="deck-overview" aria-labelledby="deck-overview-title"><div class="deck-overview-head"><h2 id="deck-overview-title">The campaign deck</h2><button type="button" data-deck-action="close-overview" aria-label="Close slide overview">×</button></div><ol>${deck.slides.map((slide,i) => `<li><button type="button" data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${escape(slide.section)}</strong><small>${escape(slide.title)}</small></button></li>`).join('')}</ol></dialog></main>`;
+  document.body.innerHTML = `<main class="deck-player" aria-label="${escape(deck.title)}"><header class="deck-header"><button class="deck-brand" type="button" aria-label="Sentient"><img src="${asset('/assets/sentient-logo.svg')}" width="180" height="38" alt="Sentient"></button><span class="deck-name">Campaign deck</span><div class="deck-tools"><button type="button" data-deck-action="overview" aria-haspopup="dialog" title="Slide overview (G)">Overview <span aria-hidden="true">▦</span></button><button type="button" data-deck-action="print" title="Print all slides">Print <span aria-hidden="true">↗</span></button><button type="button" data-deck-action="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen <span aria-hidden="true">⛶</span></button></div></header><div class="deck-stage">${deck.slides.map((slide,i) => `<article class="deck-slide deck-${escape(slide.layout)}" data-slide="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} of ${deck.slides.length}: ${escape(slide.title)}" ${i !== current ? 'hidden' : ''}><div class="deck-slide-top"><span>${escape(slide.section)}</span><span class="deck-slide-id">${String(i+1).padStart(2,'0')}</span></div>${heading(slide)}<div class="deck-fit-area"><div class="deck-content"><div class="deck-composition">${composition(slide)}</div>${slide.note ? `<p class="deck-note">${escape(slide.note)}</p>` : ''}</div></div></article>`).join('')}</div><footer class="deck-controls"><div class="deck-counter"><span data-deck-current>${String(current+1).padStart(2,'0')}</span><span> / ${String(deck.slides.length).padStart(2,'0')}</span></div><div class="deck-progress" aria-label="Choose a slide">${deck.slides.map((slide,i) => `<button type="button" data-go="${i}" aria-label="Slide ${i+1}: ${escape(slide.section)}" ${i === current ? 'aria-current="step"' : ''}><span></span></button>`).join('')}</div><div class="deck-navigation"><span class="deck-key-hint">← → to navigate</span><button type="button" data-deck-action="previous" aria-label="Previous slide">←</button><button type="button" data-deck-action="next" aria-label="Next slide">→</button></div></footer><span class="deck-announcement" role="status" aria-live="polite" aria-atomic="true"></span><dialog class="deck-overview" aria-labelledby="deck-overview-title"><div class="deck-overview-head"><h2 id="deck-overview-title">The campaign deck</h2><button type="button" data-deck-action="close-overview" aria-label="Close slide overview">×</button></div><ol>${deck.slides.map((slide,i) => `<li><button type="button" data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${escape(slide.section)}</strong><small>${escape(slide.title)}</small></button></li>`).join('')}</ol></dialog></main>`;
   delete document.documentElement.dataset.deck;
   const root = document.querySelector('.deck-player');
   registerEditableFields(root, deck);

@@ -1,16 +1,21 @@
-// Fit the entire semantic flow, including footnotes, between the floating controls.
-// Text reflows at narrow widths before a uniform scale handles short viewports.
+// Metadata and titles belong to the master grid. Only the body workspace scales.
+import { textOf } from './editor.mjs';
+
 export function initDeckFit(root) {
   let scheduled = 0;
   let disposed = false;
   const header = root.querySelector('.deck-header');
   const controls = root.querySelector('.deck-controls');
+  const titles = [...root.querySelectorAll('.deck-slide > .deck-title')];
+  const measure = document.createElement('h2');
+  measure.className = 'deck-title deck-title-measure';
+  measure.setAttribute('aria-hidden', 'true');
+  root.append(measure);
   const fit = () => {
     scheduled = 0;
     if (disposed || !root.isConnected) return;
     const slide = root.querySelector('.deck-slide:not([hidden])');
     if (!slide) return;
-    const area = slide.querySelector('.deck-fit-area');
     const content = slide.querySelector('.deck-content');
     const viewport = window.visualViewport;
     if (viewport && Math.abs(viewport.scale - 1) < .01) root.style.setProperty('--deck-viewport-height', `${viewport.height}px`);
@@ -18,12 +23,52 @@ export function initDeckFit(root) {
     const bounds = root.getBoundingClientRect();
     const gap = bounds.height < 500 ? 10 : 18;
     const inset = Math.min(72, Math.max(20, bounds.width * .045));
-    const top = Math.max(gap, header.getBoundingClientRect().bottom - bounds.top + gap);
+    root.style.setProperty('--deck-inset', `${inset}px`);
+    const labelTop = Math.max(gap, header.getBoundingClientRect().bottom - bounds.top + gap);
     const bottom = Math.min(bounds.height - gap, controls.getBoundingClientRect().top - bounds.top - gap);
     const width = Math.max(1, bounds.width - inset * 2);
+    measure.className = 'deck-slide-top deck-title-measure';
+    measure.style.width = `${Math.max(1, width - 44)}px`;
+    measure.style.fontWeight = '400';
+    const labelHeight = Math.ceil(Math.max(32, ...[...root.querySelectorAll('.deck-slide-top > span:first-child')].map(label => {
+      measure.textContent = textOf(label);
+      return measure.getBoundingClientRect().height;
+    })));
+    root.style.setProperty('--deck-label-height', `${labelHeight}px`);
+    const titleTop = labelTop + labelHeight + gap;
+    measure.className = 'deck-title deck-title-measure';
+    measure.style.removeProperty('font-weight');
+    let titleFont = bounds.width <= 760 ? (bounds.height < 700 ? 26 : 32) : Math.min(56, width * .044, bounds.height * .09);
+    measure.style.width = `${width}px`;
+    const titleHeight = () => {
+      root.style.setProperty('--deck-title-font', `${titleFont}px`);
+      return Math.ceil(Math.max(...titles.map(title => {
+        measure.textContent = textOf(title);
+        const range = document.createRange();
+        range.selectNodeContents(measure);
+        const bounds = measure.getBoundingClientRect();
+        return Math.max(bounds.height, range.getBoundingClientRect().bottom - bounds.top);
+      })));
+    };
+    let bandHeight = titleHeight();
+    // A long edited heading reduces the common font for every slide equally.
+    const bandLimit = Math.max(24, (bottom - titleTop - gap) * .4);
+    for (let attempt = 0; bandHeight > bandLimit && attempt < 12; attempt++) {
+      titleFont *= Math.max(.5, Math.min(.9, bandLimit / bandHeight));
+      bandHeight = titleHeight();
+    }
+    root.style.setProperty('--deck-label-top', `${labelTop}px`);
+    root.style.setProperty('--deck-title-top', `${titleTop}px`);
+    root.style.setProperty('--deck-title-height', `${bandHeight}px`);
+    const top = titleTop + bandHeight + gap;
     const height = Math.max(1, bottom - top);
-    Object.assign(area.style, { left:`${inset}px`, top:`${top}px`, right:'auto', bottom:'auto', width:`${width}px`, height:`${height}px` });
+    root.style.setProperty('--deck-workspace-height', `${height}px`);
+    root.style.setProperty('--deck-body-top', `${top}px`);
+    root.querySelectorAll('.deck-fit-area').forEach(workspace => {
+      Object.assign(workspace.style, { left:`${inset}px`, top:`${top}px`, right:'auto', bottom:'auto', width:`${width}px`, height:`${height}px` });
+    });
     let logicalWidth = width;
+    content.style.minHeight = '0';
     content.style.width = `${logicalWidth}px`;
     const measuredHeight = () => Math.max(1, content.offsetHeight, content.scrollHeight);
     // On short phones, reflow into a slightly wider logical surface before
@@ -48,8 +93,9 @@ export function initDeckFit(root) {
     const naturalWidth = Math.max(logicalWidth, content.scrollWidth);
     const naturalHeight = measuredHeight();
     const scale = Math.min(1, width / naturalWidth, height / naturalHeight);
-    content.style.left = `${Math.max(0, (width - naturalWidth * scale) / 2)}px`;
-    content.style.top = `${Math.max(0, (height - naturalHeight * scale) / 2)}px`;
+    content.style.minHeight = `${height / scale}px`;
+    content.style.left = '0';
+    content.style.top = '0';
     content.style.transform = `scale(${scale})`;
     content.dataset.fitted = '';
     content.dataset.fitScale = String(scale);
@@ -73,6 +119,7 @@ export function initDeckFit(root) {
     disposed = true;
     window.cancelAnimationFrame(scheduled);
     resize.disconnect();
+    measure.remove();
     root.removeEventListener('load', update, true);
     root.removeEventListener('input', update);
     window.removeEventListener('resize', update);

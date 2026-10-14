@@ -4,7 +4,7 @@ const MAX_FIELD_LENGTH = 1000;
 const safeFieldKey = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,159}$/;
 const cleanText = value => String(value ?? '').replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ');
 
-function textOf(element) {
+export function textOf(element) {
   // Read DOM text so CSS casing and the current slide's visibility never become edits.
   // Browsers create DIV/P/BR nodes for Enter in plaintext-only contenteditable.
   const read = node => {

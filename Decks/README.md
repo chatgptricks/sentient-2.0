@@ -4,7 +4,7 @@ The presentation has an opening cover followed by the twelve slides from the sup
 
 The deck has its own layouts, system typography and styles. It uses the original upright Sentient logo as its brand identity. It does not use website scenes, animations or visual components. The only photographs are the authorised Louis Gleeson and Ivan portraits, with matched framing.
 
-Every slide shares the same viewport dimensions and margins. The complete content, including notes, is fitted within the space between the floating controls. Printed pages share the same 16:9 dimensions.
+Every slide shares one master grid: identical viewport dimensions and margins, fixed eyebrow and page-number anchors, and one title font and starting position. A common title band reserves the longest heading across the deck. The body fills the workspace below it; only this body scales when space is limited, including footnotes. Printed pages share the same 16:9 dimensions and anchors.
 
 - Local: `http://localhost:4322/#/campaign-deck`
 - Published: https://chatgptricks.github.io/sentient-2.0/#/campaign-deck
