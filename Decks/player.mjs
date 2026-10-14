@@ -6,64 +6,53 @@ import { initDeckFit } from './fit.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const asset = path => new URL(`..${path}`, import.meta.url).href;
-const paragraphs = slide => (slide.paragraphs ?? []).map(text => `<p>${escape(text)}</p>`).join('');
-const statement = slide => slide.emphasis ? `<p class="deck-statement">${escape(slide.emphasis)}</p>` : '';
-const rows = (slide, className='') => `<ol class="deck-rows ${className}">${(slide.items ?? []).map((item, i) => `<li><span class="deck-row-number">${String(i+1).padStart(2,'0')}</span><div><h3>${escape(item.title)}</h3>${item.description ? `<p>${escape(item.description)}</p>` : ''}</div></li>`).join('')}</ol>`;
-const heading = slide => slide.layout === 'network'
-  ? `<h2 class="deck-title"><span data-edit-field="cover-intro">A media network with</span> <span data-edit-field="cover-metric">25–30</span> <span data-edit-field="cover-unit">million</span> <span data-edit-field="cover-audience">followers</span></h2>`
-  : `<h2 class="deck-title">${escape(slide.title)}</h2>`;
+// Editable text carries its own field name, so the editor saves exactly what each slide shows.
+const text = (tag, field, value, className='') => `<${tag}${className ? ` class="${className}"` : ''} data-edit-field="${field}">${escape(value)}</${tag}>`;
+const statement = slide => slide.emphasis ? text('p', 'emphasis', slide.emphasis, 'deck-statement') : '';
+const pad = i => String(i+1).padStart(2,'0');
+const arrow = '<span class="deck-arrow" aria-hidden="true"></span>';
+const heading = slide => `<h2 class="deck-title" data-edit-field="title">${escape(slide.title)}</h2>`;
+const themes = { opening:'dark', network:'accent', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent' };
 
 function registerEditableFields(root, deck) {
-  const field = (element, name) => { if (element) element.dataset.editField = name; };
   root.querySelectorAll('.deck-slide').forEach((slide, i) => {
     slide.dataset.slideId = deck.slides[i].id;
-    const title = slide.querySelector('.deck-title');
-    if (!title.querySelector('[data-edit-field]')) field(title, 'title');
-    field(slide.querySelector('.deck-slide-top>span'), 'section');
-    field(slide.querySelector('.deck-statement'), 'emphasis');
-    field(slide.querySelector('.deck-note'), 'note');
-    slide.querySelectorAll('.deck-copy>p, .deck-editorial-copy>p, .deck-relevance-copy>p, .deck-phase-map section>p').forEach((element, index) => {
-      if (!element.dataset.editField) field(element, `paragraph-${index}`);
-    });
-    slide.querySelectorAll('.deck-rows li, .deck-process-steps li').forEach((item, index) => {
-      field(item.querySelector('h3'), `item-${index}-title`);
-      field(item.querySelector('p'), `item-${index}-description`);
-    });
-    slide.querySelectorAll('.deck-founder').forEach((founder, index) => {
-      field(founder.querySelector('h3'), `founder-${index}-name`);
-      field(founder.querySelector('p'), `founder-${index}-bio`);
-      field(founder.querySelector('.deck-founder-role'), `founder-${index}-role`);
-    });
-    field(slide.querySelector('.deck-cpm-label'), 'cpm-label');
-    field(slide.querySelector('.deck-cpm'), 'cpm');
-    field(slide.querySelector('.deck-compensation>span'), 'compensation-label');
-    field(slide.querySelector('.deck-compensation>p'), 'compensation');
-
+    const section = slide.querySelector('.deck-slide-top>span');
+    if (section) section.dataset.editField = 'section';
   });
 }
 
 function composition(slide) {
+  const items = slide.items ?? [];
   switch (slide.layout) {
     case 'opening':
-      return `<div class="deck-cover-mark"></div>`;
+      return `<div class="deck-cover-mark"></div><div class="deck-cover-lines">${slide.lines.map((line,i) => text('p', `line-${i}`, line, 'deck-cover-line')).join('')}</div><div class="deck-cover-emblem" aria-hidden="true"></div>`;
     case 'network':
-      return `<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
+      return `<div class="deck-network-body"><div class="deck-metric">${text('strong', 'metric', slide.metric)}${text('span', 'label', slide.label)}</div><div class="deck-network-side"><ul class="deck-tags">${slide.tags.map((tag,i) => `<li>${text('span', `tag-${i}`, tag)}</li>`).join('')}</ul><ul class="deck-platforms">${slide.platforms.map((platform,i) => `<li>${text('span', `platform-${i}`, platform)}</li>`).join('')}</ul></div></div>${statement(slide)}`;
     case 'founders':
-      return `<div class="deck-founder-pair">${slide.founders.map(founder => `<section class="deck-founder"><div class="deck-founder-photo"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="1024" height="1024" decoding="async"></div><div class="deck-founder-copy"><span class="deck-founder-role">${escape(founder.role)}</span><h3>${escape(founder.name)}</h3><p>${escape(founder.description)}</p></div></section>`).join('')}</div>${statement(slide)}`;
+      return `<div class="deck-founder-pair">${slide.founders.map((founder,i) => `<section class="deck-founder"><div class="deck-founder-photo"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="1024" height="1024" decoding="async"></div><div class="deck-founder-copy">${text('span', `founder-${i}-role`, founder.role, 'deck-founder-role')}${text('h3', `founder-${i}-name`, founder.name)}${text('p', `founder-${i}-bio`, founder.description)}</div></section>`).join('')}</div>`;
     case 'approach':
-      return `<div class="deck-phase-map">${slide.paragraphs.map(text => `<section><p>${escape(text)}</p></section>`).join('')}</div>${statement(slide)}`;
+      return `<ol class="deck-flow">${slide.steps.map((step,i) => `<li>${text('span', `step-${i}-kicker`, step.kicker, 'deck-flow-kicker')}<span class="deck-flow-number" aria-hidden="true">${pad(i)}</span>${text('h3', `step-${i}-title`, step.title)}${text('p', `step-${i}-description`, step.description)}</li>`).join(arrow)}</ol>`;
     case 'selection':
-      return `<div class="deck-selection-body"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide)}</div>${statement(slide)}`;
+      return `<div class="deck-funnel"><div class="deck-funnel-pool">${text('h3', 'from', slide.from)}<div class="deck-dots" aria-hidden="true"></div></div>${arrow}<ol class="deck-filters">${items.map((item,i) => `<li><span class="deck-filter-number" aria-hidden="true">${pad(i)}</span><div>${text('h3', `item-${i}-title`, item.title)}${text('p', `item-${i}-description`, item.description)}</div></li>`).join('')}</ol>${arrow}<div class="deck-funnel-result">${text('h3', 'to', slide.to)}<div class="deck-picks" aria-hidden="true">${'<span></span>'.repeat(6)}</div></div></div>${statement(slide)}`;
+    case 'relevance':
+      return `<div class="deck-versus">${slide.versus.map((side,i) => `<section class="deck-versus-${i ? 'right' : 'big'}"><div class="deck-versus-shape" aria-hidden="true"></div>${text('h3', `versus-${i}-title`, side.title)}${text('p', `versus-${i}-description`, side.description)}</section>`).join('<span class="deck-versus-sign" aria-hidden="true">&lt;</span>')}</div>${statement(slide)}`;
+    case 'audience':
+      return `<ol class="deck-words">${items.map((item,i) => `<li>${text('h3', `item-${i}-title`, item.title)}${text('p', `item-${i}-description`, item.description)}</li>`).join('')}</ol>${statement(slide)}`;
     case 'process':
-      return `<ol class="deck-process-steps">${slide.items.map((item,i) => `<li><span aria-hidden="true">0${i+1}</span><h3>${escape(item.title)}</h3><p>${escape(item.description)}</p></li>`).join('')}</ol>${statement(slide)}`;
+      return `<ol class="deck-timeline">${items.map((item,i) => `<li><span class="deck-timeline-dot" aria-hidden="true">${i+1}</span>${text('h3', `item-${i}-title`, item.title)}${text('p', `item-${i}-description`, item.description)}</li>`).join('')}</ol>`;
     case 'commitment':
-      return `<div class="deck-commitment-body"><div class="deck-commitment-main"><p class="deck-cpm-label">Guaranteed maximum organic campaign CPM</p><div class="deck-cpm">${escape(slide.cpm)}</div></div><div class="deck-editorial-copy">${paragraphs(slide)}<div class="deck-compensation"><span>If delivery falls short</span><p>${escape(slide.compensation)}</p></div></div></div>`;
+      return `<div class="deck-commitment-body"><div class="deck-commitment-main">${text('p', 'cpm-label', slide.label, 'deck-cpm-label')}${text('div', 'cpm', slide.cpm, 'deck-cpm')}</div><div class="deck-commitment-side">${text('p', 'paragraph-0', slide.paragraphs[0], 'deck-commitment-line')}<div class="deck-compensation">${text('span', 'compensation-label', 'If delivery falls short')}${text('p', 'compensation', slide.compensation)}</div></div></div>`;
     case 'analysis':
-      return `<div class="deck-copy"><p>${escape(slide.paragraphs[0])}</p></div>${rows(slide, 'deck-analysis-rows')}<div class="deck-copy"><p>${escape(slide.paragraphs[1])}</p></div>${statement(slide)}`;
+      return `<ol class="deck-questions">${items.map((item,i) => `<li><span aria-hidden="true">${pad(i)}</span>${text('h3', `item-${i}-title`, item.title)}${text('p', `item-${i}-description`, item.description)}</li>`).join('')}</ol>`;
+    case 'paid':
+      return `<ol class="deck-equation">${items.map((item,i) => `<li${i === items.length-1 ? ' class="deck-equation-result"' : ''}>${text('h3', `item-${i}-title`, item.title)}${text('p', `item-${i}-description`, item.description)}</li>`).join('<span class="deck-operator" aria-hidden="true">+</span>').replace(/<span class="deck-operator" aria-hidden="true">\+<\/span>(?!.*deck-operator)/s, '<span class="deck-operator" aria-hidden="true">=</span>')}</ol>`;
+    case 'optimisation':
+      return `<div class="deck-loop-body"><ol class="deck-loop">${items.map((item,i) => `<li style="--i:${i}">${text('span', `item-${i}-title`, item.title)}</li>`).join('')}</ol>${statement(slide)}</div>`;
     case 'closing':
-      return `<div class="deck-closing-list"><div class="deck-copy">${paragraphs(slide)}</div>${rows(slide, 'deck-closing-rows')}</div>${statement(slide)}`;
+      return `<div class="deck-closing-body">${text('p', 'paragraph-0', slide.paragraphs[0], 'deck-closing-label')}<ul class="deck-chips">${items.map((item,i) => `<li>${text('span', `item-${i}-title`, item.title)}</li>`).join('')}</ul></div>${statement(slide)}`;
     default:
-      return `<div class="deck-copy">${paragraphs(slide)}</div>${statement(slide)}`;
+      return statement(slide);
   }
 }
 
@@ -88,7 +77,7 @@ export function mountDeck(hash) {
   }
   document.title = deck.title;
   let current = Math.min(route.slide, deck.slides.length - 1);
-  document.body.innerHTML = `<main class="deck-player" aria-label="${escape(deck.title)}"><header class="deck-header"><button class="deck-brand" type="button" aria-label="Sentient"><img src="${asset('/assets/sentient-logo.svg')}" width="180" height="38" alt="Sentient"></button><span class="deck-name">Campaign deck</span><div class="deck-tools"><button type="button" data-deck-action="overview" aria-haspopup="dialog" title="Slide overview (G)">Overview <span aria-hidden="true">▦</span></button><button type="button" data-deck-action="print" title="Print all slides">Print <span aria-hidden="true">↗</span></button><button type="button" data-deck-action="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen <span aria-hidden="true">⛶</span></button></div></header><div class="deck-stage">${deck.slides.map((slide,i) => `<article class="deck-slide deck-${escape(slide.layout)}" data-slide="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} of ${deck.slides.length}: ${escape(slide.title)}" ${i !== current ? 'hidden' : ''}><div class="deck-slide-top"><span>${escape(slide.section)}</span><span class="deck-slide-id">${String(i+1).padStart(2,'0')}</span></div>${heading(slide)}<div class="deck-fit-area"><div class="deck-content"><div class="deck-composition">${composition(slide)}</div>${slide.note ? `<p class="deck-note">${escape(slide.note)}</p>` : ''}</div></div></article>`).join('')}</div><footer class="deck-controls"><div class="deck-counter"><span data-deck-current>${String(current+1).padStart(2,'0')}</span><span> / ${String(deck.slides.length).padStart(2,'0')}</span></div><div class="deck-progress" aria-label="Choose a slide">${deck.slides.map((slide,i) => `<button type="button" data-go="${i}" aria-label="Slide ${i+1}: ${escape(slide.section)}" ${i === current ? 'aria-current="step"' : ''}><span></span></button>`).join('')}</div><div class="deck-navigation"><span class="deck-key-hint">← → to navigate</span><button type="button" data-deck-action="previous" aria-label="Previous slide">←</button><button type="button" data-deck-action="next" aria-label="Next slide">→</button></div></footer><span class="deck-announcement" role="status" aria-live="polite" aria-atomic="true"></span><dialog class="deck-overview" aria-labelledby="deck-overview-title"><div class="deck-overview-head"><h2 id="deck-overview-title">The campaign deck</h2><button type="button" data-deck-action="close-overview" aria-label="Close slide overview">×</button></div><ol>${deck.slides.map((slide,i) => `<li><button type="button" data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${escape(slide.section)}</strong><small>${escape(slide.title)}</small></button></li>`).join('')}</ol></dialog></main>`;
+  document.body.innerHTML = `<main class="deck-player" aria-label="${escape(deck.title)}"><header class="deck-header"><button class="deck-brand" type="button" aria-label="Sentient"><img src="${asset('/assets/sentient-logo.svg')}" width="180" height="38" alt="Sentient"></button><span class="deck-name">Campaign deck</span><div class="deck-tools"><button type="button" data-deck-action="overview" aria-haspopup="dialog" title="Slide overview (G)">Overview <span aria-hidden="true">▦</span></button><button type="button" data-deck-action="print" title="Print all slides">Print <span aria-hidden="true">↗</span></button><button type="button" data-deck-action="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen <span aria-hidden="true">⛶</span></button></div></header><div class="deck-stage">${deck.slides.map((slide,i) => `<article class="deck-slide deck-${escape(slide.layout)}" data-slide="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} of ${deck.slides.length}: ${escape(slide.title)}" ${i !== current ? 'hidden' : ''}><div class="deck-slide-top"><span>${escape(slide.section)}</span><span class="deck-slide-id">${String(i+1).padStart(2,'0')}</span></div>${heading(slide)}<div class="deck-fit-area"><div class="deck-content"><div class="deck-composition">${composition(slide)}</div>${slide.note ? text('p', 'note', slide.note, 'deck-note') : ''}</div></div></article>`).join('')}</div><footer class="deck-controls"><div class="deck-counter"><span data-deck-current>${String(current+1).padStart(2,'0')}</span><span> / ${String(deck.slides.length).padStart(2,'0')}</span></div><div class="deck-progress" aria-label="Choose a slide">${deck.slides.map((slide,i) => `<button type="button" data-go="${i}" aria-label="Slide ${i+1}: ${escape(slide.section)}" ${i === current ? 'aria-current="step"' : ''}><span></span></button>`).join('')}</div><div class="deck-navigation"><span class="deck-key-hint">← → to navigate</span><button type="button" data-deck-action="previous" aria-label="Previous slide">←</button><button type="button" data-deck-action="next" aria-label="Next slide">→</button></div></footer><span class="deck-announcement" role="status" aria-live="polite" aria-atomic="true"></span><dialog class="deck-overview" aria-labelledby="deck-overview-title"><div class="deck-overview-head"><h2 id="deck-overview-title">The campaign deck</h2><button type="button" data-deck-action="close-overview" aria-label="Close slide overview">×</button></div><ol>${deck.slides.map((slide,i) => `<li><button type="button" data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${escape(slide.section)}</strong><small>${escape(slide.title)}</small></button></li>`).join('')}</ol></dialog></main>`;
   delete document.documentElement.dataset.deck;
   const root = document.querySelector('.deck-player');
   registerEditableFields(root, deck);
@@ -96,6 +85,13 @@ export function mountDeck(hash) {
   const brand = root.querySelector('.deck-brand');
   const header = root.querySelector('.deck-header');
   const coverMark = root.querySelector('.deck-cover-mark');
+  // The website's 3D Sentient emblem loads only once the cover is shown.
+  const coverEmblem = root.querySelector('.deck-cover-emblem');
+  let emblem;
+  const showEmblem = () => {
+    if (emblem || !coverEmblem) return;
+    emblem = import('../site/src/scene.mjs').then(({ createScene }) => root.isConnected ? createScene(coverEmblem) : null).catch(() => null);
+  };
   let editor;
   const configureEditor = async () => {
     const config = await fetch(new URL('../comments-config.json', import.meta.url)).then(response => response.json()).catch(() => ({}));
@@ -103,7 +99,7 @@ export function mountDeck(hash) {
     editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:fit.update });
   };
   void configureEditor();
-  window.addEventListener('pagehide', () => { editor?.dispose(); fit.dispose(); }, { once:true });
+  window.addEventListener('pagehide', () => { editor?.dispose(); fit.dispose(); void emblem?.then(scene => scene?.dispose()); }, { once:true });
   window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
   const slides = [...root.querySelectorAll('.deck-slide')];
   const dialog = root.querySelector('dialog');
@@ -114,9 +110,9 @@ export function mountDeck(hash) {
   const fullscreenButton = root.querySelector('[data-deck-action="fullscreen"]');
   const sync = (index, speak = true) => {
     current = Math.max(0, Math.min(index, slides.length - 1));
-    root.dataset.theme = ['opening','founders','selection','relevance','audience','commitment','analysis','optimisation'].includes(deck.slides[current].layout) ? 'light' : 'dark';
+    root.dataset.theme = themes[deck.slides[current].layout] ?? 'dark';
     root.dataset.layout = deck.slides[current].layout;
-    if (root.dataset.layout === 'opening') coverMark?.append(brand);
+    if (root.dataset.layout === 'opening') { coverMark?.append(brand); showEmblem(); }
     else header.prepend(brand);
     slides.forEach((slide,i) => { slide.hidden = i !== current; if (i === current) slide.scrollTop = 0; });
     root.querySelector('[data-deck-current]').textContent = String(current+1).padStart(2,'0');

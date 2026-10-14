@@ -1,125 +1,100 @@
-/* An upright wordmark over a monumental, cropped acid-green arc. */
+/* The promise set as three monumental lines beside the 3D Sentient emblem from the website. */
 .deck-opening {
   background:var(--ink);
   color:var(--paper);
-  --copy:#c5c5bc;
+  --copy:#a9a99f;
   --rule:#ffffff32;
   isolation:isolate;
 }
 
-.deck-opening .deck-content {
-  height:100%;
-  gap:0;
+/* The heading stays for assistive technology; the lines below are its visual form. */
+.deck-opening > .deck-title {
+  clip-path:inset(50%);
+  width:1px;
+  height:1px;
+  overflow:hidden;
+}
+
+.deck-opening .deck-fit-area {
+  top:calc(var(--deck-label-top) + var(--deck-label-height) + 12px)!important;
+  height:calc(var(--deck-workspace-height) + var(--deck-body-top) - var(--deck-label-top) - var(--deck-label-height) - 12px)!important;
 }
 
 .deck-opening .deck-composition {
-  height:100%;
-  min-height:0;
-  gap:0;
+  position:relative;
+  justify-content:flex-end;
+  gap:3cqw;
 }
 
 .deck-opening .deck-cover-mark {
-  position:relative;
-  width:100%;
-  height:100%;
-  min-height:0;
-  margin:0;
-  overflow:hidden;
-  isolation:isolate;
-}
-
-.deck-opening::before,
-.deck-opening::after {
-  content:'';
   position:absolute;
-  border-radius:50%;
-  aspect-ratio:1;
-  pointer-events:none;
-  z-index:0;
-}
-
-.deck-opening::before {
-  width:116%;
-  left:-8%;
-  top:calc(var(--deck-body-top) + var(--deck-workspace-height) * .54);
-  background:var(--accent);
-}
-
-.deck-opening::after {
-  width:100%;
+  top:0;
   left:0;
-  top:calc(var(--deck-body-top) + var(--deck-workspace-height) * .54 + 8vw);
-  background:var(--ink);
+  width:16cqw;
 }
 
-.deck-opening .deck-cover-mark .deck-brand {
-  position:relative;
-  z-index:1;
+.deck-opening .deck-cover-mark .deck-brand,
+.deck-opening .deck-cover-mark .deck-brand img {
   display:block;
   width:100%;
-  height:62%;
-  transform:none;
+  height:auto;
+  filter:none;
 }
 
-.deck-opening .deck-cover-mark .deck-brand img {
+.deck-cover-lines {
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.deck-opening .deck-cover-line {
+  font-family:'Sentient Display','Helvetica Neue',Helvetica,Arial,sans-serif;
+  font-size:8.6cqw;
+  line-height:.98;
+  letter-spacing:-.015em;
+  text-transform:uppercase;
+  color:var(--paper);
+  white-space:nowrap;
+}
+
+.deck-opening .deck-cover-line:nth-child(2) {
+  -webkit-text-stroke:2px var(--paper);
+  color:transparent;
+}
+
+.deck-opening .deck-cover-line:last-child {
+  color:var(--accent);
+}
+
+.deck-cover-emblem {
+  position:absolute;
+  z-index:0;
+  right:-4cqw;
+  top:-4cqw;
+  width:54cqw;
+  aspect-ratio:1;
+  background:radial-gradient(circle at 50% 50%,#d0ff0030,#d0ff0010 38%,#0000 66%);
+  pointer-events:none;
+}
+
+.deck-cover-emblem canvas {
+  display:block;
   width:100%;
   height:100%;
-  object-fit:contain;
-  object-position:left center;
-  filter:none;
-  transform:none;
 }
 
-.deck-opening .deck-cover-mark .deck-brand:focus-visible {
-  outline-offset:-4px;
-}
+.deck-opening > .deck-slide-top { z-index:2; }
+.deck-opening > .deck-fit-area { z-index:1; }
 
 @media (max-width:760px) and (orientation:portrait) {
-  .deck-opening .deck-cover-mark .deck-brand {
-    height:27%;
-  }
-  .deck-opening::before {
-    width:216%;
-    left:-108%;
-    top:calc(var(--deck-body-top) + var(--deck-workspace-height) * .38);
-  }
-  .deck-opening::after {
-    width:164%;
-    left:-82%;
-    top:calc(var(--deck-body-top) + var(--deck-workspace-height) * .38 + 26vw);
-  }
+  .deck-opening .deck-cover-line { font-size:13.5cqw; white-space:normal; }
+  .deck-opening .deck-cover-mark { width:38cqw; }
+  .deck-cover-emblem { width:100cqw; right:-18cqw; top:12cqw; }
 }
 
 @media print {
-  .deck-opening {
-    --deck-body-top:2.35in;
-    --deck-workspace-height:6.15in;
-    background:var(--ink)!important;
-    color:var(--paper)!important;
-  }
-  .deck-opening .deck-content,
-  .deck-opening .deck-composition,
-  .deck-opening .deck-cover-mark {
-    height:100%;
-    min-height:0!important;
-  }
-  .deck-opening .deck-content,
-  .deck-opening .deck-composition {
-    gap:0!important;
-  }
-  .deck-opening .deck-cover-mark .deck-brand {
-    height:62%;
-  }
-  .deck-opening::before {
-    width:116%;
-    left:-8%;
-    top:calc(var(--deck-body-top) + var(--deck-workspace-height) * .54);
-  }
-  .deck-opening::after {
-    width:100%;
-    left:0;
-    top:calc(var(--deck-body-top) + var(--deck-workspace-height) * .54 + 1.28in);
-  }
+  .deck-opening { background:var(--ink)!important; color:var(--paper)!important; }
+  .deck-opening .deck-fit-area { top:1in!important; height:7.5in!important; }
+  .deck-opening .deck-composition { min-height:7.5in!important; }
 }
-
-.deck-opening > .deck-slide-top, .deck-opening > .deck-title, .deck-opening > .deck-fit-area{z-index:1}

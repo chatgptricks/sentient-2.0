@@ -1,10 +1,10 @@
 # Sentient campaign deck
 
-The presentation has an opening cover followed by the twelve slides from the supplied campaign brief. Content, conditions and placeholders come from that brief; there are no additional account lists or promotional examples.
+The presentation has an opening cover followed by twelve slides condensed from the supplied campaign brief: one idea per slide, a short headline and a visual composition (a monumental metric, flow, funnel, comparison, timeline, equation or loop) instead of paragraphs. The brief's conditions — follower overlap, CPM guarantee terms and paid-media requirements — stay as footnotes.
 
-The deck has its own layouts, system typography and styles. It uses the original upright Sentient logo as its brand identity. It does not use website scenes, animations or visual components. The only photographs are the authorised Louis Gleeson and Ivan portraits, with matched framing.
+The deck has its own layouts. Titles and body copy use system Helvetica; Sentient's Lovelo Black display face sets the cover, metrics, numerals and keywords. The cover reuses the website's 3D Sentient emblem (`site/src/scene.mjs`), loaded only when the cover is shown; no other website scenes or animations are used. The only photographs are the authorised Louis Gleeson and Ivan portraits. Slides alternate dark, paper and acid-green surfaces.
 
-Every slide shares one master grid: identical viewport dimensions and margins, fixed eyebrow and page-number anchors, and one title font and starting position. A common title band reserves the longest heading across the deck. The body fills the workspace below it; only this body scales when space is limited, including footnotes. Printed pages share the same 16:9 dimensions and anchors.
+Every slide shares one master grid: identical viewport dimensions and margins, fixed eyebrow and page-number anchors, and one title font and starting position. A common title band reserves the longest heading across the deck (the cover sets its own headline and is excluded). The body fills the workspace below it; only this body scales when space is limited, including footnotes. Printed pages share the same 16:9 dimensions and anchors. Every editable text node declares its field name in `player.mjs`.
 
 - Local: `http://localhost:4322/#/campaign-deck`
 - Published: https://chatgptricks.github.io/sentient-2.0/#/campaign-deck

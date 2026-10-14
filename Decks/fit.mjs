@@ -6,7 +6,8 @@ export function initDeckFit(root) {
   let disposed = false;
   const header = root.querySelector('.deck-header');
   const controls = root.querySelector('.deck-controls');
-  const titles = [...root.querySelectorAll('.deck-slide > .deck-title')];
+  // The cover sets its own headline, so it does not size the shared title band.
+  const titles = [...root.querySelectorAll('.deck-slide:not(.deck-opening) > .deck-title')];
   const measure = document.createElement('h2');
   measure.className = 'deck-title deck-title-measure';
   measure.setAttribute('aria-hidden', 'true');
@@ -38,7 +39,7 @@ export function initDeckFit(root) {
     const titleTop = labelTop + labelHeight + gap;
     measure.className = 'deck-title deck-title-measure';
     measure.style.removeProperty('font-weight');
-    let titleFont = bounds.width <= 760 ? (bounds.height < 700 ? 26 : 32) : Math.min(56, width * .044, bounds.height * .09);
+    let titleFont = bounds.width <= 760 ? (bounds.height < 700 ? 26 : 32) : Math.min(76, width * .052, bounds.height * .095);
     measure.style.width = `${width}px`;
     const titleHeight = () => {
       root.style.setProperty('--deck-title-font', `${titleFont}px`);
@@ -52,7 +53,7 @@ export function initDeckFit(root) {
     };
     let bandHeight = titleHeight();
     // A long edited heading reduces the common font for every slide equally.
-    const bandLimit = Math.max(24, (bottom - titleTop - gap) * .4);
+    const bandLimit = Math.max(24, (bottom - titleTop - gap) * .3);
     for (let attempt = 0; bandHeight > bandLimit && attempt < 12; attempt++) {
       titleFont *= Math.max(.5, Math.min(.9, bandLimit / bandHeight));
       bandHeight = titleHeight();
