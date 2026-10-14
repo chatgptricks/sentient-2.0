@@ -1,4 +1,4 @@
-/* A presentation design with original layouts and only the two authorised portraits. */
+/* The presentation master and original layouts; approved account/post visuals have their own stylesheet. */
 @font-face{font-family:'Sentient Display';src:url('/assets/lovelo-black.woff2') format('woff2');font-display:swap}
 body.deck-mode{margin:0;overflow:hidden;background:#101010;color:#f5f4ee}
 html:has(body.deck-mode){overflow:hidden}

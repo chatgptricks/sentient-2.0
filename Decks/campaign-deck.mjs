@@ -25,13 +25,26 @@ export const campaignDeck = {
       note: 'Combined followers across owned and partner accounts. Audiences may overlap.',
     },
     {
+      id: 'sentient-accounts',
+      layout: 'accounts',
+      section: 'Our accounts',
+      title: 'A selection of Sentient accounts',
+      accounts: [
+        { handle: '@chatpgtricks', followers: '2,749,305', image: '/assets/decks/campaign-deck/avatar-chatgptricks.jpg' },
+        { handle: '@artificialntellligence', followers: '1,526,246', image: '/assets/decks/campaign-deck/avatar-artificialntellligence.jpg' },
+        { handle: '@artificialcoding', followers: '943,652', image: '/assets/decks/campaign-deck/avatar-artificialcoding.jpg' },
+        { handle: '@evolving', followers: '877,183', image: '/assets/decks/campaign-deck/avatar-evolving.jpg' },
+      ],
+      note: 'Follower counts recorded 13 October 2026.',
+    },
+    {
       id: 'our-founders',
       layout: 'founders',
       section: 'Our founders',
       title: 'Built by people who built audiences',
       founders: [
         { name: 'Louis Gleeson', role: 'Co-Founder', description: 'Client relationships & growth strategy.', image: '/assets/founders/louis-cutout.webp' },
-        { name: 'Ivan', role: 'Co-Founder', description: 'Media growth & content — including @chatgptricks.', image: '/assets/founders/ivan-cutout.webp' },
+        { name: 'Ivan', role: 'Co-Founder', description: 'Media growth & content — including @chatpgtricks.', image: '/assets/founders/ivan-cutout.webp' },
       ],
     },
     {
@@ -82,6 +95,33 @@ export const campaignDeck = {
         { title: 'Measured', description: 'Engagement shows what lands.' },
       ],
       emphasis: 'Established audiences + the data to choose between them.',
+    },
+    {
+      id: 'sentient-promo-results',
+      layout: 'promos',
+      section: 'Promotional examples',
+      title: 'Promotional posts. Measured engagement.',
+      posts: [
+        {
+          account: '@chatpgtricks',
+          title: '1X — NEO robotic hand',
+          image: '/assets/decks/campaign-deck/promo-1x-neo.webp',
+          url: 'https://www.instagram.com/p/DalMfBeINkQ/',
+          date: '9 July 2026',
+          likes: '10,387',
+          comments: '254',
+        },
+        {
+          account: '@artificialntellligence',
+          title: 'Higgsfield — Minecraft AI building',
+          image: '/assets/decks/campaign-deck/promo-higgsfield-minecraft.webp',
+          url: 'https://www.instagram.com/p/DZV5fOZnQJU/',
+          date: '8 June 2026',
+          likes: '8,819',
+          comments: '879',
+        },
+      ],
+      note: 'Figures reflect recorded post engagement.',
     },
     {
       id: 'organic-campaign',

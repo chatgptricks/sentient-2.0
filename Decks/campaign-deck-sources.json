@@ -1,0 +1,55 @@
+{
+  "source": "SentientDash",
+  "source_url": "https://sentientdash.app/",
+  "observed_on": "2026-10-13",
+  "accounts": [
+    {
+      "source_account": "chatgptricks",
+      "display_handle": "@chatpgtricks",
+      "followers": 2749305,
+      "profile_captured_at": "2026-10-13T16:05:22+00:00"
+    },
+    {
+      "source_account": "artificialntellligence",
+      "display_handle": "@artificialntellligence",
+      "followers": 1526246,
+      "profile_captured_at": "2026-10-13T16:04:48+00:00"
+    },
+    {
+      "source_account": "artificialcoding",
+      "display_handle": "@artificialcoding",
+      "followers": 943652,
+      "profile_captured_at": "2026-10-13T16:04:15+00:00"
+    },
+    {
+      "source_account": "evolving",
+      "display_handle": "@evolving",
+      "followers": 877183,
+      "profile_captured_at": "2026-10-13T16:06:38+00:00"
+    }
+  ],
+  "posts": [
+    {
+      "source_account": "chatgptricks",
+      "display_handle": "@chatpgtricks",
+      "shortcode": "DalMfBeINkQ",
+      "permalink": "https://www.instagram.com/p/DalMfBeINkQ/",
+      "published_at": "2026-07-09T17:51:56+00:00",
+      "is_promo": true,
+      "likes": 10387,
+      "comments": 254,
+      "likes_updated_at": null
+    },
+    {
+      "source_account": "artificialntellligence",
+      "display_handle": "@artificialntellligence",
+      "shortcode": "DZV5fOZnQJU",
+      "permalink": "https://www.instagram.com/p/DZV5fOZnQJU/",
+      "published_at": "2026-06-08T22:45:56+00:00",
+      "is_promo": true,
+      "likes": 8819,
+      "comments": 879,
+      "likes_updated_at": "2026-10-07T15:10:26+00:00"
+    }
+  ]
+}

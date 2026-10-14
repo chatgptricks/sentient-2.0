@@ -1,6 +1,7 @@
 import { decks } from './registry.mjs';
 import './player.css';
 import './cover.css';
+import './social-proof.css';
 import { initDeckEditor } from './editor.mjs';
 import { initDeckFit } from './fit.mjs';
 
@@ -12,7 +13,7 @@ const statement = slide => slide.emphasis ? text('p', 'emphasis', slide.emphasis
 const pad = i => String(i+1).padStart(2,'0');
 const arrow = '<span class="deck-arrow" aria-hidden="true"></span>';
 const heading = slide => `<h2 class="deck-title" data-edit-field="title">${escape(slide.title)}</h2>`;
-const themes = { opening:'dark', network:'accent', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent', end:'dark' };
+const themes = { opening:'dark', network:'accent', accounts:'light', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', promos:'dark', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent', end:'dark' };
 
 function registerEditableFields(root, deck) {
   root.querySelectorAll('.deck-slide').forEach((slide, i) => {
@@ -29,6 +30,10 @@ function composition(slide) {
       return `<div class="deck-cover-mark"></div><div class="deck-cover-lines">${slide.lines.map((line,i) => text('p', `line-${i}`, line, 'deck-cover-line')).join('')}</div><div class="deck-cover-emblem" aria-hidden="true"></div>`;
     case 'network':
       return `<div class="deck-network-body"><div class="deck-metric">${text('strong', 'metric', slide.metric)}${text('span', 'label', slide.label)}</div><div class="deck-network-side"><ul class="deck-tags">${slide.tags.map((tag,i) => `<li>${text('span', `tag-${i}`, tag)}</li>`).join('')}</ul><ul class="deck-platforms">${slide.platforms.map((platform,i) => `<li>${text('span', `platform-${i}`, platform)}</li>`).join('')}</ul></div></div>${statement(slide)}`;
+    case 'accounts':
+      return `<ol class="deck-account-grid">${slide.accounts.map((account,i) => `<li class="deck-account"><img class="deck-account-avatar" src="${asset(account.image)}" alt="${escape(account.handle)}" width="320" height="320" decoding="async"><div class="deck-account-copy">${text('h3', `account-${i}-handle`, account.handle, 'deck-account-handle')}${text('strong', `account-${i}-followers`, account.followers, 'deck-account-followers')}${text('span', `account-${i}-label`, 'Followers', 'deck-account-label')}</div></li>`).join('')}</ol>`;
+    case 'promos':
+      return `<div class="deck-promo-grid">${slide.posts.map((post,i) => `<article class="deck-promo"><a class="deck-promo-image-link" href="${escape(post.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escape(`View ${post.title} on Instagram`)}"><img class="deck-promo-image" src="${asset(post.image)}" alt="${escape(`${post.title} promotional post from ${post.account}`)}" width="${i ? '1080' : '720'}" height="${i ? '1350' : '960'}" decoding="async"></a><div class="deck-promo-copy">${text('p', `post-${i}-account`, post.account, 'deck-promo-account')}${text('h3', `post-${i}-title`, post.title, 'deck-promo-title')}<dl class="deck-promo-metrics"><div>${text('dt', `post-${i}-likes-label`, 'Likes')}${text('dd', `post-${i}-likes`, post.likes)}</div><div>${text('dt', `post-${i}-comments-label`, 'Comments')}${text('dd', `post-${i}-comments`, post.comments)}</div></dl>${text('p', `post-${i}-date`, post.date, 'deck-promo-date')}<a class="deck-promo-source" href="${escape(post.url)}" target="_blank" rel="noopener noreferrer">${text('span', `post-${i}-link-label`, 'View post ↗')}</a></div></article>`).join('')}</div>`;
     case 'founders':
       return `<div class="deck-founder-pair">${slide.founders.map((founder,i) => `<section class="deck-founder"><div class="deck-founder-photo"><div class="deck-founder-frame"><div class="deck-founder-clip"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="925" height="927" decoding="async"></div></div></div><div class="deck-founder-copy">${text('span', `founder-${i}-role`, founder.role, 'deck-founder-role')}${text('h3', `founder-${i}-name`, founder.name)}${text('p', `founder-${i}-bio`, founder.description)}</div></section>`).join('')}</div>`;
     case 'approach':

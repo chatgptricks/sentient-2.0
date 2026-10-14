@@ -76,7 +76,13 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied }) {
   const notifyApplied = () => onFieldsApplied?.({ ...serverFields });
   const apply = values => {
     for (const { key, element } of fields) {
-      if (Object.hasOwn(values, key)) element.textContent = values[key];
+      if (Object.hasOwn(values, key)) {
+        // Honour the requested display name in existing saved copy, while
+        // keeping source account IDs and URLs unchanged.
+        element.textContent = deck.slug === 'campaign-deck'
+          ? values[key].replace(/@?chatgptricks\b/gi, '@chatpgtricks')
+          : values[key];
+      }
     }
     notifyApplied();
   };

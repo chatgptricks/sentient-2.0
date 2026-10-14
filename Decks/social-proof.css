@@ -1,0 +1,248 @@
+/* Account identities and measured Promo examples. The master grid stays intact. */
+.deck-accounts {
+  background:var(--paper);
+  color:var(--ink);
+  --copy:#5d5d55;
+  --rule:#10101026;
+}
+
+.deck-promos {
+  background:var(--ink);
+  color:var(--paper);
+  --copy:#a9a99f;
+  --rule:#ffffff2a;
+}
+
+.deck-account-grid {
+  display:grid;
+  flex:1;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:repeat(2,minmax(0,1fr));
+  gap:2.2cqw 5cqw;
+  list-style:none;
+  padding:.6cqw 0;
+  margin:0;
+  min-width:0;
+}
+
+.deck-account {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:2cqw;
+  min-width:0;
+}
+
+.deck-account-avatar {
+  display:block;
+  width:min(calc(var(--deck-layout-width,100cqw) * .11),calc(var(--deck-workspace-height,40cqw) * .3));
+  height:auto;
+  max-width:180px;
+  aspect-ratio:1;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+.deck-account-copy {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:.6cqw;
+  min-width:0;
+}
+
+.deck-account-handle {
+  font-size:1.65cqw;
+  line-height:1.2;
+  font-weight:500;
+  letter-spacing:-.025em;
+}
+
+.deck-account-followers {
+  display:block;
+  font-size:6.9cqw;
+  line-height:1;
+  letter-spacing:-.065em;
+  font-weight:700;
+  font-variant-numeric:lining-nums tabular-nums;
+  white-space:nowrap;
+}
+
+.deck-account-label {
+  font-size:1.05cqw;
+  line-height:1.2;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--copy);
+}
+
+.deck-promo-grid {
+  display:grid;
+  flex:1;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:minmax(0,1fr);
+  gap:4cqw;
+  min-width:0;
+}
+
+.deck-promo {
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
+  align-items:stretch;
+  gap:1.7cqw;
+  min-width:0;
+}
+
+.deck-promo-image-link {
+  display:block;
+  align-self:stretch;
+  min-width:0;
+}
+
+.deck-promo-image {
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:calc(var(--deck-workspace-height,40cqw) * .9);
+  object-fit:contain;
+  object-position:center;
+}
+
+.deck-promo-copy {
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:1cqw;
+  min-width:0;
+}
+
+.deck-promos .deck-promo-account {
+  font-size:1.2cqw;
+  line-height:1.3;
+  letter-spacing:-.01em;
+  font-weight:500;
+  color:var(--accent);
+}
+
+.deck-promo-title {
+  font-size:2.25cqw;
+  line-height:1.08;
+  letter-spacing:-.04em;
+  font-weight:700;
+}
+
+.deck-promo-metrics {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:1.15cqw;
+  margin:0;
+}
+
+.deck-promo-metrics>div {
+  display:flex;
+  flex-direction:column-reverse;
+  gap:.4cqw;
+}
+
+.deck-promo-metrics dt {
+  font-size:.95cqw;
+  line-height:1.2;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--copy);
+}
+
+.deck-promo-metrics dd {
+  margin:0;
+  font-size:4.1cqw;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:-.055em;
+  font-variant-numeric:lining-nums tabular-nums;
+  white-space:nowrap;
+  color:var(--accent);
+}
+
+.deck-promos .deck-promo-date {
+  font-size:1.05cqw;
+  line-height:1.25;
+  color:var(--copy);
+}
+
+.deck-promo-source {
+  display:inline-block;
+  width:fit-content;
+  border-bottom:1px solid currentColor;
+  padding-bottom:.25cqw;
+  font-size:1.05cqw;
+  line-height:1.25;
+  color:var(--paper);
+}
+
+@media (max-width:760px) {
+  .deck-account-grid { gap:20px 16px; padding:0; }
+  .deck-account { display:flex; flex-direction:column; justify-content:center; gap:13px; text-align:center; }
+  .deck-account-avatar { width:clamp(56px,21cqw,94px); }
+  .deck-account-copy { width:100%; align-items:center; gap:6px; }
+  .deck-account-handle { font-size:clamp(10px,3.1cqw,13px); line-height:1.2; }
+  .deck-account-followers { font-size:8.3cqw; }
+  .deck-account-label { font-size:10px; }
+  .deck-promo-grid { grid-template-columns:1fr; grid-template-rows:repeat(2,minmax(0,1fr)); gap:22px; }
+  .deck-promo { grid-template-columns:minmax(0,.85fr) minmax(0,1fr); gap:18px; }
+  .deck-promo-image { max-height:calc(var(--deck-workspace-height,500px) * .46); }
+  .deck-promo-copy { gap:8px; }
+  .deck-promos .deck-promo-account { font-size:11px; }
+  .deck-promo-title { font-size:19px; line-height:1.1; }
+  .deck-promo-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; width:100%; }
+  .deck-promo-metrics>div { gap:4px; }
+  .deck-promo-metrics dd { font-size:6.6cqw; }
+  .deck-promo-metrics dt { font-size:9px; }
+  .deck-promos .deck-promo-date { font-size:10px; }
+  .deck-promo-source { font-size:11px; padding-bottom:3px; }
+}
+
+@media (max-height:500px) and (orientation:landscape) {
+  .deck-account-grid { gap:1.4cqw 5cqw; padding:0; }
+  .deck-account { display:grid; grid-template-columns:auto minmax(0,1fr); gap:1.5cqw; text-align:left; }
+  .deck-account-avatar { width:min(8cqw,calc(var(--deck-workspace-height,20cqw) * .36)); }
+  .deck-account-copy { align-items:flex-start; gap:.35cqw; }
+  .deck-account-handle { font-size:1.2cqw; }
+  .deck-account-followers { font-size:4.8cqw; }
+  .deck-account-label { font-size:.85cqw; }
+  .deck-promo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:minmax(0,1fr); gap:3cqw; }
+  .deck-promo { grid-template-columns:minmax(0,.8fr) minmax(0,1fr); gap:1.5cqw; }
+  .deck-promo-image { max-height:calc(var(--deck-workspace-height,20cqw) * .9); }
+  .deck-promo-copy { gap:.5cqw; }
+  .deck-promos .deck-promo-account { font-size:1cqw; }
+  .deck-promo-title { font-size:1.8cqw; }
+  .deck-promo-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:1cqw; }
+  .deck-promo-metrics>div { gap:.25cqw; }
+  .deck-promo-metrics dd { font-size:2.8cqw; }
+  .deck-promo-metrics dt { font-size:.8cqw; }
+  .deck-promos .deck-promo-date,.deck-promo-source { font-size:.85cqw; }
+}
+
+@media print {
+  .deck-accounts .deck-composition,.deck-promos .deck-composition { width:100%!important; }
+  .deck-account-grid { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); gap:.4in .55in; padding:0; }
+  .deck-account { display:grid; grid-template-columns:auto minmax(0,1fr); gap:.3in; text-align:left; }
+  .deck-account-avatar { width:1.5in; max-width:none; }
+  .deck-account-copy { align-items:flex-start; gap:9px; }
+  .deck-account-handle { font-size:22px; }
+  .deck-account-followers { font-size:78px; }
+  .deck-account-label { font-size:13px; }
+  .deck-promo-grid { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:minmax(0,1fr); gap:.45in; }
+  .deck-promo { grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:.25in; }
+  .deck-promo-image { max-height:none; }
+  .deck-promo-copy { gap:13px; }
+  .deck-promos .deck-promo-account { font-size:15px; }
+  .deck-promo-title { font-size:27px; }
+  .deck-promo-metrics { grid-template-columns:1fr; gap:16px; width:auto; }
+  .deck-promo-metrics>div { gap:5px; }
+  .deck-promo-metrics dd { font-size:54px; }
+  .deck-promo-metrics dt { font-size:12px; }
+  .deck-promos .deck-promo-date { font-size:13px; }
+  .deck-promo-source { font-size:15px; padding-bottom:3px; }
+}
