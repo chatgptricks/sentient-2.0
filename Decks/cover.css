@@ -54,7 +54,7 @@
   --emblem:min(42vw, calc(var(--deck-viewport-height, 100dvh) - 170px));
 }
 
-.deck-opening .deck-cover-line {
+.deck-player .deck-opening .deck-cover-line {
   font-family:'Sentient Display','Helvetica Neue',Helvetica,Arial,sans-serif;
   font-size:min(calc((100cqw - var(--emblem) * .92) / 11.2), calc(var(--deck-viewport-height, 100dvh) * .115));
   line-height:.98;
@@ -97,7 +97,7 @@
 @media (max-aspect-ratio:1/1) {
   .deck-opening { --emblem:min(84vw, calc(var(--deck-viewport-height, 100dvh) * .36), calc(var(--deck-viewport-height, 100dvh) - 460px)); }
   .deck-cover-emblem { right:auto; left:calc(50% - var(--emblem) / 2); top:calc(var(--deck-viewport-height, 100dvh) * .13); }
-  .deck-opening .deck-cover-line { font-size:min(13.5cqw, calc(var(--deck-viewport-height, 100dvh) * .075)); white-space:normal; }
+  .deck-player .deck-opening .deck-cover-line { font-size:min(13.5cqw, calc(var(--deck-viewport-height, 100dvh) * .075)); white-space:normal; }
   .deck-opening .deck-cover-mark { width:38cqw; }
 }
 

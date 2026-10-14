@@ -71,7 +71,32 @@ export function initDeckFit(root) {
     let logicalWidth = width;
     content.style.minHeight = '0';
     content.style.width = `${logicalWidth}px`;
+    content.style.removeProperty('--deck-layout-width');
     const measuredHeight = () => Math.max(1, content.offsetHeight, content.scrollHeight);
+    // Beyond phones, the layout always spans the workspace while the type
+    // scale (the container that cqw units refer to) adapts: it shrinks on
+    // wide, short screens and grows up to 20% where height is left over.
+    // Uniform scaling would leave the slide narrower than the screen.
+    if (bounds.width > 760 && !slide.classList.contains('deck-opening')) {
+      content.style.setProperty('--deck-layout-width', `${width}px`);
+      const parts = [...content.children];
+      // Any text wider than its own box (a long word, a one-line display
+      // figure) counts as not fitting, as does anything wider than the slide.
+      const texts = [...content.querySelectorAll('[data-edit-field]')];
+      const fits = () => measuredHeight() <= height
+        && parts.every(part => part.scrollWidth <= width + 1)
+        && texts.every(text => !text.clientWidth || text.scrollWidth <= text.clientWidth + 1);
+      let lower = Math.min(width, width * height / measuredHeight() * .9);
+      let upper = width * 1.2;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const candidate = (lower + upper) / 2;
+        content.style.width = `${candidate}px`;
+        if (fits()) lower = candidate;
+        else upper = candidate;
+      }
+      content.style.width = `${lower}px`;
+      logicalWidth = width;
+    }
     // On short phones, reflow into a slightly wider logical surface before
     // shrinking. This retains the available screen width and larger final type.
     if (bounds.width <= 760 && measuredHeight() > height) {
@@ -91,7 +116,10 @@ export function initDeckFit(root) {
       logicalWidth = upper;
       content.style.width = `${logicalWidth}px`;
     }
-    const naturalWidth = Math.max(logicalWidth, content.scrollWidth);
+    const layoutWidth = content.style.getPropertyValue('--deck-layout-width')
+      ? Math.max(width, ...[...content.children].map(part => part.scrollWidth))
+      : Math.max(logicalWidth, content.scrollWidth);
+    const naturalWidth = layoutWidth;
     const naturalHeight = measuredHeight();
     const scale = Math.min(1, width / naturalWidth, height / naturalHeight);
     content.style.minHeight = `${height / scale}px`;
