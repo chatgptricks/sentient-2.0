@@ -87,6 +87,8 @@ export function mountDeck(hash) {
   const coverMark = root.querySelector('.deck-cover-mark');
   // The website's 3D Sentient emblem loads only once the cover is shown.
   const coverEmblem = root.querySelector('.deck-cover-emblem');
+  // It belongs to the slide surface, not the fitted body, so it sizes against the screen.
+  coverEmblem?.closest('.deck-slide')?.prepend(coverEmblem);
   let emblem;
   const showEmblem = () => {
     if (emblem || !coverEmblem) return;
