@@ -65,16 +65,17 @@ html:has(body.deck-mode){overflow:hidden}
 /* 03 Founders: large portraits, one line each. */
 .deck-founder-pair{display:grid;flex:none;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:4cqw;height:calc(var(--deck-workspace-height,40cqw) - 2px)}
 /* Background-free cutouts share one framing (same face size and eye line).
-   Each sits in a lime circle: the body is clipped to the circle's lower arc
-   while the head rises out above its top edge. --d is the circle's diameter
-   as a fraction of the portrait width. */
+   Each sits in a lime circle: the portrait is masked to the circle plus a
+   head-wide band above it, so the circle's outline stays exact while the
+   head rises out. --d is the circle diameter and --head the band width, as
+   fractions of the portrait width. */
 .deck-founder{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0;min-height:0;justify-items:center;text-align:center}
 .deck-founder-photo{container-type:size;width:100%;min-height:0;display:flex;justify-content:center;align-items:flex-end}
-.deck-founder-frame{--d:.76;position:relative;width:min(100cqw,calc(100cqh * 925 / 927));aspect-ratio:925/927}
+.deck-founder-frame{--d:.76;--head:.6;position:relative;width:min(100cqw,calc(100cqh * 925 / 927));aspect-ratio:925/927}
 .deck-founder-frame:before{content:'';position:absolute;bottom:0;left:calc((1 - var(--d)) * 50%);width:calc(var(--d) * 100%);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 30%,#e6ff5c,var(--accent) 50%,#b3d900)}
 .deck-founder-frame:after{content:'';position:absolute;z-index:1;bottom:0;left:calc((1 - var(--d)) * 50%);width:calc(var(--d) * 100%);aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 max(2px,.35cqw) var(--accent);clip-path:inset(50% 0 0 0);pointer-events:none}
-.deck-founder-clip{position:absolute;top:0;bottom:0;left:calc((1 - var(--d)) * 50%);width:calc(var(--d) * 100%);overflow:hidden;border-radius:0 0 50% 50% / 0 0 calc(var(--d) * 50%) calc(var(--d) * 50%)}
-.deck-founder-clip img{position:absolute;top:0;left:calc((var(--d) - 1) / var(--d) * 50%);width:calc(100% / var(--d));height:100%;max-width:none}
+.deck-founder-clip{position:absolute;inset:0;--circle-h:calc(var(--d) * 100% * 925 / 927);-webkit-mask:radial-gradient(circle closest-side,#000 calc(100% - 1px),#0000) 50% 100% / calc(var(--d) * 100%) var(--circle-h) no-repeat,linear-gradient(#000 0 0) 50% 0 / calc(var(--head) * 100%) calc(100% - var(--circle-h) / 2) no-repeat;mask:radial-gradient(circle closest-side,#000 calc(100% - 1px),#0000) 50% 100% / calc(var(--d) * 100%) var(--circle-h) no-repeat,linear-gradient(#000 0 0) 50% 0 / calc(var(--head) * 100%) calc(100% - var(--circle-h) / 2) no-repeat}
+.deck-founder-clip img{display:block;width:100%;height:100%}
 .deck-founder-copy{display:flex;flex-direction:column;align-items:center;gap:.5cqw;padding-top:1.2cqw}
 .deck-founder h3{font-family:'Sentient Display',sans-serif;font-weight:400;font-size:3cqw;line-height:1;text-transform:uppercase;color:var(--paper)}
 .deck-founder-role{order:-1;font-size:1.1cqw;letter-spacing:.08em;text-transform:uppercase;padding:.35cqw .9cqw;border-radius:99px;background:var(--accent);color:var(--ink);font-weight:600}
