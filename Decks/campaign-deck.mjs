@@ -30,8 +30,8 @@ export const campaignDeck = {
       section: 'Our founders',
       title: 'Built by people who built audiences',
       founders: [
-        { name: 'Louis Gleeson', role: 'Co-Founder', description: 'Client relationships & growth strategy.', image: '/assets/louis.png' },
-        { name: 'Ivan', role: 'Co-Founder', description: 'Media growth & content — including @chatgptricks.', image: '/assets/ivan.png' },
+        { name: 'Louis Gleeson', role: 'Co-Founder', description: 'Client relationships & growth strategy.', image: '/assets/founders/louis-cutout.webp' },
+        { name: 'Ivan', role: 'Co-Founder', description: 'Media growth & content — including @chatgptricks.', image: '/assets/founders/ivan-cutout.webp' },
       ],
     },
     {
