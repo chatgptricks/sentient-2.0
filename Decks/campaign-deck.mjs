@@ -154,5 +154,11 @@ export const campaignDeck = {
       ],
       emphasis: 'We’ll recommend the accounts and campaign to get started.',
     },
+    {
+      id: 'end',
+      layout: 'end',
+      section: 'Sentient',
+      title: 'Sentient',
+    },
   ],
 };

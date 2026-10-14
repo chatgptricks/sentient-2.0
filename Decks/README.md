@@ -1,6 +1,6 @@
 # Sentient campaign deck
 
-The presentation has an opening cover followed by twelve slides condensed from the supplied campaign brief: one idea per slide, a short headline and a visual composition (a monumental metric, flow, funnel, comparison, timeline, equation or loop) instead of paragraphs. The brief's conditions — follower overlap, CPM guarantee terms and paid-media requirements — stay as footnotes.
+The presentation has an opening cover, twelve slides condensed from the supplied campaign brief and a dark closing slide with the Sentient logo centred in neon lime. The brief slides use one idea per slide, a short headline and a visual composition (a monumental metric, flow, funnel, comparison, timeline, equation or loop) instead of paragraphs. The brief's conditions — follower overlap, CPM guarantee terms and paid-media requirements — stay as footnotes.
 
 The deck has its own layouts. Titles and body copy use system Helvetica; Sentient's Lovelo Black display face sets the cover, metrics, numerals and keywords. The cover reuses the website's 3D Sentient emblem (`site/src/scene.mjs`), loaded only when the cover is shown; no other website scenes or animations are used. The only photographs are the authorised Louis Gleeson and Ivan portraits. Slides alternate dark, paper and acid-green surfaces.
 

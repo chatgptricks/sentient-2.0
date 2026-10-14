@@ -1,4 +1,4 @@
-/* The promise set as three monumental lines beside the 3D Sentient emblem from the website. */
+/* The cover (three monumental lines beside the website's 3D Sentient emblem) and the closing neon logo slide. */
 .deck-opening {
   background:var(--ink);
   color:var(--paper);
@@ -105,4 +105,62 @@
   .deck-opening { background:var(--ink)!important; color:var(--paper)!important; }
   .deck-opening .deck-fit-area { top:1in!important; height:7.5in!important; }
   .deck-opening .deck-composition { min-height:7.5in!important; }
+}
+
+/* Closing slide: the Sentient logo alone, in neon lime, centred on the full slide. */
+.deck-end > .deck-title,
+.deck-end > .deck-slide-top {
+  clip-path:inset(50%);
+  width:1px;
+  height:1px;
+  overflow:hidden;
+}
+
+.deck-player[data-layout=end] .deck-header .deck-brand { visibility:hidden; }
+
+.deck-end .deck-fit-area {
+  inset:0!important;
+  width:auto!important;
+  height:auto!important;
+}
+
+.deck-end .deck-content {
+  inset:0;
+  width:auto!important;
+  height:100%;
+  min-height:0!important;
+  transform:none!important;
+}
+
+.deck-end .deck-composition {
+  height:100%;
+  align-items:center;
+  justify-content:center;
+}
+
+.deck-end {
+  background:radial-gradient(ellipse 60% 45% at 50% 50%,#d0ff0014,#0000 70%),var(--ink);
+}
+
+/* The glow sits on a wrapper so the mask on the logo does not clip it. */
+.deck-end-glow {
+  width:min(64vw, calc(var(--deck-viewport-height, 100dvh) * 1.5), 1100px);
+  filter:drop-shadow(0 0 2px #efffa0) drop-shadow(0 0 14px #d0ff00) drop-shadow(0 0 48px #d0ff0099) drop-shadow(0 0 120px #d0ff0055);
+}
+
+.deck-end-logo {
+  aspect-ratio:180 / 38;
+  background:var(--accent);
+  -webkit-mask:url('/assets/sentient-logo.svg') center / contain no-repeat;
+  mask:url('/assets/sentient-logo.svg') center / contain no-repeat;
+}
+
+@media (max-aspect-ratio:1/1) {
+  .deck-end-glow { width:84vw; }
+}
+
+@media print {
+  .deck-end .deck-fit-area { inset:0!important; }
+  .deck-end .deck-composition { min-height:9in!important; }
+  .deck-end-glow { width:10in; }
 }

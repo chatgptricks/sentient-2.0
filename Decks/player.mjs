@@ -12,7 +12,7 @@ const statement = slide => slide.emphasis ? text('p', 'emphasis', slide.emphasis
 const pad = i => String(i+1).padStart(2,'0');
 const arrow = '<span class="deck-arrow" aria-hidden="true"></span>';
 const heading = slide => `<h2 class="deck-title" data-edit-field="title">${escape(slide.title)}</h2>`;
-const themes = { opening:'dark', network:'accent', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent' };
+const themes = { opening:'dark', network:'accent', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent', end:'dark' };
 
 function registerEditableFields(root, deck) {
   root.querySelectorAll('.deck-slide').forEach((slide, i) => {
@@ -51,6 +51,8 @@ function composition(slide) {
       return `<div class="deck-loop-body"><ol class="deck-loop">${items.map((item,i) => `<li style="--i:${i}">${text('span', `item-${i}-title`, item.title)}</li>`).join('')}</ol>${statement(slide)}</div>`;
     case 'closing':
       return `<div class="deck-closing-body">${text('p', 'paragraph-0', slide.paragraphs[0], 'deck-closing-label')}<ul class="deck-chips">${items.map((item,i) => `<li>${text('span', `item-${i}-title`, item.title)}</li>`).join('')}</ul></div>${statement(slide)}`;
+    case 'end':
+      return `<div class="deck-end-glow" role="img" aria-label="Sentient"><div class="deck-end-logo"></div></div>`;
     default:
       return statement(slide);
   }

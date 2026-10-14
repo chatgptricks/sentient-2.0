@@ -6,8 +6,8 @@ export function initDeckFit(root) {
   let disposed = false;
   const header = root.querySelector('.deck-header');
   const controls = root.querySelector('.deck-controls');
-  // The cover sets its own headline, so it does not size the shared title band.
-  const titles = [...root.querySelectorAll('.deck-slide:not(.deck-opening) > .deck-title')];
+  // The cover and closing logo slide set no visible heading, so they do not size the shared title band.
+  const titles = [...root.querySelectorAll('.deck-slide:not(.deck-opening):not(.deck-end) > .deck-title')];
   const measure = document.createElement('h2');
   measure.className = 'deck-title deck-title-measure';
   measure.setAttribute('aria-hidden', 'true');
@@ -77,7 +77,7 @@ export function initDeckFit(root) {
     // scale (the container that cqw units refer to) adapts: it shrinks on
     // wide, short screens and grows up to 20% where height is left over.
     // Uniform scaling would leave the slide narrower than the screen.
-    if (bounds.width > 760 && !slide.classList.contains('deck-opening')) {
+    if (bounds.width > 760 && !slide.matches('.deck-opening, .deck-end')) {
       content.style.setProperty('--deck-layout-width', `${width}px`);
       const parts = [...content.children];
       // Any text wider than its own box (a long word, a one-line display
