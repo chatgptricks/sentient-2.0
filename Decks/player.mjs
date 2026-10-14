@@ -12,7 +12,7 @@ const statement = slide => slide.emphasis ? text('p', 'emphasis', slide.emphasis
 const pad = i => String(i+1).padStart(2,'0');
 const arrow = '<span class="deck-arrow" aria-hidden="true"></span>';
 const heading = slide => `<h2 class="deck-title" data-edit-field="title">${escape(slide.title)}</h2>`;
-const themes = { opening:'dark', network:'accent', founders:'light', approach:'accent', selection:'dark', relevance:'accent', audience:'light', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent', end:'dark' };
+const themes = { opening:'dark', network:'accent', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent', end:'dark' };
 
 function registerEditableFields(root, deck) {
   root.querySelectorAll('.deck-slide').forEach((slide, i) => {
@@ -30,7 +30,7 @@ function composition(slide) {
     case 'network':
       return `<div class="deck-network-body"><div class="deck-metric">${text('strong', 'metric', slide.metric)}${text('span', 'label', slide.label)}</div><div class="deck-network-side"><ul class="deck-tags">${slide.tags.map((tag,i) => `<li>${text('span', `tag-${i}`, tag)}</li>`).join('')}</ul><ul class="deck-platforms">${slide.platforms.map((platform,i) => `<li>${text('span', `platform-${i}`, platform)}</li>`).join('')}</ul></div></div>${statement(slide)}`;
     case 'founders':
-      return `<div class="deck-founder-pair">${slide.founders.map((founder,i) => `<section class="deck-founder"><div class="deck-founder-photo"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="925" height="927" decoding="async"></div><div class="deck-founder-copy">${text('span', `founder-${i}-role`, founder.role, 'deck-founder-role')}${text('h3', `founder-${i}-name`, founder.name)}${text('p', `founder-${i}-bio`, founder.description)}</div></section>`).join('')}</div>`;
+      return `<div class="deck-founder-pair">${slide.founders.map((founder,i) => `<section class="deck-founder"><div class="deck-founder-photo"><div class="deck-founder-frame"><div class="deck-founder-clip"><img src="${asset(founder.image)}" alt="${escape(founder.name)}" width="925" height="927" decoding="async"></div></div></div><div class="deck-founder-copy">${text('span', `founder-${i}-role`, founder.role, 'deck-founder-role')}${text('h3', `founder-${i}-name`, founder.name)}${text('p', `founder-${i}-bio`, founder.description)}</div></section>`).join('')}</div>`;
     case 'approach':
       return `<ol class="deck-flow">${slide.steps.map((step,i) => `<li>${text('span', `step-${i}-kicker`, step.kicker, 'deck-flow-kicker')}<span class="deck-flow-number" aria-hidden="true">${pad(i)}</span>${text('h3', `step-${i}-title`, step.title)}${text('p', `step-${i}-description`, step.description)}</li>`).join(arrow)}</ol>`;
     case 'selection':
