@@ -31,7 +31,7 @@ export const campaignDeck = {
       title: 'A selection of Sentient accounts',
       followersAsOf: '2026-10-13',
       accounts: [
-        { id: 'chatgptricks', handle: '@chatpgtricks', followers: '2,749,305', image: '/assets/decks/campaign-deck/avatar-chatgptricks.jpg' },
+        { id: 'chatgptricks', handle: '@chatgptricks', followers: '2,749,305', image: '/assets/decks/campaign-deck/avatar-chatgptricks.jpg' },
         { id: 'artificialntellligence', handle: '@artificialntellligence', followers: '1,526,246', image: '/assets/decks/campaign-deck/avatar-artificialntellligence.jpg' },
         { id: 'artificialcoding', handle: '@artificialcoding', followers: '943,652', image: '/assets/decks/campaign-deck/avatar-artificialcoding.jpg' },
         { id: 'evolving', handle: '@evolving', followers: '877,183', image: '/assets/decks/campaign-deck/avatar-evolving.jpg' },
@@ -45,7 +45,7 @@ export const campaignDeck = {
       title: 'Built by people who built audiences',
       founders: [
         { name: 'Louis Gleeson', role: 'Co-Founder', description: 'Client relationships & growth strategy.', image: '/assets/founders/louis-cutout.webp' },
-        { name: 'Ivan', role: 'Co-Founder', description: 'Media growth & content — including @chatpgtricks.', image: '/assets/founders/ivan-cutout.webp' },
+        { name: 'Ivan', role: 'Co-Founder', description: 'Media growth & content — including @chatgptricks.', image: '/assets/founders/ivan-cutout.webp' },
       ],
     },
     {
@@ -104,7 +104,7 @@ export const campaignDeck = {
       title: 'Promotional posts. Measured engagement.',
       posts: [
         {
-          account: '@chatpgtricks',
+          account: '@chatgptricks',
           title: '1X — NEO robotic hand',
           image: '/assets/decks/campaign-deck/promo-1x-neo.webp',
           url: 'https://www.instagram.com/p/DalMfBeINkQ/',

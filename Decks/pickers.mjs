@@ -8,8 +8,8 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'
 const followers = count => Number(count).toLocaleString('en-US');
 const compact = count => new Intl.NumberFormat('en-US', { notation:'compact', maximumFractionDigits:1 }).format(count);
 const longDate = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' });
-// Visible labels may differ from the source identity (for example the requested
-// `@chatpgtricks` label), so every lookup resolves through the source ID.
+// Saved copy from before may carry the `chatpgtricks` typo of the real
+// `chatgptricks` handle; it still resolves to the right account.
 const aliases = { chatpgtricks:'chatgptricks' };
 const accountId = value => {
   const id = String(value ?? '').trim().replace(/^@/, '').toLowerCase();
