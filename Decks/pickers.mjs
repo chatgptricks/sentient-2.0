@@ -162,9 +162,10 @@ export function initDeckPickers({ root, deck, asset }) {
     if (output) output.textContent = text;
   };
 
-  root.addEventListener('click', async event => {
-    const button = event.target.closest('[data-refresh-accounts]');
-    if (!button || !services.lookupAccount) return;
+  // Every shown count is replaced by SentientDash's latest exact reading.
+  const refreshAccounts = async () => {
+    const button = root.querySelector('[data-refresh-accounts]');
+    if (!button || !services.lookupAccount || button.disabled) return;
     button.disabled = true;
     accountStatus('Reading followers from SentientDash…');
     const failures = [];
@@ -173,8 +174,11 @@ export function initDeckPickers({ root, deck, asset }) {
       catch (error) { failures.push(error.message); }
     }
     updateAccountsNote();
-    accountStatus(failures.length ? failures[0] : 'Followers updated from SentientDash.');
+    accountStatus(failures.length ? failures.join(' ') : 'Followers updated from SentientDash. Press Done to save them.');
     button.disabled = false;
+  };
+  root.addEventListener('click', event => {
+    if (event.target.closest('[data-refresh-accounts]')) void refreshAccounts();
   });
 
   root.addEventListener('change', async event => {
@@ -210,5 +214,5 @@ export function initDeckPickers({ root, deck, asset }) {
   });
 
   sync();
-  return { catalog, sync, connect(value) { services = value; sync(); } };
+  return { catalog, sync, refreshAccounts, connect(value) { services = value; sync(); } };
 }

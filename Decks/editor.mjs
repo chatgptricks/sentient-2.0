@@ -37,7 +37,7 @@ function sameFields(a, b) {
   return keys.length === Object.keys(b).length && keys.every(key => Object.hasOwn(b, key) && a[key] === b[key]);
 }
 
-export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied }) {
+export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStart }) {
   const lifecycle = new AbortController();
   const { signal } = lifecycle;
   const brand = root.querySelector('.deck-brand');
@@ -144,6 +144,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied }) {
     editFeedback.textContent = '';
     toolbar.hidden = false;
     closeAccess();
+    onEditStart?.();
   };
   const leave = () => {
     editing = false;

@@ -109,7 +109,7 @@ export function mountDeck(hash) {
   const configureEditor = async () => {
     const config = await fetch(new URL('../comments-config.json', import.meta.url)).then(response => response.json()).catch(() => ({}));
     if (!root.isConnected) return;
-    editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:() => { pickers.sync(); fit.update(); } });
+    editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:() => { pickers.sync(); fit.update(); }, onEditStart:() => void pickers.refreshAccounts() });
     const deckApi = config.apiUrl ? `${String(config.apiUrl).replace(/\/+$/, '')}/decks/${encodeURIComponent(deck.slug)}` : '';
     pickers.connect({ coverBase:deckApi, lookup:url => editor.lookupPost(url), lookupAccount:handle => editor.lookupAccount(handle) });
   };
