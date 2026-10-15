@@ -285,18 +285,21 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied }) {
     event.returnValue = '';
   }, { signal });
 
+  const sentientDash = async (route, body) => {
+    if (!editing || !credential) throw new Error('Enter edit mode to use SentientDash.');
+    const { response, payload } = await request(`${endpoint}/${route}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify(body)
+    });
+    if (!response.ok || !payload) throw new Error(payload?.error || 'SentientDash is unavailable right now. Try again.');
+    return payload;
+  };
+
   return {
     ready,
-    // Looks up a pasted Instagram link in SentientDash through the Worker,
-    // authorised by this editing session's password.
-    async lookupPost(url) {
-      if (!editing || !credential) throw new Error('Enter edit mode to look up a post.');
-      const { response, payload } = await request(`${endpoint}/instagram-post`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify({ url })
-      });
-      if (!response.ok || !payload) throw new Error(payload?.error || 'SentientDash is unavailable right now. Try again.');
-      return payload;
-    },
+    // SentientDash lookups through the Worker, authorised by this editing
+    // session's password: a pasted Instagram link, or an account's followers.
+    lookupPost: url => sentientDash('instagram-post', { url }),
+    lookupAccount: handle => sentientDash('account', { handle }),
     dispose() {
       lifecycle.abort();
       accessGeneration++;

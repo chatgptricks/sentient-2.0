@@ -368,6 +368,41 @@
 
 .deck-post-picker button:focus-visible { outline:2px solid #f3f2e9; outline-offset:2px; }
 
+.deck-accounts .deck-composition { position:relative; }
+
+.deck-editing .deck-account-refresh {
+  top:-4px;
+  right:0;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+
+.deck-account-refresh button {
+  min-height:32px;
+  padding:6px 14px;
+  border:0;
+  border-radius:99px;
+  background:#d0ff00;
+  color:#17230c;
+  font:inherit;
+  box-shadow:0 6px 20px #0003;
+}
+
+.deck-account-refresh button:disabled { opacity:.6; cursor:wait; }
+
+.deck-account-refresh output {
+  max-width:280px;
+  padding:6px 10px;
+  border-radius:9px;
+  background:#10180ff2;
+  color:#d3dec8;
+  font-size:11px;
+  text-align:right;
+}
+
+.deck-account-refresh output:empty { display:none; }
+
 @media print {
   .deck-picker { display:none!important; }
 }

@@ -4,7 +4,7 @@ import './cover.css';
 import './social-proof.css';
 import { initDeckEditor } from './editor.mjs';
 import { initDeckFit } from './fit.mjs';
-import { accountCatalog, accountPicker, initDeckPickers, postPicker } from './pickers.mjs';
+import { accountCatalog, accountPicker, accountRefresh, initDeckPickers, postPicker } from './pickers.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const asset = path => new URL(`..${path}`, import.meta.url).href;
@@ -33,7 +33,7 @@ function composition(slide) {
       return `<div class="deck-network-body"><div class="deck-metric">${text('strong', 'metric', slide.metric)}${text('span', 'label', slide.label)}</div><div class="deck-network-side"><ul class="deck-tags">${slide.tags.map((tag,i) => `<li>${text('span', `tag-${i}`, tag)}</li>`).join('')}</ul><ul class="deck-platforms">${slide.platforms.map((platform,i) => `<li>${text('span', `platform-${i}`, platform)}</li>`).join('')}</ul></div></div>${statement(slide)}`;
     case 'accounts': {
       const catalog = accountCatalog(slide);
-      return `<ol class="deck-account-grid">${slide.accounts.map((account,i) => `<li class="deck-account"><div class="deck-account-media"><img class="deck-account-avatar" src="${asset(account.image)}" alt="${escape(account.handle)}" width="320" height="320" decoding="async">${accountPicker(catalog, i)}</div><div class="deck-account-copy">${text('h3', `account-${i}-handle`, account.handle, 'deck-account-handle')}${text('strong', `account-${i}-followers`, account.followers, 'deck-account-followers')}${text('span', `account-${i}-label`, 'Followers', 'deck-account-label')}</div><span data-edit-field="account-${i}-id" hidden>${escape(account.id)}</span></li>`).join('')}</ol>`;
+      return `<ol class="deck-account-grid">${slide.accounts.map((account,i) => `<li class="deck-account"><div class="deck-account-media"><img class="deck-account-avatar" src="${asset(account.image)}" alt="${escape(account.handle)}" width="320" height="320" decoding="async">${accountPicker(catalog, i)}</div><div class="deck-account-copy">${text('h3', `account-${i}-handle`, account.handle, 'deck-account-handle')}${text('strong', `account-${i}-followers`, account.followers, 'deck-account-followers')}${text('span', `account-${i}-label`, 'Followers', 'deck-account-label')}</div><span data-edit-field="account-${i}-id" hidden>${escape(account.id)}</span><span data-edit-field="account-${i}-asof" hidden>${escape(slide.followersAsOf)}</span></li>`).join('')}</ol>${accountRefresh}`;
     }
     case 'promos':
       return `<div class="deck-promo-grid">${slide.posts.map((post,i) => `<article class="deck-promo"><div class="deck-promo-media"><a class="deck-promo-image-link" href="${escape(post.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escape(`View ${post.title} on Instagram`)}"><img class="deck-promo-image" src="${asset(post.image)}" alt="${escape(`${post.title} promotional post from ${post.account}`)}" width="${i ? '1080' : '720'}" height="${i ? '1350' : '960'}" decoding="async"></a>${postPicker(i)}<span data-edit-field="post-${i}-url" hidden>${escape(post.url)}</span><span data-edit-field="post-${i}-source" hidden>${escape(post.source)}</span></div><div class="deck-promo-copy">${text('p', `post-${i}-account`, post.account, 'deck-promo-account')}${text('h3', `post-${i}-title`, post.title, 'deck-promo-title')}<dl class="deck-promo-metrics"><div>${text('dt', `post-${i}-likes-label`, 'Likes')}${text('dd', `post-${i}-likes`, post.likes)}</div><div>${text('dt', `post-${i}-comments-label`, 'Comments')}${text('dd', `post-${i}-comments`, post.comments)}</div></dl>${text('p', `post-${i}-date`, post.date, 'deck-promo-date')}<a class="deck-promo-source" href="${escape(post.url)}" target="_blank" rel="noopener noreferrer">${text('span', `post-${i}-link-label`, 'View post ↗')}</a></div></article>`).join('')}</div>`;
@@ -111,7 +111,7 @@ export function mountDeck(hash) {
     if (!root.isConnected) return;
     editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:() => { pickers.sync(); fit.update(); } });
     const deckApi = config.apiUrl ? `${String(config.apiUrl).replace(/\/+$/, '')}/decks/${encodeURIComponent(deck.slug)}` : '';
-    pickers.connect({ coverBase:deckApi, lookup:url => editor.lookupPost(url) });
+    pickers.connect({ coverBase:deckApi, lookup:url => editor.lookupPost(url), lookupAccount:handle => editor.lookupAccount(handle) });
   };
   void configureEditor();
   window.addEventListener('pagehide', () => { editor?.dispose(); fit.dispose(); void emblem?.then(scene => scene?.dispose()); }, { once:true });

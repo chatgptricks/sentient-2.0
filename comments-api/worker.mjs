@@ -176,6 +176,31 @@ async function handleInstagramPost(request, env, json, originAllowed) {
   }
 }
 
+async function handleAccount(request, env, json, originAllowed) {
+  if (request.method !== 'POST') return json(405, { error: 'Method not allowed.' });
+  const rejected = await guardDeckWrite(request, env, json, originAllowed);
+  if (rejected) return rejected;
+  const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
+  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return json(401, { error: 'Incorrect editor password.' });
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
+  const parsed = await readJson(request, 1024);
+  if (parsed.error) return json(parsed.status, { error: parsed.error });
+  const handle = String(parsed.data?.handle ?? '').trim().replace(/^@/, '').toLowerCase();
+  if (!handlePattern.test(handle)) return json(400, { error: 'Use an Instagram handle.' });
+  if (!env.SENTIENTDASH_API_KEY) return json(503, { error: 'SentientDash is not connected yet.' });
+  try {
+    const response = await sentientDash(env, `/api/v1/accounts/${handle}`);
+    if (response.status === 404) return json(404, { error: `SentientDash has no data for @${handle} with this API key.` });
+    if (response.status === 429) return json(429, { error: 'SentientDash is busy. Try again in a minute.' });
+    if (!response.ok) return json(502, { error: 'SentientDash is unavailable right now. Try again.' });
+    const { data, data_updated_at: updated } = await response.json();
+    if (!Number.isSafeInteger(data?.followers)) return json(404, { error: `SentientDash has no follower count for @${handle}.` });
+    return json(200, { handle, followers: data.followers, capturedAt: updated?.profile ?? null });
+  } catch {
+    return json(502, { error: 'SentientDash is unavailable right now. Try again.' });
+  }
+}
+
 // Covers are public because the deck is public, but only for posts the saved
 // deck actually shows, so the key cannot be used to browse other posts.
 async function handleCover(request, env, json, account, shortcode, ctx) {
@@ -219,16 +244,18 @@ export default {
     const deckRoute = url.pathname === `/decks/${deckSlug}`;
     const deckAuthRoute = url.pathname === `/decks/${deckSlug}/auth`;
     const postRoute = url.pathname === `/decks/${deckSlug}/instagram-post`;
+    const accountRoute = url.pathname === `/decks/${deckSlug}/account`;
     const coverRoute = new RegExp(`^/decks/${deckSlug}/covers/([^/]+)/([^/]+)$`).exec(url.pathname);
     if (coverRoute) {
       try { return await handleCover(request, env, json, coverRoute[1], coverRoute[2], ctx); }
       catch { return json(503, {error:'Cover unavailable.'}); }
     }
-    if (url.pathname !== '/comments' && !deckRoute && !deckAuthRoute && !postRoute) return json(404, {error:'Not found.'});
-    if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':deckAuthRoute || postRoute ? 'POST, OPTIONS' : deckRoute ? 'GET, PUT, OPTIONS' : 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers':deckRoute || postRoute ? 'Content-Type, Authorization' : 'Content-Type', 'Access-Control-Max-Age':'3600'}});
+    if (url.pathname !== '/comments' && !deckRoute && !deckAuthRoute && !postRoute && !accountRoute) return json(404, {error:'Not found.'});
+    if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':deckAuthRoute || postRoute || accountRoute ? 'POST, OPTIONS' : deckRoute ? 'GET, PUT, OPTIONS' : 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers':deckRoute || postRoute || accountRoute ? 'Content-Type, Authorization' : 'Content-Type', 'Access-Control-Max-Age':'3600'}});
     try {
       if (deckAuthRoute) return await handleDeckAuth(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (postRoute) return await handleInstagramPost(request, env, json, Boolean(origin && allowed.includes(origin)));
+      if (accountRoute) return await handleAccount(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (deckRoute) return await handleDeck(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (request.method === 'GET') {
         const page = url.searchParams.get('page');
@@ -253,6 +280,6 @@ export default {
       await env.DB.prepare('INSERT OR IGNORE INTO comments (id,page,author,message,anchor,created_at) VALUES (?,?,?,?,?,?)').bind(comment.id, comment.page, comment.author, comment.message, JSON.stringify(comment.anchor), createdAt).run();
       const row = await env.DB.prepare('SELECT * FROM comments WHERE id = ?').bind(comment.id).first();
       return json(201, {comment:{id:row.id,page:row.page,author:row.author,message:row.message,anchor:JSON.parse(row.anchor),createdAt:row.created_at}});
-    } catch { return json(503, {error:deckRoute || deckAuthRoute || postRoute ? 'Deck content is temporarily unavailable. Please try again.' : 'Comments are temporarily unavailable. Please try again.'}); }
+    } catch { return json(503, {error:deckRoute || deckAuthRoute || postRoute || accountRoute ? 'Deck content is temporarily unavailable. Please try again.' : 'Comments are temporarily unavailable. Please try again.'}); }
   }
 };

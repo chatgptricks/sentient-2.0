@@ -144,6 +144,7 @@ const withDash=(context,overrides={})=>{
     assert.equal(init.headers.Authorization,`Bearer ${dashKey}`);
     if (overrides[url.pathname]) return overrides[url.pathname]();
     if (url.pathname==='/api/v1/accounts') return Response.json({data:[{handle:'artificialntellligence'},{handle:'chatgptricks'}]});
+    if (url.pathname==='/api/v1/accounts/chatgptricks') return Response.json({schema_version:'1.0',data:{handle:'chatgptricks',followers:2751234},data_updated_at:{profile:'2026-10-14T16:05:22+00:00',engagement:null}});
     if (url.pathname==='/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ') return Response.json({data:dashPost});
     if (url.pathname==='/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ/cover') return new Response('JPEG',{headers:{'Content-Type':'image/jpeg'}});
     return Response.json({detail:'Not found'},{status:404});
@@ -193,4 +194,17 @@ test('covers are served only for posts the saved deck shows',async context=>{
   assert.equal(await response.text(),'JPEG');
   assert.equal((await cover('chatgptricks/Other')).status,404);
   assert.equal((await cover('../secrets/x')).status,404);
+});
+
+test('account lookup returns exact SentientDash followers for the editor',async context=>{
+  const storage={...deckEnvironment(context),SENTIENTDASH_API_KEY:dashKey};
+  withDash(context);
+  const lookup=(body,options={})=>new Request('https://api.example/decks/campaign-deck/account',{method:'POST',headers:{Origin:'https://chatgptricks.github.io','Content-Type':'application/json',...(options.password===null?{}:{Authorization:`Bearer ${editorPassword}`})},body:JSON.stringify(body)});
+  const response=await worker.fetch(lookup({handle:'@ChatGPTricks'}),storage);
+  assert.equal(response.status,200);
+  assert.deepEqual(await response.json(),{handle:'chatgptricks',followers:2751234,capturedAt:'2026-10-14T16:05:22+00:00'});
+  assert.equal((await worker.fetch(lookup({handle:'chatgptricks'},{password:null}),storage)).status,401);
+  assert.equal((await worker.fetch(lookup({handle:'bad handle!'}),storage)).status,400);
+  assert.equal((await worker.fetch(lookup({handle:'unknown'}),storage)).status,404);
+  assert.equal((await worker.fetch(lookup({handle:'chatgptricks'}),{...storage,SENTIENTDASH_API_KEY:undefined})).status,503);
 });

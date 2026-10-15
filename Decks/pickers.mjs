@@ -32,8 +32,12 @@ export function accountCatalog(slide) {
 
 export const accountPicker = (catalog, index) => `<label class="deck-picker deck-account-picker"><span class="deck-picker-cue" aria-hidden="true">Change ▾</span><span>Choose account</span><select data-account-picker="${index}">${[...catalog.values()].map(account => `<option value="${escape(account.id)}">${escape(account.handle)} · ${compact(account.followers)}</option>`).join('')}</select></label>`;
 
+export const accountRefresh = `<div class="deck-picker deck-account-refresh"><button type="button" data-refresh-accounts>↻ Update followers from SentientDash</button><output aria-live="polite"></output></div>`;
+
 export const postPicker = index => `<form class="deck-picker deck-post-picker" data-post-picker="${index}" novalidate><label><span>Instagram post link</span><input type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://www.instagram.com/p/…"></label><button type="submit">Show</button><output aria-live="polite"></output></form>`;
 
+// A stored date (YYYY-MM-DD) or timestamp, as its Costa Rica calendar day.
+const dayOf = value => /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : new Date(value).toLocaleDateString('en-CA', { timeZone:'America/Costa_Rica' });
 const recordedDate = iso => new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'America/Costa_Rica' });
 // The caption's first line, without hashtags or mentions, as an editable title.
 const titleFrom = caption => {
@@ -52,14 +56,16 @@ export function initDeckPickers({ root, deck, asset }) {
   const changed = element => element?.dispatchEvent(new Event('input', { bubbles:true }));
 
   const accountCards = () => [...root.querySelectorAll('.deck-account')];
-  const selectedAccounts = () => accountCards().map((card, i) => catalog.get(accountId(field(card, `account-${i}-id`)?.textContent))).filter(Boolean);
   // A handle typed by hand (before the dropdown existed) still selects its account.
   const showAccount = (card, i) => {
     const byHandle = catalog.get(accountId(field(card, `account-${i}-handle`)?.textContent));
     const original = accountsSlide.accounts[i];
     if (byHandle && byHandle.id !== accountId(field(card, `account-${i}-id`)?.textContent)) {
       setText(card, `account-${i}-id`, byHandle.id);
-      if (field(card, `account-${i}-followers`)?.textContent === original.followers) setText(card, `account-${i}-followers`, followers(byHandle.followers));
+      if (field(card, `account-${i}-followers`)?.textContent === original.followers) {
+        setText(card, `account-${i}-followers`, followers(byHandle.followers));
+        setText(card, `account-${i}-asof`, byHandle.asOf);
+      }
       corrected = true;
     }
     const account = catalog.get(accountId(field(card, `account-${i}-id`)?.textContent));
@@ -71,7 +77,7 @@ export function initDeckPickers({ root, deck, asset }) {
   };
   // A single date when every count comes from the same snapshot, otherwise the range.
   const accountsNote = () => {
-    const dates = [...new Set(selectedAccounts().map(account => account.asOf))].sort();
+    const dates = [...new Set(accountCards().map((card, i) => field(card, `account-${i}-asof`)?.textContent.trim()).filter(Boolean).map(dayOf))].sort();
     if (!dates.length) return '';
     if (dates.length === 1) return `Follower counts recorded ${longDate(dates[0])}.`;
     return `Follower counts recorded between ${longDate(dates[0])} and ${longDate(dates.at(-1))}.`;
@@ -132,8 +138,7 @@ export function initDeckPickers({ root, deck, asset }) {
   const sync = () => {
     corrected = false;
     accountCards().forEach(showAccount);
-    const note = root.querySelector('.deck-accounts .deck-note');
-    if (corrected && note) note.textContent = accountsNote();
+    if (corrected) updateAccountsNote();
     if (postsSlide) postCards().forEach((card, i) => {
       showPost(card, i);
       const input = card.querySelector('input');
@@ -141,7 +146,38 @@ export function initDeckPickers({ root, deck, asset }) {
     });
   };
 
-  root.addEventListener('change', event => {
+  const updateAccountsNote = () => {
+    const note = root.querySelector('.deck-accounts .deck-note');
+    if (note) note.textContent = accountsNote();
+  };
+  // Replaces a card's count with SentientDash's latest exact reading.
+  const refreshAccount = async (card, i) => {
+    const result = await services.lookupAccount(field(card, `account-${i}-id`).textContent.trim());
+    setText(card, `account-${i}-followers`, followers(result.followers));
+    if (result.capturedAt) setText(card, `account-${i}-asof`, result.capturedAt);
+    changed(field(card, `account-${i}-followers`));
+  };
+  const accountStatus = text => {
+    const output = root.querySelector('.deck-account-refresh output');
+    if (output) output.textContent = text;
+  };
+
+  root.addEventListener('click', async event => {
+    const button = event.target.closest('[data-refresh-accounts]');
+    if (!button || !services.lookupAccount) return;
+    button.disabled = true;
+    accountStatus('Reading followers from SentientDash…');
+    const failures = [];
+    for (const [i, card] of accountCards().entries()) {
+      try { await refreshAccount(card, i); }
+      catch (error) { failures.push(error.message); }
+    }
+    updateAccountsNote();
+    accountStatus(failures.length ? failures[0] : 'Followers updated from SentientDash.');
+    button.disabled = false;
+  });
+
+  root.addEventListener('change', async event => {
     const select = event.target.closest('[data-account-picker]');
     if (!select) return;
     const i = Number(select.dataset.accountPicker);
@@ -151,10 +187,19 @@ export function initDeckPickers({ root, deck, asset }) {
     setText(card, `account-${i}-id`, account.id);
     setText(card, `account-${i}-handle`, account.handle);
     setText(card, `account-${i}-followers`, followers(account.followers));
+    setText(card, `account-${i}-asof`, account.asOf);
     showAccount(card, i);
-    const note = root.querySelector('.deck-accounts .deck-note');
-    if (note) note.textContent = accountsNote();
+    updateAccountsNote();
     changed(field(card, `account-${i}-id`));
+    if (!services.lookupAccount) return;
+    accountStatus(`Reading ${account.handle} from SentientDash…`);
+    try {
+      await refreshAccount(card, i);
+      updateAccountsNote();
+      accountStatus(`${account.handle}: exact followers from SentientDash.`);
+    } catch (error) {
+      accountStatus(error.message);
+    }
   });
   root.addEventListener('submit', event => {
     const form = event.target.closest('[data-post-picker]');

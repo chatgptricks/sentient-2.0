@@ -39,3 +39,5 @@ The campaign deck's editor can replace a showcased promotional post by pasting i
 `GET /decks/campaign-deck/covers/{handle}/{shortcode}` is public because the deck is public, but it only serves covers whose `handle/shortcode` is saved in a deck `…-source` field. It reads the stored SentientDash cover and caches it for a day.
 
 Configure the key as a secret: create an account-scoped website key at SentientDash `/api.html` covering the Sentient accounts, then run `npx wrangler secret put SENTIENTDASH_API_KEY` here and paste it at the hidden prompt. `SENTIENTDASH_API_URL` optionally overrides the default `https://cortex-api-db2e.onrender.com`. The API key is never stored in this repository.
+
+`POST /decks/campaign-deck/account` accepts JSON `{ handle }` with the same editor authorisation and returns `{ handle, followers, capturedAt }` from SentientDash `GET /api/v1/accounts/{handle}` (the exact latest follower count and when it was recorded). The deck uses it when an account is chosen and from its "Update followers" button.
