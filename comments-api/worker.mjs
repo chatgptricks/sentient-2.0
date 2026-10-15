@@ -131,16 +131,12 @@ async function findPost(env, post) {
     return { account: handle, ...data };
   };
   if (post.account) return lookup(post.account);
-  // Links without an account: check each account the key can read.
-  const response = await sentientDash(env, '/api/v1/accounts');
+  // Links without an account: SentientDash finds it within the key's scope.
+  const response = await sentientDash(env, `/api/v1/posts/${post.shortcode}`);
+  if (response.status === 404) return null;
   if (!response.ok) throw Object.assign(new Error('upstream'), { status: response.status });
   const { data } = await response.json();
-  for (const { handle } of data ?? []) {
-    if (!handlePattern.test(handle)) continue;
-    const found = await lookup(handle);
-    if (found) return found;
-  }
-  return null;
+  return data;
 }
 
 async function handleInstagramPost(request, env, json, originAllowed) {

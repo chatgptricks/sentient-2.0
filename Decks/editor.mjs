@@ -91,9 +91,10 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     const controller = new AbortController();
     const abort = () => controller.abort();
     signal.addEventListener('abort', abort, { once: true });
-    const timeout = window.setTimeout(abort, 15000);
+    const timeout = window.setTimeout(abort, options.timeout ?? 15000);
     try {
-      const response = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store', credentials: 'omit' });
+      const { timeout: _, ...init } = options;
+      const response = await fetch(url, { ...init, signal: controller.signal, cache: 'no-store', credentials: 'omit' });
       let payload;
       try { payload = await response.json(); } catch { payload = null; }
       return { response, payload };
@@ -288,9 +289,16 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
 
   const sentientDash = async (route, body) => {
     if (!editing || !credential) throw new Error('Enter edit mode to use SentientDash.');
-    const { response, payload } = await request(`${endpoint}/${route}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify(body)
-    });
+    let result;
+    try {
+      // SentientDash can take a while on a cold start; allow it longer than a save.
+      result = await request(`${endpoint}/${route}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify(body), timeout: 60000
+      });
+    } catch {
+      throw new Error('SentientDash took too long to answer. Try again.');
+    }
+    const { response, payload } = result;
     if (!response.ok || !payload) throw new Error(payload?.error || 'SentientDash is unavailable right now. Try again.');
     return payload;
   };

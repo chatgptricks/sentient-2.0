@@ -146,6 +146,7 @@ const withDash=(context,overrides={})=>{
     if (url.pathname==='/api/v1/accounts') return Response.json({data:[{handle:'artificialntellligence'},{handle:'chatgptricks'}]});
     if (url.pathname==='/api/v1/accounts/chatgptricks') return Response.json({schema_version:'1.0',data:{handle:'chatgptricks',followers:2751234},data_updated_at:{profile:'2026-10-14T16:05:22+00:00',engagement:null}});
     if (url.pathname==='/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ') return Response.json({data:dashPost});
+    if (url.pathname==='/api/v1/posts/DalMfBeINkQ') return Response.json({data:{account:'chatgptricks',...dashPost}});
     if (url.pathname==='/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ/cover') return new Response('JPEG',{headers:{'Content-Type':'image/jpeg'}});
     return Response.json({detail:'Not found'},{status:404});
   };
@@ -166,7 +167,7 @@ test('post lookup finds real SentientDash data from a pasted link',async context
   const response=await worker.fetch(postRequest({url:'https://www.instagram.com/p/DalMfBeINkQ/'}),storage);
   assert.equal(response.status,200);
   assert.deepEqual(await response.json(),{account:'chatgptricks',shortcode:'DalMfBeINkQ',permalink:'https://www.instagram.com/p/DalMfBeINkQ/',publishedAt:'2026-07-09T11:51:56-06:00',likes:10387,comments:254,caption:dashPost.caption,isPromo:true,metricsUpdatedAt:'2026-10-07T15:10:26+00:00',cover:'/decks/campaign-deck/covers/chatgptricks/DalMfBeINkQ'});
-  assert.deepEqual(calls,['/api/v1/accounts','/api/v1/accounts/artificialntellligence/posts/DalMfBeINkQ','/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ']);
+  assert.deepEqual(calls,['/api/v1/posts/DalMfBeINkQ']);
   calls.length=0;
   await worker.fetch(postRequest({url:'https://www.instagram.com/chatgptricks/p/DalMfBeINkQ/'}),storage);
   assert.deepEqual(calls,['/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ']);
