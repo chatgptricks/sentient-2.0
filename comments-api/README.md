@@ -29,3 +29,13 @@ The same Worker stores shared text overrides for the campaign deck. Migration `0
 The plaintext password is not stored in this repository or returned by the API. Configure `DECK_EDITOR_PASSWORD_SHA256` as a Wrangler secret containing the password's 64-character SHA-256 hex digest. For example, generate the digest with a hidden terminal prompt, then supply that digest to `npx wrangler secret put DECK_EDITOR_PASSWORD_SHA256`. Local development can provide the digest as a runtime binding with `wrangler dev --var DECK_EDITOR_PASSWORD_SHA256:<digest>`. Keep plaintext credentials and local secret files outside tracked files. Without the secret, reads work and writes are unavailable. Edit attempts have a separate per-IP rate limit.
 
 Apply the new migration before deploying the Worker, using the existing local/remote migration commands. A saved deck can be read or downloaded as JSON from the GET endpoint. Administrators can also export the backing database with `npx wrangler d1 export sentient-proposal-comments --remote --output=<private-path>`.
+
+## Promotional-post lookups
+
+The campaign deck's editor can replace a showcased promotional post by pasting its Instagram link. The Worker resolves it through the SentientDash website API, so the browser never sees the SentientDash key and nothing is read from Instagram.
+
+`POST /decks/campaign-deck/instagram-post` accepts JSON `{ url }` with the same editor bearer password, allowed origin and edit rate limit as saving. It accepts `instagram.com/p/…`, `/reel/…` and account-prefixed links. With an account in the link it reads `GET /api/v1/accounts/{handle}/posts/{shortcode}`; otherwise it lists the key's accounts and checks each one. It returns `{ account, shortcode, permalink, publishedAt, likes, comments, caption, isPromo, metricsUpdatedAt, cover }`, `404` when SentientDash has no exported data for the post, and `503` until the key is configured.
+
+`GET /decks/campaign-deck/covers/{handle}/{shortcode}` is public because the deck is public, but it only serves covers whose `handle/shortcode` is saved in a deck `…-source` field. It reads the stored SentientDash cover and caches it for a day.
+
+Configure the key as a secret: create an account-scoped website key at SentientDash `/api.html` covering the Sentient accounts, then run `npx wrangler secret put SENTIENTDASH_API_KEY` here and paste it at the hidden prompt. `SENTIENTDASH_API_URL` optionally overrides the default `https://cortex-api-db2e.onrender.com`. The API key is never stored in this repository.

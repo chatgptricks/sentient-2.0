@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import worker, {validateComment, validateDeckEdit} from './worker.mjs';
+import worker, {parseInstagramPost, validateComment, validateDeckEdit} from './worker.mjs';
 const note = {id:crypto.randomUUID(),page:'home',author:'Reviewer',message:'Change this headline.',anchor:{selector:'main > section:nth-of-type(1)',quote:'Headline',x:.5,y:.5,pageY:.1}};
 test('validates untrusted notes and anchors',()=>{
   assert.equal(validateComment(note).author,'Reviewer');
@@ -130,4 +130,67 @@ test('deck requests enforce CORS, method, JSON and streamed body limits',async c
 test('deck save failures never report success',async()=>{
   const response=await worker.fetch(deckRequest('PUT',{fields:{title:'Change'},revision:0}),{...env,DECK_EDITOR_PASSWORD_SHA256:editorHash,DB:{prepare(){throw new Error('offline');}}});
   assert.equal(response.status,503);
+});
+
+// A fake SentientDash website API: two readable accounts, one known post.
+const dashKey='sad_api_test';
+const dashPost={shortcode:'DalMfBeINkQ',caption:'1X just unveiled the NEO hand\n#aitoolsentient',is_promo:true,published_at:'2026-07-09T11:51:56-06:00',permalink:'https://www.instagram.com/p/DalMfBeINkQ/',format:'reel',likes:10387,comments:254,metrics_updated_at:'2026-10-07T15:10:26+00:00'};
+const withDash=(context,overrides={})=>{
+  const calls=[];
+  const original=globalThis.fetch;
+  globalThis.fetch=async(input,init={})=>{
+    const url=new URL(input);
+    calls.push(url.pathname);
+    assert.equal(init.headers.Authorization,`Bearer ${dashKey}`);
+    if (overrides[url.pathname]) return overrides[url.pathname]();
+    if (url.pathname==='/api/v1/accounts') return Response.json({data:[{handle:'artificialntellligence'},{handle:'chatgptricks'}]});
+    if (url.pathname==='/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ') return Response.json({data:dashPost});
+    if (url.pathname==='/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ/cover') return new Response('JPEG',{headers:{'Content-Type':'image/jpeg'}});
+    return Response.json({detail:'Not found'},{status:404});
+  };
+  context.after(()=>{globalThis.fetch=original;});
+  return calls;
+};
+const postRequest=(body,options={})=>new Request('https://api.example/decks/campaign-deck/instagram-post',{method:'POST',headers:{Origin:'https://chatgptricks.github.io','Content-Type':'application/json',...(options.password===null?{}:{Authorization:`Bearer ${options.password ?? editorPassword}`})},body:JSON.stringify(body)});
+
+test('parses Instagram post, reel and account-prefixed links only',()=>{
+  assert.deepEqual(parseInstagramPost('https://www.instagram.com/p/DalMfBeINkQ/?igsh=x'),{account:null,shortcode:'DalMfBeINkQ'});
+  assert.deepEqual(parseInstagramPost('https://instagram.com/ChatGPTricks/reel/DZV5fOZnQJU'),{account:'chatgptricks',shortcode:'DZV5fOZnQJU'});
+  for (const value of ['http://www.instagram.com/p/x/','https://evil.example/p/x/','https://www.instagram.com/chatgptricks/','not a url',null]) assert.equal(parseInstagramPost(value),null);
+});
+
+test('post lookup finds real SentientDash data from a pasted link',async context=>{
+  const storage={...deckEnvironment(context),SENTIENTDASH_API_KEY:dashKey,SENTIENTDASH_API_URL:'https://dash.example'};
+  const calls=withDash(context);
+  const response=await worker.fetch(postRequest({url:'https://www.instagram.com/p/DalMfBeINkQ/'}),storage);
+  assert.equal(response.status,200);
+  assert.deepEqual(await response.json(),{account:'chatgptricks',shortcode:'DalMfBeINkQ',permalink:'https://www.instagram.com/p/DalMfBeINkQ/',publishedAt:'2026-07-09T11:51:56-06:00',likes:10387,comments:254,caption:dashPost.caption,isPromo:true,metricsUpdatedAt:'2026-10-07T15:10:26+00:00',cover:'/decks/campaign-deck/covers/chatgptricks/DalMfBeINkQ'});
+  assert.deepEqual(calls,['/api/v1/accounts','/api/v1/accounts/artificialntellligence/posts/DalMfBeINkQ','/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ']);
+  calls.length=0;
+  await worker.fetch(postRequest({url:'https://www.instagram.com/chatgptricks/p/DalMfBeINkQ/'}),storage);
+  assert.deepEqual(calls,['/api/v1/accounts/chatgptricks/posts/DalMfBeINkQ']);
+});
+
+test('post lookup requires the editor, a valid link and a configured key',async context=>{
+  const storage={...deckEnvironment(context),SENTIENTDASH_API_KEY:dashKey};
+  withDash(context,{'/api/v1/accounts/chatgptricks/posts/Busy':()=>new Response('{}',{status:429})});
+  assert.equal((await worker.fetch(postRequest({url:'https://www.instagram.com/p/DalMfBeINkQ/'},{password:null}),storage)).status,401);
+  assert.equal((await worker.fetch(postRequest({url:'https://example.com/p/x/'}),storage)).status,400);
+  assert.equal((await worker.fetch(postRequest({url:'https://www.instagram.com/p/Unknown/'}),storage)).status,404);
+  assert.equal((await worker.fetch(postRequest({url:'https://www.instagram.com/chatgptricks/p/Busy/'}),storage)).status,429);
+  assert.equal((await worker.fetch(postRequest({url:'https://www.instagram.com/p/DalMfBeINkQ/'}),{...storage,SENTIENTDASH_API_KEY:undefined})).status,503);
+});
+
+test('covers are served only for posts the saved deck shows',async context=>{
+  const storage={...deckEnvironment(context),SENTIENTDASH_API_KEY:dashKey};
+  withDash(context);
+  const cover=path=>worker.fetch(new Request(`https://api.example/decks/campaign-deck/covers/${path}`),storage);
+  assert.equal((await cover('chatgptricks/DalMfBeINkQ')).status,404);
+  await worker.fetch(deckRequest('PUT',{fields:{'sentient-promo-results.post-0-source':'chatgptricks/DalMfBeINkQ'},revision:0}),storage);
+  const response=await cover('chatgptricks/DalMfBeINkQ');
+  assert.equal(response.status,200);
+  assert.equal(response.headers.get('Content-Type'),'image/jpeg');
+  assert.equal(await response.text(),'JPEG');
+  assert.equal((await cover('chatgptricks/Other')).status,404);
+  assert.equal((await cover('../secrets/x')).status,404);
 });

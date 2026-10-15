@@ -79,7 +79,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied }) {
       if (Object.hasOwn(values, key)) {
         // Honour the requested display name in existing saved copy, while
         // keeping source account IDs and URLs unchanged.
-        element.textContent = deck.slug === 'campaign-deck'
+        element.textContent = deck.slug === 'campaign-deck' && !/-(id|url)$/.test(key)
           ? values[key].replace(/@?chatgptricks\b/gi, '@chatpgtricks')
           : values[key];
       }
@@ -287,6 +287,16 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied }) {
 
   return {
     ready,
+    // Looks up a pasted Instagram link in SentientDash through the Worker,
+    // authorised by this editing session's password.
+    async lookupPost(url) {
+      if (!editing || !credential) throw new Error('Enter edit mode to look up a post.');
+      const { response, payload } = await request(`${endpoint}/instagram-post`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify({ url })
+      });
+      if (!response.ok || !payload) throw new Error(payload?.error || 'SentientDash is unavailable right now. Try again.');
+      return payload;
+    },
     dispose() {
       lifecycle.abort();
       accessGeneration++;

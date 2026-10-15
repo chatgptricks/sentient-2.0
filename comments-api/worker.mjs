@@ -103,6 +103,100 @@ async function handleDeck(request, env, json, originAllowed) {
   return json(200, { deck: deckSlug, fields: edit.fields, revision: edit.revision + 1, updatedAt });
 }
 
+// Promotional-post lookups. The SentientDash website key stays in this Worker
+// (secret SENTIENTDASH_API_KEY); the deck only ever sees the public result.
+const sentientDashUrl = env => (env.SENTIENTDASH_API_URL || 'https://cortex-api-db2e.onrender.com').replace(/\/+$/, '');
+const handlePattern = /^[a-z0-9_.]{1,30}$/;
+const shortcodePattern = /^[A-Za-z0-9_-]{1,64}$/;
+
+export function parseInstagramPost(value) {
+  let url;
+  try { url = new URL(String(value ?? '').trim()); } catch { return null; }
+  if (url.protocol !== 'https:' || !/^(www\.)?instagram\.com$/i.test(url.hostname)) return null;
+  const match = /^\/(?:([A-Za-z0-9_.]{1,30})\/)?(?:p|reel|reels|tv)\/([A-Za-z0-9_-]{1,64})\/?$/.exec(url.pathname);
+  if (!match) return null;
+  return { account: match[1]?.toLowerCase() ?? null, shortcode: match[2] };
+}
+
+async function sentientDash(env, path) {
+  return fetch(`${sentientDashUrl(env)}${path}`, { headers: { Authorization: `Bearer ${env.SENTIENTDASH_API_KEY}`, Accept: 'application/json' }, redirect: 'follow' });
+}
+
+async function findPost(env, post) {
+  const lookup = async handle => {
+    const response = await sentientDash(env, `/api/v1/accounts/${handle}/posts/${post.shortcode}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw Object.assign(new Error('upstream'), { status: response.status });
+    const { data } = await response.json();
+    return { account: handle, ...data };
+  };
+  if (post.account) return lookup(post.account);
+  // Links without an account: check each account the key can read.
+  const response = await sentientDash(env, '/api/v1/accounts');
+  if (!response.ok) throw Object.assign(new Error('upstream'), { status: response.status });
+  const { data } = await response.json();
+  for (const { handle } of data ?? []) {
+    if (!handlePattern.test(handle)) continue;
+    const found = await lookup(handle);
+    if (found) return found;
+  }
+  return null;
+}
+
+async function handleInstagramPost(request, env, json, originAllowed) {
+  if (request.method !== 'POST') return json(405, { error: 'Method not allowed.' });
+  const rejected = await guardDeckWrite(request, env, json, originAllowed);
+  if (rejected) return rejected;
+  const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
+  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return json(401, { error: 'Incorrect editor password.' });
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
+  const parsed = await readJson(request, 4096);
+  if (parsed.error) return json(parsed.status, { error: parsed.error });
+  const post = parseInstagramPost(parsed.data?.url);
+  if (!post) return json(400, { error: 'Paste an Instagram post or reel link.' });
+  if (!env.SENTIENTDASH_API_KEY) return json(503, { error: 'SentientDash is not connected yet.' });
+  try {
+    const found = await findPost(env, post);
+    if (!found) return json(404, { error: 'SentientDash has no data for this post. Check it belongs to a Sentient account the API key can read.' });
+    return json(200, {
+      account: found.account,
+      shortcode: found.shortcode,
+      permalink: found.permalink,
+      publishedAt: found.published_at,
+      likes: found.likes ?? null,
+      comments: found.comments ?? null,
+      caption: found.caption ?? null,
+      isPromo: found.is_promo ?? null,
+      metricsUpdatedAt: found.metrics_updated_at ?? null,
+      cover: `/decks/${deckSlug}/covers/${found.account}/${found.shortcode}`,
+    });
+  } catch (error) {
+    if (error.status === 429) return json(429, { error: 'SentientDash is busy. Try again in a minute.' });
+    return json(502, { error: 'SentientDash is unavailable right now. Try again.' });
+  }
+}
+
+// Covers are public because the deck is public, but only for posts the saved
+// deck actually shows, so the key cannot be used to browse other posts.
+async function handleCover(request, env, json, account, shortcode, ctx) {
+  if (request.method !== 'GET') return json(405, { error: 'Method not allowed.' });
+  if (!handlePattern.test(account) || !shortcodePattern.test(shortcode)) return json(404, { error: 'Not found.' });
+  const cache = globalThis.caches?.default;
+  const cached = await cache?.match(request);
+  if (cached) return cached;
+  const row = await env.DB.prepare('SELECT fields FROM deck_edits WHERE slug = ?').bind(deckSlug).first();
+  const fields = row ? JSON.parse(row.fields) : {};
+  const source = `${account}/${shortcode}`;
+  if (!Object.entries(fields).some(([key, value]) => key.endsWith('-source') && value === source)) return json(404, { error: 'Not found.' });
+  if (!env.SENTIENTDASH_API_KEY) return json(503, { error: 'SentientDash is not connected yet.' });
+  const upstream = await sentientDash(env, `/api/v1/accounts/${account}/posts/${shortcode}/cover`);
+  const type = upstream.headers.get('Content-Type') || '';
+  if (!upstream.ok || !type.startsWith('image/')) return json(upstream.status === 404 ? 404 : 502, { error: 'Cover unavailable.' });
+  const response = new Response(upstream.body, { status: 200, headers: { 'Content-Type': type, 'Cache-Control': 'public, max-age=86400', 'X-Content-Type-Options': 'nosniff' } });
+  if (cache) ctx?.waitUntil?.(cache.put(request, response.clone()));
+  return response;
+}
+
 export function validateComment(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   const { id, page, anchor } = data;
@@ -114,7 +208,7 @@ export function validateComment(data) {
   return { id, page, author, message, anchor };
 }
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin');
     const allowed = (env.ALLOWED_ORIGINS || '').split(',');
     const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Vary': 'Origin', 'X-Content-Type-Options': 'nosniff' };
@@ -124,10 +218,17 @@ export default {
     const url = new URL(request.url);
     const deckRoute = url.pathname === `/decks/${deckSlug}`;
     const deckAuthRoute = url.pathname === `/decks/${deckSlug}/auth`;
-    if (url.pathname !== '/comments' && !deckRoute && !deckAuthRoute) return json(404, {error:'Not found.'});
-    if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':deckAuthRoute ? 'POST, OPTIONS' : deckRoute ? 'GET, PUT, OPTIONS' : 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers':deckRoute ? 'Content-Type, Authorization' : 'Content-Type', 'Access-Control-Max-Age':'3600'}});
+    const postRoute = url.pathname === `/decks/${deckSlug}/instagram-post`;
+    const coverRoute = new RegExp(`^/decks/${deckSlug}/covers/([^/]+)/([^/]+)$`).exec(url.pathname);
+    if (coverRoute) {
+      try { return await handleCover(request, env, json, coverRoute[1], coverRoute[2], ctx); }
+      catch { return json(503, {error:'Cover unavailable.'}); }
+    }
+    if (url.pathname !== '/comments' && !deckRoute && !deckAuthRoute && !postRoute) return json(404, {error:'Not found.'});
+    if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':deckAuthRoute || postRoute ? 'POST, OPTIONS' : deckRoute ? 'GET, PUT, OPTIONS' : 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers':deckRoute || postRoute ? 'Content-Type, Authorization' : 'Content-Type', 'Access-Control-Max-Age':'3600'}});
     try {
       if (deckAuthRoute) return await handleDeckAuth(request, env, json, Boolean(origin && allowed.includes(origin)));
+      if (postRoute) return await handleInstagramPost(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (deckRoute) return await handleDeck(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (request.method === 'GET') {
         const page = url.searchParams.get('page');
@@ -152,6 +253,6 @@ export default {
       await env.DB.prepare('INSERT OR IGNORE INTO comments (id,page,author,message,anchor,created_at) VALUES (?,?,?,?,?,?)').bind(comment.id, comment.page, comment.author, comment.message, JSON.stringify(comment.anchor), createdAt).run();
       const row = await env.DB.prepare('SELECT * FROM comments WHERE id = ?').bind(comment.id).first();
       return json(201, {comment:{id:row.id,page:row.page,author:row.author,message:row.message,anchor:JSON.parse(row.anchor),createdAt:row.created_at}});
-    } catch { return json(503, {error:deckRoute || deckAuthRoute ? 'Deck content is temporarily unavailable. Please try again.' : 'Comments are temporarily unavailable. Please try again.'}); }
+    } catch { return json(503, {error:deckRoute || deckAuthRoute || postRoute ? 'Deck content is temporarily unavailable. Please try again.' : 'Comments are temporarily unavailable. Please try again.'}); }
   }
 };
