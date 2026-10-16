@@ -123,7 +123,10 @@ function ensurePassword(reason = 'Publicar usa la contraseña del editor de deck
       try {
         await api.checkPassword(input.value);
         password = result = input.value;
+        // Continue at once: browsers may defer a dialog's close event (for example in a background tab).
+        resolve(result);
         element.close();
+        element.remove();
       } catch (failure) {
         error.textContent = failure.status === 401 ? 'Contraseña incorrecta.' : failure.message;
         input.select();
