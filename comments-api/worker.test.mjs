@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import worker, {parseInstagramPost, validateComment, validateDeckEdit} from './worker.mjs';
+import worker, {parseInstagramPost, validateComment, validateDeckEdit, validateStudioDeck} from './worker.mjs';
 const note = {id:crypto.randomUUID(),page:'home',author:'Reviewer',message:'Change this headline.',anchor:{selector:'main > section:nth-of-type(1)',quote:'Headline',x:.5,y:.5,pageY:.1}};
 test('validates untrusted notes and anchors',()=>{
   assert.equal(validateComment(note).author,'Reviewer');
@@ -208,4 +208,79 @@ test('account lookup returns exact SentientDash followers for the editor',async 
   assert.equal((await worker.fetch(lookup({handle:'bad handle!'}),storage)).status,400);
   assert.equal((await worker.fetch(lookup({handle:'unknown'}),storage)).status,404);
   assert.equal((await worker.fetch(lookup({handle:'chatgptricks'}),{...storage,SENTIENTDASH_API_KEY:undefined})).status,503);
+});
+
+// Deck studio: published decks and their images.
+const studioEnvironment = context => {
+  const database = new DatabaseSync(':memory:');
+  database.exec(readFileSync(new URL('./migrations/0003_studio.sql',import.meta.url),'utf8'));
+  context.after(()=>database.close());
+  const bound = (statement, values) => ({
+    async first(){return statement.get(...values) ?? null;},
+    async all(){return {results:statement.all(...values)};},
+    async run(){const result=statement.run(...values);return {meta:{changes:Number(result.changes)}};},
+  });
+  return {...env,DECK_EDITOR_PASSWORD_SHA256:editorHash,DB:{prepare(sql){const statement=database.prepare(sql);return {...bound(statement,[]),bind:(...values)=>bound(statement,values)};}}};
+};
+const studioRequest = (method, path, body, options={}) => new Request(`https://api.example/studio${path}`, {
+  method,
+  headers: {
+    ...(options.origin === null ? {} : {Origin:'https://chatgptricks.github.io'}),
+    ...(body === undefined ? {} : {'Content-Type':options.type ?? 'application/json'}),
+    ...(options.password === null ? {} : {Authorization:`Bearer ${options.password ?? editorPassword}`}),
+  },
+  ...(body === undefined ? {} : {body:options.type ? body : JSON.stringify(body)}),
+});
+const studioDeck = {title:'Launch plan',slides:[{id:'a1',layout:'blank',surface:'dark',section:'Intro',title:'Hello',blocks:[{type:'statement',text:'One line.'}]}]};
+
+test('validates studio decks as bounded plain data without inline images',()=>{
+  assert.equal(validateStudioDeck({deck:studioDeck,revision:0}).deck.title,'Launch plan');
+  const slide=studioDeck.slides[0];
+  for (const input of [null,{deck:studioDeck},{deck:{...studioDeck,title:' '},revision:0},{deck:{...studioDeck,slides:[]},revision:0},
+    {deck:{...studioDeck,slides:[{...slide,blocks:'x'}]},revision:0},
+    {deck:{...studioDeck,slides:[{...slide,blocks:[{type:'image',image:'data:image/png;base64,AAAA'}]}]},revision:0},
+    {deck:{...studioDeck,slides:[{...slide,blocks:[{type:'promos',items:[{url:' javascript:alert(1)'}]}]}]},revision:0},
+    {deck:{...studioDeck,slides:[{...slide,blocks:[{type:'paragraph',text:'x'.repeat(4001)}]}]},revision:0},
+    {deck:{...studioDeck,slides:Array.from({length:81},()=>slide)},revision:0},
+  ]) assert.equal(validateStudioDeck(input),null);
+});
+
+test('publishes, reads, conflicts and unpublishes studio decks',async context=>{
+  const storage=studioEnvironment(context);
+  assert.equal((await worker.fetch(studioRequest('POST','/auth',undefined,{password:'wrong'}),storage)).status,401);
+  assert.equal((await worker.fetch(studioRequest('POST','/auth'),storage)).status,200);
+  assert.equal((await worker.fetch(studioRequest('GET','/decks/launch-plan',undefined,{origin:null,password:null}),storage)).status,404);
+  assert.equal((await worker.fetch(studioRequest('PUT','/decks/launch-plan',{deck:studioDeck,revision:0},{password:'wrong'}),storage)).status,401);
+  assert.equal((await worker.fetch(studioRequest('PUT','/decks/campaign-deck',{deck:studioDeck,revision:0}),storage)).status,404);
+  let response=await worker.fetch(studioRequest('PUT','/decks/launch-plan',{deck:studioDeck,revision:0}),storage);
+  assert.equal(response.status,200);
+  assert.equal((await response.json()).revision,1);
+  const shared=await (await worker.fetch(studioRequest('GET','/decks/launch-plan',undefined,{origin:null,password:null}),storage)).json();
+  assert.deepEqual(shared.deck,studioDeck);
+  response=await worker.fetch(studioRequest('PUT','/decks/launch-plan',{deck:{...studioDeck,title:'Stale'},revision:0}),storage);
+  assert.equal(response.status,409);
+  assert.equal((await response.json()).revision,1);
+  assert.equal((await worker.fetch(studioRequest('PUT','/decks/launch-plan',{deck:{...studioDeck,title:'Second'},revision:1}),storage)).status,200);
+  assert.equal((await worker.fetch(studioRequest('GET','/decks',undefined,{password:null}),storage)).status,401);
+  const listed=await (await worker.fetch(studioRequest('GET','/decks'),storage)).json();
+  assert.deepEqual(listed.decks.map(deck=>[deck.slug,deck.title,deck.revision,deck.slides]),[['launch-plan','Second',2,1]]);
+  assert.equal((await worker.fetch(studioRequest('DELETE','/decks/launch-plan'),storage)).status,200);
+  assert.equal((await worker.fetch(studioRequest('GET','/decks/launch-plan',undefined,{password:null}),storage)).status,404);
+});
+
+test('stores studio images once by content and serves them publicly',async context=>{
+  const storage=studioEnvironment(context);
+  const bytes=new Uint8Array([0x52,0x49,0x46,0x46,1,2,3,4]);
+  assert.equal((await worker.fetch(studioRequest('POST','/assets',bytes,{type:'image/svg+xml'}),storage)).status,415);
+  assert.equal((await worker.fetch(studioRequest('POST','/assets',bytes,{type:'image/webp',password:'wrong'}),storage)).status,401);
+  assert.equal((await worker.fetch(studioRequest('POST','/assets',new Uint8Array(1400*1024+1),{type:'image/png'}),storage)).status,413);
+  const first=await (await worker.fetch(studioRequest('POST','/assets',bytes,{type:'image/webp'}),storage)).json();
+  const second=await (await worker.fetch(studioRequest('POST','/assets',bytes,{type:'image/webp'}),storage)).json();
+  assert.equal(first.id,second.id);
+  assert.equal(first.url,`https://api.example/studio/assets/${first.id}`);
+  const image=await worker.fetch(new Request(first.url),storage);
+  assert.equal(image.status,200);
+  assert.equal(image.headers.get('Content-Type'),'image/webp');
+  assert.deepEqual(new Uint8Array(await image.arrayBuffer()),bytes);
+  assert.equal((await worker.fetch(new Request('https://api.example/studio/assets/nope'),storage)).status,404);
 });

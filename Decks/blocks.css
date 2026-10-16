@@ -1,0 +1,61 @@
+/* Studio slides: any slide can take any of the three surfaces, and elements
+   keep their contrast on whichever surface they are placed. */
+.deck-block{display:contents}
+.deck-stage .deck-slide[data-surface=dark]{background:var(--ink);color:var(--paper);--copy:#a9a99f;--rule:#ffffff2a;--fg:var(--paper);--bg:var(--ink)}
+.deck-stage .deck-slide[data-surface=light]{background:var(--paper);color:var(--ink);--copy:#5d5d55;--rule:#10101026;--fg:var(--ink);--bg:var(--paper)}
+.deck-stage .deck-slide[data-surface=accent]{background:var(--accent);color:var(--ink);--copy:#2f3518;--rule:#10101040;--fg:var(--ink);--bg:var(--accent)}
+
+/* Elements drawn for a light surface use the surface's own foreground. */
+.deck-slide[data-surface] .deck-words li{border-top-color:var(--fg)}
+.deck-slide[data-surface] .deck-words li:nth-child(2) h3{-webkit-text-stroke-color:var(--fg)}
+.deck-slide[data-surface] .deck-words p{color:var(--fg)}
+.deck-slide[data-surface] .deck-platforms li{border-color:var(--fg)}
+.deck-slide[data-surface] .deck-network .deck-statement,.deck-slide[data-surface].deck-network .deck-statement{border-top-color:var(--fg)}
+.deck-slide[data-surface=dark] .deck-tags li{background:var(--accent);color:var(--ink)}
+.deck-slide[data-surface=accent] .deck-tags li,.deck-slide[data-surface=light] .deck-tags li{background:var(--ink);color:var(--accent)}
+.deck-slide[data-surface=dark] .deck-loop:before{border-color:#ffffff40}
+.deck-slide[data-surface=dark] .deck-loop:after{color:#ffffff30}
+.deck-slide[data-surface=dark] .deck-loop li{background:var(--paper);color:var(--ink)}
+.deck-slide[data-surface=dark] .deck-loop li:last-child{background:var(--accent)}
+.deck-slide[data-surface=dark] .deck-questions li{background:#1d1d1b}
+.deck-slide[data-surface=dark] .deck-questions span{color:#ffffff26}
+.deck-slide[data-surface=dark] .deck-questions li:last-child{background:var(--accent);color:var(--ink);--copy:#2f3518}
+.deck-slide[data-surface=dark] .deck-questions li:last-child span{color:#10101040}
+.deck-slide[data-surface=accent] .deck-questions li{background:#10101012}
+.deck-slide:is([data-surface=light],[data-surface=accent]) .deck-equation li:not(.deck-equation-result){background:#10101010}
+.deck-slide[data-surface=accent] .deck-equation li.deck-equation-result{background:var(--ink);color:var(--paper);--copy:#b5b5ab}
+.deck-slide[data-surface=dark] .deck-versus-big .deck-versus-shape{border-color:#ffffff60;background:radial-gradient(circle,#ffffff40 1.5px,#0000 2px) 0 0/1.4cqw 1.4cqw}
+.deck-slide[data-surface=dark] .deck-versus-right .deck-versus-shape{background:var(--accent);box-shadow:0 0 0 1.4cqw #d0ff0022,0 0 0 2.8cqw #d0ff000f}
+.deck-slide:is([data-surface=light],[data-surface=accent]) .deck-timeline-dot{background:var(--bg);border-color:var(--ink);color:var(--ink)}
+.deck-slide:is([data-surface=light],[data-surface=accent]) .deck-timeline li:first-child .deck-timeline-dot{background:var(--ink);color:var(--accent)}
+.deck-slide:is([data-surface=light],[data-surface=accent]) .deck-timeline li:not(:last-child):before{background:linear-gradient(90deg,var(--ink),#10101030)}
+.deck-slide[data-surface=accent] .deck-founder-frame:before{background:radial-gradient(circle at 50% 30%,#3a3a36,var(--ink) 60%)}
+.deck-slide[data-surface=accent] .deck-founder-frame:after{box-shadow:inset 0 0 0 max(2px,.35cqw) var(--ink)}
+.deck-slide:is([data-surface=light],[data-surface=accent]) .deck-founder h3{color:var(--ink)}
+
+/* Repeatable elements follow their item count on landscape screens. */
+@media (min-width:761px){
+  .deck-timeline[style*="--n"]{grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+  .deck-questions[style*="--n"]{grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+  .deck-founder-pair[style*="--n"]{grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+  .deck-account-grid[style*="--rows"]{grid-template-rows:repeat(var(--rows),minmax(0,1fr))}
+  .deck-promo-grid[style*="--n"]{grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+}
+.deck-loop[style*="--n"] li{transform:rotate(calc(var(--i) * 360deg / var(--n) - 90deg)) translate(var(--r)) rotate(calc(var(--i) * -360deg / var(--n) + 90deg))}
+
+/* Elements that are new to the studio. */
+.deck-slide .studio-paragraph{font-size:2.2cqw;line-height:1.4;max-width:70cqw;color:var(--copy)}
+.studio-metric strong{font-size:14cqw!important}
+.studio-tags{flex:none}
+.studio-image{margin:0;display:flex;flex-direction:column;gap:1cqw;min-height:0}
+.studio-image img{display:block;width:100%;height:calc(var(--deck-workspace-height,40cqw) * .62);object-fit:cover;border-radius:1.2cqw;background:#ffffff10}
+.studio-image[data-size=small] img{height:calc(var(--deck-workspace-height,40cqw) * .4)}
+.studio-image[data-size=large] img{height:calc(var(--deck-workspace-height,40cqw) * .86)}
+.studio-image[data-fit=contain] img{object-fit:contain;background:none}
+.studio-image figcaption{font-size:1.4cqw;line-height:1.4;color:var(--copy)}
+@media (max-width:760px){
+  .studio-image img{height:auto;max-height:60vh}
+  .deck-slide .studio-paragraph{font-size:16px;max-width:none}
+}
+/* Display figures set at line-height .82 rise above their box; keep them clear of the title. */
+.deck-block .deck-metric{padding-top:1.4cqw}

@@ -218,6 +218,192 @@ async function handleCover(request, env, json, account, shortcode, ctx) {
   return response;
 }
 
+// Deck studio: decks built from the campaign deck's templates and elements,
+// published so their link opens anywhere. Reading a published deck and its
+// images is public; publishing uses the deck editor password.
+const studioDeckLimit = 512 * 1024;
+const studioAssetLimit = 1400 * 1024;
+const studioAssetTypes = new Set(['image/webp', 'image/png', 'image/jpeg', 'image/gif']);
+const studioSlugPattern = /^[a-z0-9][a-z0-9-]{1,63}$/;
+const reservedSlugs = new Set([deckSlug, 'studio']);
+
+export function validateStudioDeck(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)
+    || !Number.isSafeInteger(data.revision) || data.revision < 0 || data.revision >= Number.MAX_SAFE_INTEGER) return null;
+  const { deck } = data;
+  if (!deck || typeof deck !== 'object' || Array.isArray(deck)
+    || typeof deck.title !== 'string' || !deck.title.trim() || deck.title.length > 200
+    || !Array.isArray(deck.slides) || !deck.slides.length || deck.slides.length > 80) return null;
+  // Every value is plain data: bounded strings, never inline images or script URLs.
+  const plain = (value, depth) => {
+    if (depth > 8) return false;
+    if (value === null || typeof value === 'number' || typeof value === 'boolean') return true;
+    if (typeof value === 'string') return value.length <= 4000 && !/^\s*(data|javascript|vbscript):/i.test(value);
+    if (Array.isArray(value)) return value.length <= 200 && value.every(item => plain(item, depth + 1));
+    if (typeof value !== 'object') return false;
+    return Object.entries(value).every(([key, item]) => /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(key) && plain(item, depth + 1));
+  };
+  const slidesValid = deck.slides.every(slide => slide && typeof slide === 'object' && !Array.isArray(slide)
+    && typeof slide.layout === 'string' && Array.isArray(slide.blocks) && slide.blocks.length <= 20
+    && slide.blocks.every(block => block && typeof block.type === 'string'));
+  if (!slidesValid || !plain(deck.slides, 0)) return null;
+  const clean = { title: deck.title.trim(), slides: deck.slides };
+  if (new TextEncoder().encode(JSON.stringify(clean)).byteLength > studioDeckLimit) return null;
+  return { deck: clean, revision: data.revision };
+}
+
+// Origin, rate limit and password, then the JSON body: the common gate of every studio write.
+async function studioWrite(request, env, json, originAllowed, limit = 4096) {
+  if (!originAllowed) return { response: json(403, { error: 'Origin required.' }) };
+  const rate = env.STUDIO_RATE ?? env.DECK_EDIT_RATE;
+  if (rate && !(await rate.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' })).success) return { response: json(429, { error: 'Too many requests. Please wait a minute.' }) };
+  if (!/^[0-9a-f]{64}$/i.test(env.DECK_EDITOR_PASSWORD_SHA256 || '')) return { response: json(503, { error: 'Publishing is temporarily unavailable.' }) };
+  const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
+  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return { response: json(401, { error: 'Incorrect editor password.' }) };
+  if (limit === 0) return {};
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) return { response: json(415, { error: 'Use JSON.' }) };
+  const parsed = await readJson(request, limit);
+  if (parsed.error) return { response: json(parsed.status, { error: parsed.error }) };
+  return { data: parsed.data };
+}
+
+const studioDeck = row => ({ slug: row.slug, title: row.title, deck: JSON.parse(row.deck), revision: row.revision, publishedAt: row.published_at, updatedAt: row.updated_at });
+
+async function handleStudioDecks(request, env, json, originAllowed) {
+  if (request.method !== 'GET') return json(405, { error: 'Method not allowed.' });
+  const gate = await studioWrite(request, env, json, originAllowed, 0);
+  if (gate.response) return gate.response;
+  const { results } = await env.DB.prepare('SELECT slug, title, deck, revision, published_at, updated_at FROM studio_decks ORDER BY updated_at DESC').all();
+  return json(200, { decks: results.map(row => { const { deck, ...rest } = studioDeck(row); return { ...rest, slides: deck.slides.length }; }) });
+}
+
+async function handleStudioDeck(request, env, json, originAllowed, slug) {
+  if (!studioSlugPattern.test(slug) || reservedSlugs.has(slug)) return json(404, { error: 'Not found.' });
+  const read = () => env.DB.prepare('SELECT slug, title, deck, revision, published_at, updated_at FROM studio_decks WHERE slug = ?').bind(slug).first();
+  if (request.method === 'GET') {
+    const row = await read();
+    return row ? json(200, studioDeck(row)) : json(404, { error: 'This deck is not published.' });
+  }
+  if (request.method === 'DELETE') {
+    const gate = await studioWrite(request, env, json, originAllowed, 0);
+    if (gate.response) return gate.response;
+    await env.DB.prepare('DELETE FROM studio_decks WHERE slug = ?').bind(slug).run();
+    return json(200, { slug, deleted: true });
+  }
+  if (request.method !== 'PUT') return json(405, { error: 'Method not allowed.' });
+  const gate = await studioWrite(request, env, json, originAllowed, studioDeckLimit + 4096);
+  if (gate.response) return gate.response;
+  const edit = validateStudioDeck(gate.data);
+  if (!edit) return json(400, { error: 'This deck cannot be published: check it has a title, at most 80 slides, and that every image is uploaded.' });
+  const now = new Date().toISOString();
+  const serialized = JSON.stringify(edit.deck);
+  // As with the campaign deck, the revision in the write itself prevents a
+  // stale copy from overwriting a newer publication.
+  const saved = edit.revision === 0
+    ? await env.DB.prepare('INSERT INTO studio_decks (slug, title, deck, revision, published_at, updated_at) VALUES (?, ?, ?, 1, ?, ?) ON CONFLICT(slug) DO NOTHING').bind(slug, edit.deck.title, serialized, now, now).run()
+    : await env.DB.prepare('UPDATE studio_decks SET title = ?, deck = ?, revision = revision + 1, updated_at = ? WHERE slug = ? AND revision = ?').bind(edit.deck.title, serialized, now, slug, edit.revision).run();
+  if (saved.meta.changes !== 1) {
+    const current = await read();
+    return json(409, { error: 'This deck was published from another copy since you last published it.', ...(current ? studioDeck(current) : { revision: 0 }) });
+  }
+  return json(200, studioDeck(await read()));
+}
+
+const base64 = bytes => { let text = ''; for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode(...bytes.subarray(i, i + 32768)); return btoa(text); };
+const fromBase64 = text => Uint8Array.from(atob(text), char => char.charCodeAt(0));
+const assetUrl = (request, id) => `${new URL(request.url).origin}/studio/assets/${id}`;
+
+async function storeAsset(env, bytes, type) {
+  const id = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(value => value.toString(16).padStart(2, '0')).join('');
+  await env.DB.prepare('INSERT OR IGNORE INTO studio_assets (id, type, data, created_at) VALUES (?, ?, ?, ?)').bind(id, type, base64(bytes), new Date().toISOString()).run();
+  return id;
+}
+
+async function readBytes(request, limit) {
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  let size = 0;
+  const chunks = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) { await reader.cancel(); return 'too-large'; }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  return bytes;
+}
+
+async function handleStudioUpload(request, env, json, originAllowed) {
+  if (request.method !== 'POST') return json(405, { error: 'Method not allowed.' });
+  const gate = await studioWrite(request, env, json, originAllowed, 0);
+  if (gate.response) return gate.response;
+  const type = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+  if (!studioAssetTypes.has(type)) return json(415, { error: 'Upload a WebP, PNG, JPEG or GIF image.' });
+  const bytes = await readBytes(request, studioAssetLimit);
+  if (bytes === 'too-large') return json(413, { error: 'Images must be 1.4 MB or smaller.' });
+  if (!bytes?.length) return json(400, { error: 'The image is empty.' });
+  const id = await storeAsset(env, bytes, type);
+  return json(201, { id, url: assetUrl(request, id) });
+}
+
+async function handleStudioAsset(request, env, json, id) {
+  if (request.method !== 'GET') return json(405, { error: 'Method not allowed.' });
+  if (!/^[0-9a-f]{64}$/.test(id)) return json(404, { error: 'Not found.' });
+  const row = await env.DB.prepare('SELECT type, data FROM studio_assets WHERE id = ?').bind(id).first();
+  if (!row) return json(404, { error: 'Not found.' });
+  // Content-addressed, so the bytes behind an id never change.
+  return new Response(fromBase64(row.data), { headers: { 'Content-Type': row.type, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff', 'Access-Control-Allow-Origin': '*', 'Cross-Origin-Resource-Policy': 'cross-origin' } });
+}
+
+async function handleStudioPost(request, env, json, originAllowed) {
+  if (request.method !== 'POST') return json(405, { error: 'Method not allowed.' });
+  const gate = await studioWrite(request, env, json, originAllowed);
+  if (gate.response) return gate.response;
+  const post = parseInstagramPost(gate.data?.url);
+  if (!post) return json(400, { error: 'Paste an Instagram post or reel link.' });
+  if (!env.SENTIENTDASH_API_KEY) return json(503, { error: 'SentientDash is not connected yet.' });
+  try {
+    const found = await findPost(env, post);
+    if (!found) return json(404, { error: 'SentientDash has no data for this post. Check it belongs to a Sentient account the API key can read.' });
+    // The cover is copied into the studio's images, so the published deck never depends on SentientDash.
+    let cover = null;
+    const upstream = await sentientDash(env, `/api/v1/accounts/${found.account}/posts/${found.shortcode}/cover`);
+    const type = (upstream.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+    if (upstream.ok && studioAssetTypes.has(type)) {
+      const bytes = new Uint8Array(await upstream.arrayBuffer());
+      if (bytes.length && bytes.length <= studioAssetLimit) cover = assetUrl(request, await storeAsset(env, bytes, type));
+    }
+    return json(200, {
+      account: found.account, shortcode: found.shortcode, permalink: found.permalink, publishedAt: found.published_at,
+      likes: found.likes ?? null, comments: found.comments ?? null, caption: found.caption ?? null, cover,
+    });
+  } catch (error) {
+    if (error.status === 429) return json(429, { error: 'SentientDash is busy. Try again in a minute.' });
+    return json(502, { error: 'SentientDash is unavailable right now. Try again.' });
+  }
+}
+
+async function handleStudio(request, env, json, originAllowed, path) {
+  if (path === '/studio/auth') {
+    if (request.method !== 'POST') return json(405, { error: 'Method not allowed.' });
+    const gate = await studioWrite(request, env, json, originAllowed, 0);
+    return gate.response ?? json(200, { ok: true });
+  }
+  if (path === '/studio/decks') return handleStudioDecks(request, env, json, originAllowed);
+  if (path === '/studio/assets') return handleStudioUpload(request, env, json, originAllowed);
+  if (path === '/studio/account') return handleAccount(request, env, json, originAllowed);
+  if (path === '/studio/instagram-post') return handleStudioPost(request, env, json, originAllowed);
+  const deck = /^\/studio\/decks\/([^/]+)$/.exec(path);
+  if (deck) return handleStudioDeck(request, env, json, originAllowed, deck[1]);
+  const asset = /^\/studio\/assets\/([^/]+)$/.exec(path);
+  if (asset) return handleStudioAsset(request, env, json, asset[1]);
+  return json(404, { error: 'Not found.' });
+}
+
 export function validateComment(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   const { id, page, anchor } = data;
@@ -242,6 +428,11 @@ export default {
     const postRoute = url.pathname === `/decks/${deckSlug}/instagram-post`;
     const accountRoute = url.pathname === `/decks/${deckSlug}/account`;
     const coverRoute = new RegExp(`^/decks/${deckSlug}/covers/([^/]+)/([^/]+)$`).exec(url.pathname);
+    if (url.pathname.startsWith('/studio/')) {
+      if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type, Authorization', 'Access-Control-Max-Age':'3600'}});
+      try { return await handleStudio(request, env, json, Boolean(origin && allowed.includes(origin)), url.pathname); }
+      catch { return json(503, {error:'Publishing is temporarily unavailable. Please try again.'}); }
+    }
     if (coverRoute) {
       try { return await handleCover(request, env, json, coverRoute[1], coverRoute[2], ctx); }
       catch { return json(503, {error:'Cover unavailable.'}); }

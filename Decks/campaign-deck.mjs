@@ -3,6 +3,8 @@
 export const campaignDeck = {
   slug: 'campaign-deck',
   title: 'Sentient — Campaign Deck',
+  name: 'Campaign deck',
+  overviewTitle: 'The campaign deck',
   description: 'Sentient’s approach to audience selection, managed organic campaigns, campaign analysis and optional paid amplification.',
   slides: [
     {

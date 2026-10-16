@@ -1,0 +1,10 @@
+/* Inside a studio frame: the slide alone, with editing affordances. */
+.studio-frame .deck-tools,.studio-frame .deck-controls{visibility:hidden}
+.studio-editable [contenteditable]{cursor:text;outline:1px solid transparent;outline-offset:5px;border-radius:2px}
+.studio-editable [contenteditable]:hover{outline-color:#d0ff0077}
+.studio-editable [contenteditable]:focus{outline:2px solid #d0ff00}
+.studio-editable .deck-slide:is([data-surface=light],[data-surface=accent]) [contenteditable]:hover{outline-color:#10101055}
+.studio-editable .deck-slide:is([data-surface=light],[data-surface=accent]) [contenteditable]:focus{outline-color:#101010}
+.studio-editable .deck-block>*{cursor:pointer}
+.studio-outline{position:fixed;z-index:200;pointer-events:none;border:2px solid #7c5cff;border-radius:10px;box-shadow:0 0 0 4px #7c5cff26}
+.studio-outline[hidden]{display:none}

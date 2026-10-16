@@ -41,3 +41,16 @@ The campaign deck's editor can replace a showcased promotional post by pasting i
 Configure the key as a secret: create an account-scoped website key at SentientDash `/api.html` covering the Sentient accounts, then run `npx wrangler secret put SENTIENTDASH_API_KEY` here and paste it at the hidden prompt. `SENTIENTDASH_API_URL` optionally overrides the default `https://cortex-api-db2e.onrender.com`. The API key is never stored in this repository.
 
 `POST /decks/campaign-deck/account` accepts JSON `{ handle }` with the same editor authorisation and returns `{ handle, followers, capturedAt }` from SentientDash `GET /api/v1/accounts/{handle}` (the exact latest follower count and when it was recorded). The deck uses it when an account is chosen and from its "Update followers" button.
+
+## Deck Studio publishing
+
+Migration `0003_studio.sql` adds `studio_decks` (published decks, at most 512 KiB of JSON each) and `studio_assets` (their images, content-addressed by SHA-256 and stored as base64 text, at most 1.4 MB each). It does not change comments or the campaign deck. Apply it with the usual local/remote migration commands before deploying the Worker. `STUDIO_RATE` limits studio writes to 120 per minute per IP (a publication uploads each image separately).
+
+- `GET /studio/decks/{slug}` — public; returns `{ slug, title, deck, revision, publishedAt, updatedAt }` or `404`.
+- `PUT /studio/decks/{slug}` — `{ deck, revision }`; `revision` is `0` to publish a new slug, otherwise the revision last published from this copy. A stale revision returns `409` with the current publication. Decks must be plain data: a title, 1–80 slides with element arrays, strings of at most 4,000 characters and no `data:`/`javascript:` values (images are uploaded first). The slugs `campaign-deck` and `studio` are reserved.
+- `DELETE /studio/decks/{slug}` — unpublishes.
+- `GET /studio/decks` — lists published decks (password required).
+- `POST /studio/assets` — raw WebP, PNG, JPEG or GIF body; returns `{ id, url }`. `GET /studio/assets/{id}` serves it publicly with an immutable cache.
+- `POST /studio/auth` — checks the password. `POST /studio/account` and `POST /studio/instagram-post` are the SentientDash lookups; the post lookup copies the cover into `studio_assets` so a published deck never depends on SentientDash.
+
+Every write uses the deck editor password as `Authorization: Bearer …` (the same `DECK_EDITOR_PASSWORD_SHA256`) from an allowed origin.

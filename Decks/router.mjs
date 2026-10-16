@@ -1,21 +1,27 @@
 import { mountDeck, parseDeckHash } from './player.mjs';
+import { mountStudio } from './studio.mjs';
 
 const isDeckHash = hash => hash.startsWith('#/');
-const deckMode = isDeckHash(window.location.hash);
-const initialSlug = parseDeckHash(window.location.hash)?.slug;
+const isStudioHash = hash => /^#\/studio(\/|$)/.test(hash);
+// The website, the studio and each deck are separate modes.
+const modeOf = hash => isStudioHash(hash) ? 'studio' : isDeckHash(hash) ? `deck:${parseDeckHash(hash)?.slug}` : 'site';
+const mode = modeOf(window.location.hash);
+const deckMode = mode !== 'site';
 
 // Crossing between the website and a deck gets a fresh document, so their
 // animations, navigation and review tools never remain active together.
 window.addEventListener('hashchange', () => {
-  const nextDeckMode = isDeckHash(window.location.hash);
-  const nextSlug = parseDeckHash(window.location.hash)?.slug;
-  if (nextDeckMode === deckMode && (!deckMode || nextSlug === initialSlug)) return;
+  const nextMode = modeOf(window.location.hash);
+  if (nextMode === mode) return;
   document.documentElement.dataset.modeLoading = 'true';
-  if (nextDeckMode) document.documentElement.dataset.deck = 'true';
+  if (nextMode !== 'site') document.documentElement.dataset.deck = 'true';
   window.location.reload();
 });
 
-if (deckMode) {
+if (mode === 'studio') {
+  await mountStudio();
+  delete document.documentElement.dataset.modeLoading;
+} else if (deckMode) {
   await mountDeck(window.location.hash);
   delete document.documentElement.dataset.modeLoading;
 } else {

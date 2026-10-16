@@ -5,16 +5,18 @@ import './social-proof.css';
 import { initDeckEditor } from './editor.mjs';
 import { initDeckFit } from './fit.mjs';
 import { accountCatalog, accountPicker, accountRefresh, initDeckPickers, postPicker } from './pickers.mjs';
+import { assetUrl, fixedSurface, renderBlocks, surfaceOf } from './blocks.mjs';
+import { getDeck, getDeckBySlug } from './studio-store.mjs';
+import { fetchPublished } from './studio-api.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
-const asset = path => new URL(`..${path}`, import.meta.url).href;
+const asset = path => assetUrl(path, import.meta.url);
 // Editable text carries its own field name, so the editor saves exactly what each slide shows.
 const text = (tag, field, value, className='') => `<${tag}${className ? ` class="${className}"` : ''} data-edit-field="${field}">${escape(value)}</${tag}>`;
 const statement = slide => slide.emphasis ? text('p', 'emphasis', slide.emphasis, 'deck-statement') : '';
 const pad = i => String(i+1).padStart(2,'0');
 const arrow = '<span class="deck-arrow" aria-hidden="true"></span>';
 const heading = slide => `<h2 class="deck-title" data-edit-field="title">${escape(slide.title)}</h2>`;
-const themes = { opening:'dark', network:'accent', accounts:'light', founders:'dark', approach:'light', selection:'dark', relevance:'accent', audience:'light', promos:'dark', process:'dark', commitment:'accent', analysis:'light', paid:'dark', optimisation:'light', closing:'accent', end:'dark' };
 
 function registerEditableFields(root, deck) {
   root.querySelectorAll('.deck-slide').forEach((slide, i) => {
@@ -25,6 +27,9 @@ function registerEditableFields(root, deck) {
 }
 
 function composition(slide) {
+  // Studio slides are stacks of elements; the campaign deck keeps its layouts
+  // and field names so its saved edits stay attached.
+  if (slide.blocks) return renderBlocks(slide, asset);
   const items = slide.items ?? [];
   switch (slide.layout) {
     case 'opening':
@@ -66,6 +71,23 @@ function composition(slide) {
   }
 }
 
+// The whole presentation: header, every slide (hidden but the current one, so
+// the shared title band measures all headings) and the controls.
+export const deckMarkup = (deck, current) => `<main class="deck-player" aria-label="${escape(deck.title)}"><header class="deck-header"><button class="deck-brand" type="button" aria-label="Sentient"><img src="${asset('/assets/sentient-logo.svg')}" width="180" height="38" alt="Sentient"></button><span class="deck-name">${escape(deck.name ?? deck.title)}</span><div class="deck-tools"><button type="button" data-deck-action="overview" aria-haspopup="dialog" title="Slide overview (G)">Overview <span aria-hidden="true">▦</span></button><button type="button" data-deck-action="print" title="Print all slides">Print <span aria-hidden="true">↗</span></button><button type="button" data-deck-action="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen <span aria-hidden="true">⛶</span></button></div></header><div class="deck-stage">${deck.slides.map((slide,i) => `<article class="deck-slide deck-${escape(slide.layout)}" data-slide="${i}"${slide.blocks && !fixedSurface(slide.layout) ? ` data-surface="${surfaceOf(slide)}"` : ''} role="group" aria-roledescription="slide" aria-label="${i+1} of ${deck.slides.length}: ${escape(slide.title)}" ${i !== current ? 'hidden' : ''}><div class="deck-slide-top"><span>${escape(slide.section)}</span><span class="deck-slide-id">${String(i+1).padStart(2,'0')}</span></div>${heading(slide)}<div class="deck-fit-area"><div class="deck-content"><div class="deck-composition">${composition(slide)}</div>${slide.note ? text('p', 'note', slide.note, 'deck-note') : ''}</div></div></article>`).join('')}</div><footer class="deck-controls"><div class="deck-counter"><span data-deck-current>${String(current+1).padStart(2,'0')}</span><span> / ${String(deck.slides.length).padStart(2,'0')}</span></div><div class="deck-progress" aria-label="Choose a slide">${deck.slides.map((slide,i) => `<button type="button" data-go="${i}" aria-label="Slide ${i+1}: ${escape(slide.section)}" ${i === current ? 'aria-current="step"' : ''}><span></span></button>`).join('')}</div><div class="deck-navigation"><span class="deck-key-hint">← → to navigate</span><button type="button" data-deck-action="previous" aria-label="Previous slide">←</button><button type="button" data-deck-action="next" aria-label="Next slide">→</button></div></footer><span class="deck-announcement" role="status" aria-live="polite" aria-atomic="true"></span><dialog class="deck-overview" aria-labelledby="deck-overview-title"><div class="deck-overview-head"><h2 id="deck-overview-title">${escape(deck.overviewTitle ?? deck.title)}</h2><button type="button" data-deck-action="close-overview" aria-label="Close slide overview">×</button></div><ol>${deck.slides.map((slide,i) => `<li><button type="button" data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${escape(slide.section)}</strong><small>${escape(slide.title)}</small></button></li>`).join('')}</ol></dialog></main>`;
+
+// Studio decks: `~id` is a draft in this browser (the studio's Present
+// button); any other slug is a published deck, read from the deck Worker, or
+// this browser's copy of it when it has not been published yet.
+async function studioDeck(slug) {
+  if (slug.startsWith('~')) return getDeck(slug.slice(1)).catch(() => null);
+  try {
+    const published = await fetchPublished(slug);
+    return { slug, title:published.title, slides:published.deck.slides };
+  } catch (error) {
+    return error.status === 404 || error.status === 0 ? getDeckBySlug(slug).catch(() => null) : null;
+  }
+}
+
 export function parseDeckHash(hash) {
   const match = /^#\/([^/]+)(?:\/(\d+))?\/?$/.exec(hash);
   if (!match) return null;
@@ -74,9 +96,10 @@ export function parseDeckHash(hash) {
   return { slug, slide: Math.max(0, Number(match[2] ?? 1) - 1) };
 }
 
-export function mountDeck(hash) {
+export async function mountDeck(hash) {
   const route = parseDeckHash(hash);
-  const deck = decks.find(item => item.slug === route?.slug);
+  const deck = decks.find(item => item.slug === route?.slug) ?? (route ? await studioDeck(route.slug) : null);
+  const shared = decks.includes(deck);
   document.body.dataset.page = 'deck';
   document.body.className = 'deck-mode';
   if (!deck) {
@@ -87,12 +110,12 @@ export function mountDeck(hash) {
   }
   document.title = deck.title;
   let current = Math.min(route.slide, deck.slides.length - 1);
-  document.body.innerHTML = `<main class="deck-player" aria-label="${escape(deck.title)}"><header class="deck-header"><button class="deck-brand" type="button" aria-label="Sentient"><img src="${asset('/assets/sentient-logo.svg')}" width="180" height="38" alt="Sentient"></button><span class="deck-name">Campaign deck</span><div class="deck-tools"><button type="button" data-deck-action="overview" aria-haspopup="dialog" title="Slide overview (G)">Overview <span aria-hidden="true">▦</span></button><button type="button" data-deck-action="print" title="Print all slides">Print <span aria-hidden="true">↗</span></button><button type="button" data-deck-action="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen <span aria-hidden="true">⛶</span></button></div></header><div class="deck-stage">${deck.slides.map((slide,i) => `<article class="deck-slide deck-${escape(slide.layout)}" data-slide="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} of ${deck.slides.length}: ${escape(slide.title)}" ${i !== current ? 'hidden' : ''}><div class="deck-slide-top"><span>${escape(slide.section)}</span><span class="deck-slide-id">${String(i+1).padStart(2,'0')}</span></div>${heading(slide)}<div class="deck-fit-area"><div class="deck-content"><div class="deck-composition">${composition(slide)}</div>${slide.note ? text('p', 'note', slide.note, 'deck-note') : ''}</div></div></article>`).join('')}</div><footer class="deck-controls"><div class="deck-counter"><span data-deck-current>${String(current+1).padStart(2,'0')}</span><span> / ${String(deck.slides.length).padStart(2,'0')}</span></div><div class="deck-progress" aria-label="Choose a slide">${deck.slides.map((slide,i) => `<button type="button" data-go="${i}" aria-label="Slide ${i+1}: ${escape(slide.section)}" ${i === current ? 'aria-current="step"' : ''}><span></span></button>`).join('')}</div><div class="deck-navigation"><span class="deck-key-hint">← → to navigate</span><button type="button" data-deck-action="previous" aria-label="Previous slide">←</button><button type="button" data-deck-action="next" aria-label="Next slide">→</button></div></footer><span class="deck-announcement" role="status" aria-live="polite" aria-atomic="true"></span><dialog class="deck-overview" aria-labelledby="deck-overview-title"><div class="deck-overview-head"><h2 id="deck-overview-title">The campaign deck</h2><button type="button" data-deck-action="close-overview" aria-label="Close slide overview">×</button></div><ol>${deck.slides.map((slide,i) => `<li><button type="button" data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span><strong>${escape(slide.section)}</strong><small>${escape(slide.title)}</small></button></li>`).join('')}</ol></dialog></main>`;
+  document.body.innerHTML = deckMarkup(deck, current);
   delete document.documentElement.dataset.deck;
   const root = document.querySelector('.deck-player');
   registerEditableFields(root, deck);
   const fit = initDeckFit(root);
-  const pickers = initDeckPickers({ root, deck, asset });
+  const pickers = shared ? initDeckPickers({ root, deck, asset }) : { sync() {}, refreshAccounts() {}, connect() {} };
   const brand = root.querySelector('.deck-brand');
   const header = root.querySelector('.deck-header');
   const coverMark = root.querySelector('.deck-cover-mark');
@@ -113,7 +136,8 @@ export function mountDeck(hash) {
     const deckApi = config.apiUrl ? `${String(config.apiUrl).replace(/\/+$/, '')}/decks/${encodeURIComponent(deck.slug)}` : '';
     pickers.connect({ coverBase:deckApi, lookup:url => editor.lookupPost(url), lookupAccount:handle => editor.lookupAccount(handle) });
   };
-  void configureEditor();
+  // Shared text edits and SentientDash lookups belong to the published decks.
+  if (shared) void configureEditor();
   window.addEventListener('pagehide', () => { editor?.dispose(); fit.dispose(); void emblem?.then(scene => scene?.dispose()); }, { once:true });
   window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
   const slides = [...root.querySelectorAll('.deck-slide')];
@@ -125,7 +149,7 @@ export function mountDeck(hash) {
   const fullscreenButton = root.querySelector('[data-deck-action="fullscreen"]');
   const sync = (index, speak = true) => {
     current = Math.max(0, Math.min(index, slides.length - 1));
-    root.dataset.theme = themes[deck.slides[current].layout] ?? 'dark';
+    root.dataset.theme = surfaceOf(deck.slides[current]);
     root.dataset.layout = deck.slides[current].layout;
     if (root.dataset.layout === 'opening') { coverMark?.append(brand); showEmblem(); }
     else header.prepend(brand);

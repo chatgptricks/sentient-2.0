@@ -14,3 +14,17 @@ In edit mode the accounts slide shows a dropdown on each avatar listing every Se
 `campaign-deck.mjs` owns content; `player.mjs` owns rendering and navigation; `fit.mjs` owns responsive fitting. Rebuild and reload after edits using `npm run build` from `site/`. Run `npm run check` before publishing. A push to `main` deploys through the existing GitHub Pages workflow.
 
 The `#/…` hash namespace selects a deck from `registry.mjs`. Crossing between the normal website and the presentation reloads the document so each starts with its own styles and behavior. Public builds use `BASE_PATH=/sentient-2.0 STATIC_HOSTING=1 npm run build`.
+
+## Deck Studio
+
+`#/studio` is a simplified Canva for decks like this one (local: `http://localhost:4322/#/studio`, published: https://chatgptricks.github.io/sentient-2.0/#/studio). Everything in the campaign deck is available in it:
+
+- **Templates** — each of the sixteen campaign slides (cover, reach metric, accounts, founders, approach, selection funnel, comparison, big words, promotional posts, process, CPM commitment, questions, equation, loop, closing proposal, closing logo), plus a blank slide. A template is inserted after the current slide with the campaign copy as a starting point.
+- **Elements** — the slides' compositions as blocks that can be added to any slide and stacked: statement, paragraph, tags, bulleted list, metric with tags, large metric, commitment, arrow steps, funnel, comparison, big words, timeline, numbered cards, equation, loop, accounts, promotional posts, people (cut-out portraits on the lime circle) and image. Repeatable items (steps, filters, accounts, posts…) are added, removed and reordered in the inspector, within each element's limits.
+- **Surfaces** — any slide except the cover and closing logo can use the dark, paper or lime surface; elements keep their contrast on each (`blocks.css`).
+
+Text is edited directly on the slide or in the inspector; images are uploaded (resized to WebP), linked, or chosen from the Sentient catalogue (account avatars, founders' portraits). Accounts can read their exact followers from SentientDash, and a pasted Instagram link fills a promotional post, cover included. Slides are added, duplicated, deleted and reordered by dragging; undo/redo, ⌘D (duplicate), Delete (remove the selected element) and the arrow keys work outside text fields.
+
+The canvas and every thumbnail are the real presentation: `studio-frame.mjs` (a second build entry) renders the deck with `player.mjs`'s markup, the deck stylesheets and `fit.mjs` in a 1600×900 frame, so the studio shows exactly what viewers see. `blocks.mjs` owns the element library and templates; `studio.mjs` the editor.
+
+Decks are saved as you work in this browser's IndexedDB (`studio-store.mjs`) and can be exported or imported as JSON. **Publicar** (with the deck editor password) uploads the deck's images to the deck Worker and publishes the deck under its slug; the link `#/<slug>` then opens on any device, and **Actualizar publicación** replaces it (a stale copy is refused unless you confirm). The studio home lists published decks, opens their links, edits a copy, and the publish dialog unpublishes. **Presentar** opens the local draft (`#/~<id>`) without publishing. The campaign deck keeps its own layouts and saved-edit field names; studio decks never use its shared-text editor.
