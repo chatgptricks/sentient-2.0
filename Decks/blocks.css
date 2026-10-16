@@ -59,3 +59,8 @@
 }
 /* Display figures set at line-height .82 rise above their box; keep them clear of the title. */
 .deck-block .deck-metric{padding-top:1.4cqw}
+/* Lime figures and labels become ink on the paper and lime surfaces. */
+.deck-slide:is([data-surface=light],[data-surface=accent]) :is(.deck-promo-account,.deck-promo-metrics dd,.deck-promo-source){color:var(--ink)}
+.deck-slide[data-surface=accent] .deck-funnel-result{background:var(--ink);color:var(--accent)}
+.deck-slide[data-surface=accent] .deck-picks span{background:var(--accent)}
+.deck-slide[data-surface=accent] .deck-founder-role{background:var(--ink);color:var(--accent)}
