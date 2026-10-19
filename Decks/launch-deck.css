@@ -1,0 +1,35 @@
+/* Brief-specific spacing; the campaign master, controls and portraits stay shared. */
+.deck-launch-founders .deck-founder-pair{height:calc(var(--deck-workspace-height,40cqw) - 3.8cqw)}
+.deck-launch-founders .deck-founder{grid-template-rows:minmax(0,1fr) 12.6cqw}
+.deck-launch-overview .studio-metric strong{font-size:14cqw!important}
+.deck-launch-overview .studio-metric span{max-width:none}
+.deck-launch-overview .studio-paragraph,.deck-launch-production .studio-paragraph{max-width:85cqw}
+.deck-launch-flow .deck-flow h3{font-size:2.65cqw;min-height:2.1em}
+.deck-launch-flow .deck-flow p{min-height:5.6em}
+.deck-launch-audiences .deck-words h3{font-size:5.1cqw}
+.deck-launch-audiences .deck-words li{grid-template-columns:1.05fr 1fr}
+.deck-launch-audiences .deck-words p{font-size:1.9cqw}
+.deck-launch-reporting .deck-words{gap:.7cqw}
+.deck-launch-reporting .deck-words li{padding-top:.7cqw;grid-template-columns:.8fr 1.2fr}
+.deck-launch-reporting .deck-words h3{font-size:4.4cqw}
+.deck-launch-reporting .deck-words p{font-size:1.9cqw}
+.deck-launch-closing .deck-chips{grid-template-columns:repeat(2,minmax(0,1fr))}
+.deck-launch-closing .deck-statement{align-self:flex-start;background:var(--ink);color:var(--accent)!important;padding:1.4cqw 2.4cqw;border-radius:99px;font-size:2.4cqw!important}
+@media(max-width:760px){
+  .deck-launch-founders .deck-founder-pair{height:auto}
+  .deck-launch-founders .deck-founder{grid-template-rows:minmax(0,1fr) 155px}
+  .deck-launch-founders .deck-founder h3{min-height:2em}
+  .deck-launch-flow .deck-flow h3{font-size:22px;min-height:0}
+  .deck-launch-flow .deck-flow p{min-height:0}
+  .deck-launch-audiences .deck-words,.deck-launch-reporting .deck-words{gap:13px}
+  .deck-launch-audiences .deck-words li,.deck-launch-reporting .deck-words li{grid-template-columns:1fr;gap:4px;padding-top:8px}
+  .deck-launch-audiences .deck-words h3{font-size:32px}
+  .deck-launch-reporting .deck-words h3{font-size:30px}
+  .deck-launch-audiences .deck-words p,.deck-launch-reporting .deck-words p{font-size:14px}
+  .deck-launch-overview .studio-metric strong{font-size:14cqw!important}
+  .deck-launch-closing .deck-chips{grid-template-columns:1fr}
+  .deck-launch-closing .deck-statement{font-size:18px!important;border-radius:18px;padding:12px 16px}
+}
+@media print{
+  .deck-launch-founders .deck-founder-pair{height:5.1in}
+}

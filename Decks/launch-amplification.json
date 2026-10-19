@@ -1,0 +1,445 @@
+{
+  "format": "sentient-deck",
+  "version": 1,
+  "deck": {
+    "title": "Sentient — Launch Amplification",
+    "slides": [
+      {
+        "id": "cover",
+        "layout": "opening",
+        "section": "Launch amplification",
+        "title": "Your launch, amplified across X and LinkedIn",
+        "blocks": [
+          {
+            "type": "cover",
+            "lines": [
+              {
+                "text": "Your launch."
+              },
+              {
+                "text": "Amplified."
+              },
+              {
+                "text": "X + LinkedIn."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sentient",
+        "layout": "network",
+        "surface": "accent",
+        "section": "Sentient",
+        "title": "A media network built for reach",
+        "blocks": [
+          {
+            "type": "metric-tags",
+            "metric": "25–30M",
+            "label": "followers across owned and partner accounts",
+            "tags": [
+              {
+                "text": "AI"
+              },
+              {
+                "text": "Technology"
+              },
+              {
+                "text": "Business"
+              }
+            ],
+            "platforms": [
+              {
+                "text": "X"
+              },
+              {
+                "text": "LinkedIn"
+              },
+              {
+                "text": "Instagram"
+              },
+              {
+                "text": "+ more"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "Established media pages and creators, supported by a database of thousands of accounts."
+          },
+          {
+            "type": "statement",
+            "text": "Audience selection, content and distribution. One team."
+          }
+        ],
+        "note": "Combined followers across owned and partner accounts. Audiences may overlap."
+      },
+      {
+        "id": "our-founders",
+        "layout": "launch-founders",
+        "surface": "dark",
+        "section": "Our founders",
+        "title": "Louis Gleeson & Ivan",
+        "blocks": [
+          {
+            "type": "people",
+            "items": [
+              {
+                "name": "Louis Gleeson",
+                "role": "Co-Founder",
+                "image": "/assets/founders/louis-cutout.webp",
+                "description": "Client relationships and growth strategy. Campaigns built around each brand’s objectives."
+              },
+              {
+                "name": "Ivan",
+                "role": "Co-Founder",
+                "image": "/assets/founders/ivan-cutout.webp",
+                "description": "Media growth & content, including @chatpgtricks. Built and monetised AI communities."
+              }
+            ]
+          }
+        ],
+        "note": "Our experience comes from building audiences ourselves and working directly with brands to reach them."
+      },
+      {
+        "id": "launch-amplification",
+        "layout": "launch-overview",
+        "surface": "accent",
+        "section": "Launch amplification",
+        "title": "Your launch across X and LinkedIn",
+        "blocks": [
+          {
+            "type": "metric",
+            "metric": "100s–1,000s",
+            "label": "of creators and media accounts, coordinated around your launch video"
+          },
+          {
+            "type": "paragraph",
+            "text": "Packages from $10,000. Your original announcement, introduced through tailored commentary, quote posts and reposts."
+          },
+          {
+            "type": "statement",
+            "text": "Minimum guaranteed views: 1M at $40,000 · 2M at $75,000"
+          }
+        ],
+        "note": "Guarantees apply to total campaign views across all included platforms."
+      },
+      {
+        "id": "the-opportunity",
+        "layout": "analysis",
+        "surface": "light",
+        "section": "The opportunity",
+        "title": "Beyond your own followers",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Introduce your product to relevant communities through accounts they already follow. The campaign is designed to generate:"
+          },
+          {
+            "type": "questions",
+            "items": [
+              {
+                "title": "Visibility",
+                "description": "Concentrated attention around your launch."
+              },
+              {
+                "title": "Discussion",
+                "description": "Conversations about your product and its use cases."
+              },
+              {
+                "title": "Traffic",
+                "description": "Visits to your website or launch destination."
+              },
+              {
+                "title": "Adoption",
+                "description": "Opportunities for sign-ups, downloads and product adoption."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "account-selection",
+        "layout": "selection",
+        "surface": "dark",
+        "section": "Account selection",
+        "title": "A distribution plan around your customer",
+        "blocks": [
+          {
+            "type": "funnel",
+            "from": "Thousands of accounts",
+            "to": "Your account mix",
+            "items": [
+              {
+                "title": "Audience relevance",
+                "description": "Communities suited to your product"
+              },
+              {
+                "title": "Performance data",
+                "description": "Available account results"
+              },
+              {
+                "title": "Content style",
+                "description": "A natural fit for the announcement"
+              },
+              {
+                "title": "Placement cost",
+                "description": "Aligned with your selected package"
+              }
+            ]
+          },
+          {
+            "type": "statement",
+            "text": "Specialist creators explain the product. Larger media accounts extend its visibility."
+          }
+        ],
+        "note": "The account mix and campaign scale reflect your product, objectives and selected package."
+      },
+      {
+        "id": "how-amplification-works",
+        "layout": "launch-flow",
+        "surface": "light",
+        "section": "How amplification works",
+        "title": "One launch video. Many introductions.",
+        "blocks": [
+          {
+            "type": "flow",
+            "items": [
+              {
+                "kicker": "Announcement",
+                "title": "Your original post",
+                "description": "The founder or company publishes the main launch post."
+              },
+              {
+                "kicker": "Creators",
+                "title": "Tailored commentary",
+                "description": "Quote posts and reposts introduce the launch to each audience."
+              },
+              {
+                "kicker": "Network",
+                "title": "Wider distribution",
+                "description": "Additional accounts share the announcement across the network."
+              },
+              {
+                "kicker": "Use cases",
+                "title": "Follow-up content",
+                "description": "Supporting posts explore the product and keep the launch in circulation."
+              }
+            ]
+          },
+          {
+            "type": "statement",
+            "text": "Sentient coordinates content, accounts and publishing across X and LinkedIn."
+          }
+        ]
+      },
+      {
+        "id": "content-for-each-audience",
+        "layout": "launch-audiences",
+        "surface": "accent",
+        "section": "Content that fits each audience",
+        "title": "A reason to care for every community",
+        "blocks": [
+          {
+            "type": "words",
+            "items": [
+              {
+                "title": "AI",
+                "description": "What the technology makes possible."
+              },
+              {
+                "title": "Founders",
+                "description": "The business problem it solves and the story behind it — for founders and startup audiences."
+              },
+              {
+                "title": "Productivity",
+                "description": "How it changes an everyday workflow."
+              },
+              {
+                "title": "Developers",
+                "description": "What they can build or achieve with it."
+              }
+            ]
+          },
+          {
+            "type": "statement",
+            "text": "We write or guide creator copy to give each audience a reason to watch, explore and act."
+          }
+        ]
+      },
+      {
+        "id": "launch-execution",
+        "layout": "process",
+        "surface": "dark",
+        "section": "Launch execution",
+        "title": "A coordinated campaign around your launch",
+        "blocks": [
+          {
+            "type": "timeline",
+            "items": [
+              {
+                "title": "Before",
+                "description": "Agree the angle, select accounts, prepare copy and coordinate approvals."
+              },
+              {
+                "title": "At launch",
+                "description": "Your main post goes live, followed by creator commentary and reposts."
+              },
+              {
+                "title": "After",
+                "description": "Extend distribution, monitor performance and manage campaign delivery."
+              }
+            ]
+          },
+          {
+            "type": "statement",
+            "text": "One campaign lead for your team. Sentient coordinates the participating accounts."
+          }
+        ]
+      },
+      {
+        "id": "campaign-packages",
+        "layout": "launch-packages",
+        "surface": "light",
+        "section": "Campaign packages",
+        "title": "A launch package matched to your ambition",
+        "blocks": [
+          {
+            "type": "launch-packages",
+            "investmentLabel": "Investment",
+            "distributionLabel": "Distribution",
+            "viewsLabel": "Minimum guaranteed views",
+            "coordinationLabel": "Account selection and coordination",
+            "copyLabel": "Creator copy guidance",
+            "reportingLabel": "Campaign reporting",
+            "includedLabel": "Included",
+            "plans": [
+              {
+                "name": "Launch",
+                "investment": "$10,000",
+                "distribution": "Focused account selection",
+                "views": "No fixed guarantee"
+              },
+              {
+                "name": "Launch Plus",
+                "investment": "$40,000",
+                "distribution": "Expanded account selection",
+                "views": "1 million"
+              },
+              {
+                "name": "Launch Scale",
+                "investment": "$75,000",
+                "distribution": "Broadest account selection",
+                "views": "2 million"
+              }
+            ]
+          }
+        ],
+        "note": "View guarantees cover total campaign delivery across all included platforms. Views may include repeat exposure. The proposal confirms the account mix, placements and measurement window."
+      },
+      {
+        "id": "optional-video-production",
+        "layout": "launch-production",
+        "surface": "accent",
+        "section": "Optional launch video production",
+        "title": "A launch video built around your product",
+        "blocks": [
+          {
+            "type": "metric",
+            "metric": "+$10,000",
+            "label": "Optional video production · additional investment"
+          },
+          {
+            "type": "paragraph",
+            "text": "A clear customer outcome. A compelling product demonstration. A reason to take action. Messaging aligned with your amplification campaign."
+          },
+          {
+            "type": "statement",
+            "text": "Already have a launch video? We can build the campaign around it."
+          }
+        ],
+        "note": "A separate video production package. Production scope and deliverables are agreed separately."
+      },
+      {
+        "id": "reporting-and-results",
+        "layout": "launch-reporting",
+        "surface": "light",
+        "section": "Reporting and results",
+        "title": "See what your launch delivered",
+        "blocks": [
+          {
+            "type": "words",
+            "items": [
+              {
+                "title": "Views",
+                "description": "Total campaign views against the agreed commitment."
+              },
+              {
+                "title": "Accounts",
+                "description": "Performance by account and placement."
+              },
+              {
+                "title": "Response",
+                "description": "Engagement and audience response."
+              },
+              {
+                "title": "Return",
+                "description": "Traffic and conversions where tracking is available."
+              },
+              {
+                "title": "Next",
+                "description": "Recommendations for future launches."
+              }
+            ]
+          },
+          {
+            "type": "statement",
+            "text": "View guarantees establish delivery. Traffic and conversion reporting help assess commercial return."
+          }
+        ]
+      },
+      {
+        "id": "your-next-launch",
+        "layout": "launch-closing",
+        "surface": "accent",
+        "section": "Your next launch",
+        "title": "An audience for your next announcement",
+        "blocks": [
+          {
+            "type": "chips",
+            "label": "Accounts, messaging and distribution for relevant communities.",
+            "items": [
+              {
+                "title": "Product launches"
+              },
+              {
+                "title": "Major feature releases"
+              },
+              {
+                "title": "Funding announcements"
+              },
+              {
+                "title": "Market expansion"
+              }
+            ]
+          },
+          {
+            "type": "statement",
+            "text": "Share your product, launch date and target audience. We’ll build the campaign around them."
+          }
+        ]
+      },
+      {
+        "id": "end",
+        "layout": "end",
+        "section": "Sentient",
+        "title": "Sentient",
+        "blocks": [
+          {
+            "type": "end-logo"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -5,6 +5,7 @@
 // write inline edits straight back into the slide's data.
 import './blocks.css';
 import { campaignDeck } from './campaign-deck.mjs';
+import { launchBlockTypes } from './launch-elements.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const pad = i => String(i+1).padStart(2,'0');
@@ -33,6 +34,7 @@ const items = (block, key='items') => block[key] ?? [];
 // the studio inspector; `render(block, at, src)` returns the block's markup,
 // where `at(...keys)` names a text path and `src(path)` resolves an image.
 export const blockTypes = {
+  ...launchBlockTypes,
   'metric-tags': {
     label:'Cifra + etiquetas', group:'Cifras', hint:'Un número monumental con temas y plataformas.',
     fields:[field('metric', 'Cifra'), field('label', 'Descripción', 'textarea')],

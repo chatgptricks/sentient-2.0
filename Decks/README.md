@@ -28,3 +28,11 @@ Text is edited directly on the slide or in the inspector; images are uploaded (r
 The canvas and every thumbnail are the real presentation: `studio-frame.mjs` (a second build entry) renders the deck with `player.mjs`'s markup, the deck stylesheets and `fit.mjs` in a 1600×900 frame, so the studio shows exactly what viewers see. `blocks.mjs` owns the element library and templates; `studio.mjs` the editor.
 
 Decks are saved as you work in this browser's IndexedDB (`studio-store.mjs`) and can be exported or imported as JSON. **Publicar** (with the deck editor password) uploads the deck's images to the deck Worker and publishes the deck under its slug; the link `#/<slug>` then opens on any device, and **Actualizar publicación** replaces it (a stale copy is refused unless you confirm). The studio home lists published decks, opens their links, edits a copy, and the publish dialog unpublishes. **Presentar** opens the local draft (`#/~<id>`) without publishing. The campaign deck keeps its own layouts and saved-edit field names; studio decks never use its shared-text editor.
+
+## Launch amplification
+
+`launch-amplification.json` is the editable Studio source for the launch amplification deck. It follows the campaign deck's typography, surfaces, master grid, founders' portraits, cover and closing logo: fourteen slides, comprising a cover, the twelve topics from the supplied launch amplification brief in order, and the closing logo. Launch Scale is **$75,000**, as confirmed by the user, consistently in both the overview and the package comparison. The optional video production package is an additional **$10,000**.
+
+Published link: https://chatgptricks.github.io/sentient-2.0/#/launch-amplification
+
+The deck is published through the existing Studio API, with no registry entry, so a subsequent Studio publication updates the public link. Import the JSON to create a local copy, or open the published deck in Studio. The original campaign deck and its saved edits remain separate. `launch-elements.mjs` adds a native, editable three-package comparison table; `launch-elements.css` and `launch-deck.css` scope its layout and spacing without changing the campaign master. To validate the source, pass its `deck` to `validateStudioDeck({ deck, revision:0 })` from `comments-api/worker.mjs`.
