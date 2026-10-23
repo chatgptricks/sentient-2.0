@@ -40,7 +40,7 @@ export async function build() {
   const entryPoints = [resolve(root, 'src/motion.mjs')];
   if (pages['/universe']) entryPoints.push(resolve(root, 'src/universe.mjs'));
   await bundle({ entryPoints, outdir: resolve(root, 'dist/js'), loader: { '.svg': 'text' }, bundle: true, splitting: true, format: 'esm', minify: true, target: ['es2022'], logLevel: 'warning' });
-  await bundle({ entryPoints: [resolve(root, '../Decks/router.mjs'), resolve(root, '../Decks/studio-frame.mjs')], outdir: resolve(root, 'dist/Decks'), external: ['/assets/*'], loader: { '.svg': 'text' }, bundle: true, splitting: true, format: 'esm', minify: true, target: ['es2022'], logLevel: 'warning' });
+  await bundle({ entryPoints: [resolve(root, '../Decks/router.mjs'), resolve(root, '../Decks/studio-frame.mjs')], outdir: resolve(root, 'dist/Decks'), nodePaths:[resolve(root, 'node_modules')], external: ['/assets/*'], loader: { '.svg': 'text' }, bundle: true, splitting: true, format: 'esm', minify: true, target: ['es2022'], logLevel: 'warning' });
   if (basePath) {
     const rewriteAssets = async directory => {
       for (const entry of await readdir(directory, { withFileTypes: true })) {

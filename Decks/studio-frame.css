@@ -1,5 +1,5 @@
 /* Inside a studio frame: the slide alone, with editing affordances. */
-.studio-frame .deck-tools,.studio-frame .deck-controls{visibility:hidden}
+.studio-frame .deck-controls{visibility:hidden}
 .studio-editable [contenteditable]{cursor:text;outline:1px solid transparent;outline-offset:5px;border-radius:2px}
 .studio-editable [contenteditable]:hover{outline-color:#d0ff0077}
 .studio-editable [contenteditable]:focus{outline:2px solid #d0ff00}

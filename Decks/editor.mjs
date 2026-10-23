@@ -37,7 +37,7 @@ function sameFields(a, b) {
   return keys.length === Object.keys(b).length && keys.every(key => Object.hasOwn(b, key) && a[key] === b[key]);
 }
 
-export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStart }) {
+export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStart, onDownloadPdf }) {
   const lifecycle = new AbortController();
   const { signal } = lifecycle;
   const brand = root.querySelector('.deck-brand');
@@ -54,12 +54,13 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   const toolbar = document.createElement('div');
   toolbar.className = 'deck-edit-toolbar';
   toolbar.hidden = true;
-  toolbar.innerHTML = '<p class="deck-edit-feedback" role="status" aria-live="polite"></p><button class="deck-edit-done" type="button">Done <span aria-hidden="true">✓</span></button>';
+  toolbar.innerHTML = '<p class="deck-edit-feedback" role="status" aria-live="polite"></p><button class="deck-edit-pdf" type="button">Download PDF</button><button class="deck-edit-done" type="button">Done <span aria-hidden="true">✓</span></button>';
   root.append(dialog, toolbar);
   const passwordInput = dialog.querySelector('input');
   const accessFeedback = dialog.querySelector('.deck-access-feedback');
   const continueButton = dialog.querySelector('.deck-access-continue');
-  const doneButton = toolbar.querySelector('button');
+  const doneButton = toolbar.querySelector('.deck-edit-done');
+  const pdfButton = toolbar.querySelector('.deck-edit-pdf');
   const editFeedback = toolbar.querySelector('.deck-edit-feedback');
   let credential = '';
   let revision = 0;
@@ -67,6 +68,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   let savedSnapshot = '';
   let editing = false;
   let saving = false;
+  let exporting = false;
   let loadingError = false;
   let lastFocused;
   let accessGeneration = 0;
@@ -162,7 +164,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     brand?.focus?.({ preventScroll: true });
   };
   const save = async () => {
-    if (!editing || saving) return;
+    if (!editing || saving || exporting) return;
     if (!dirty()) { leave(); return; }
     const values = { ...serverFields };
     for (const { key, element, original } of fields) {
@@ -177,6 +179,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     }
     saving = true;
     doneButton.disabled = true;
+    pdfButton.disabled = true;
     doneButton.setAttribute('aria-busy', 'true');
     doneButton.textContent = 'Saving…';
     editFeedback.textContent = '';
@@ -216,11 +219,30 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     } finally {
       saving = false;
       doneButton.disabled = false;
+      pdfButton.disabled = false;
       doneButton.removeAttribute('aria-busy');
       doneButton.innerHTML = 'Done <span aria-hidden="true">✓</span>';
       if (editing) fields.forEach(({ element }) => element.setAttribute('contenteditable', 'plaintext-only'));
     }
   };
+
+  pdfButton.addEventListener('click', async () => {
+    if (!editing || saving || exporting || !onDownloadPdf) return;
+    exporting = true;
+    pdfButton.disabled = doneButton.disabled = true;
+    pdfButton.setAttribute('aria-busy', 'true');
+    document.activeElement?.blur();
+    try {
+      await onDownloadPdf(({ index, total }) => { editFeedback.textContent = `Preparing PDF ${index + 1}/${total}…`; });
+      editFeedback.textContent = '';
+    } catch {
+      editFeedback.textContent = 'Could not download PDF. Try again.';
+    } finally {
+      exporting = false;
+      pdfButton.disabled = doneButton.disabled = false;
+      pdfButton.removeAttribute('aria-busy');
+    }
+  }, { signal });
 
   brand?.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); }, { signal });
   brand?.addEventListener('dblclick', openAccess, { signal });

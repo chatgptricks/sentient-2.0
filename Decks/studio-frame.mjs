@@ -94,4 +94,34 @@ function select(block) {
   drawOutline();
 }
 
-window.studioFrame = { render, select };
+async function downloadPdf(deck, { onProgress, download = true } = {}) {
+  render(deck, 0, { emblem:true });
+  document.body.className = 'deck-mode';
+  outline.remove();
+  const root = document.querySelector('.deck-player');
+  const slides = [...root.querySelectorAll('.deck-slide')];
+  const brand = root.querySelector('.deck-brand');
+  const header = root.querySelector('.deck-header');
+  const cover = root.querySelector('.deck-cover-mark');
+  const { exportDeckPdf, snapshotCanvas } = await import('./pdf-export.mjs');
+  return exportDeckPdf({ root, deck, download, onProgress,
+    showSlide(index) {
+      root.dataset.theme = surfaceOf(deck.slides[index]);
+      root.dataset.layout = deck.slides[index].layout;
+      if (root.dataset.layout === 'opening') cover?.append(brand);
+      else header.prepend(brand);
+      slides.forEach((slide, i) => { slide.hidden = i !== index; });
+      root.querySelector('[data-deck-current]').textContent = String(index + 1).padStart(2, '0');
+      root.querySelectorAll('.deck-progress [data-go]').forEach(button => {
+        if (Number(button.dataset.go) === index) button.setAttribute('aria-current', 'step');
+        else button.removeAttribute('aria-current');
+      });
+      root.querySelector('[data-deck-action="previous"]').disabled = index === 0;
+      root.querySelector('[data-deck-action="next"]').disabled = index === slides.length - 1;
+      fit.update();
+    },
+    beforeCapture:async () => snapshotCanvas(root, await emblem)
+  });
+}
+
+window.studioFrame = { render, select, downloadPdf };

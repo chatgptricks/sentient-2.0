@@ -18,8 +18,11 @@ test('rate limits and rejects oversized requests',async()=>{
 });
 test('does not report success on a failed save',async()=>{const r=await worker.fetch(req('POST',note),{...env,DB:{prepare(){throw new Error('offline');}}});assert.equal(r.status,503);});
 
-const editorPassword = 'test-editor-password';
-const editorHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(editorPassword)))].map(value=>value.toString(16).padStart(2,'0')).join('');
+const editorPassword = crypto.randomUUID();
+const legacyEditorPassword = crypto.randomUUID();
+const passwordHash = async password => [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(password)))].map(value=>value.toString(16).padStart(2,'0')).join('');
+const editorHash = await passwordHash(editorPassword);
+const legacyEditorHash = await passwordHash(legacyEditorPassword);
 const deckRequest = (method, body, options={}) => new Request(`https://api.example/decks/${options.slug ?? 'campaign-deck'}`, {
   method,
   headers: {
@@ -112,6 +115,26 @@ test('deck editor authentication validates the password without storing or chang
   const state=await worker.fetch(deckRequest('GET'),storage);
   assert.deepEqual((await state.json()).fields,{});
   assert.equal((await worker.fetch(new Request('https://api.example/decks/campaign-deck/auth',{method:'OPTIONS',headers:{Origin:'https://chatgptricks.github.io'}}),storage)).headers.get('Access-Control-Allow-Methods'),'POST, OPTIONS');
+});
+
+test('classic editor accepts both password hashes with one digest per attempt',async context=>{
+  const storage={...deckEnvironment(context),DECK_EDITOR_PASSWORD_LEGACY_SHA256:legacyEditorHash.toUpperCase()};
+  const digest=crypto.subtle.digest.bind(crypto.subtle);
+  const calls=context.mock.method(crypto.subtle,'digest',(...args)=>digest(...args));
+  const auth=password=>new Request('https://api.example/decks/campaign-deck/auth',{method:'POST',headers:{Origin:'https://chatgptricks.github.io','Content-Type':'application/json'},body:JSON.stringify({password})});
+  for (const [password,status] of [[editorPassword,200],[legacyEditorPassword,200],[crypto.randomUUID(),401]]) {
+    const before=calls.mock.callCount();
+    assert.equal((await worker.fetch(auth(password),storage)).status,status);
+    assert.equal(calls.mock.callCount(),before+1);
+  }
+  assert.equal((await (await worker.fetch(deckRequest('GET'),storage)).json()).revision,0);
+  for (const [revision,password] of [editorPassword,legacyEditorPassword].entries()) {
+    const response=await worker.fetch(deckRequest('PUT',{fields:{title:`Edit ${revision+1}`},revision},{password}),storage);
+    assert.equal(response.status,200);
+    assert.equal((await response.json()).revision,revision+1);
+  }
+  assert.equal((await worker.fetch(deckRequest('PUT',{fields:{title:'Rejected'},revision:2},{password:crypto.randomUUID()}),storage)).status,401);
+  assert.deepEqual((await (await worker.fetch(deckRequest('GET'),storage)).json()).fields,{title:'Edit 2'});
 });
 
 test('deck requests enforce CORS, method, JSON and streamed body limits',async context=>{
@@ -268,6 +291,35 @@ test('publishes, reads, conflicts and unpublishes studio decks',async context=>{
   assert.equal((await worker.fetch(studioRequest('GET','/decks/launch-plan',undefined,{password:null}),storage)).status,404);
 });
 
+test('studio accepts both passwords for authentication and publishing but rejects another password',async context=>{
+  const storage={...studioEnvironment(context),DECK_EDITOR_PASSWORD_LEGACY_SHA256:legacyEditorHash};
+  for (const [revision,password] of [editorPassword,legacyEditorPassword].entries()) {
+    assert.equal((await worker.fetch(studioRequest('POST','/auth',undefined,{password}),storage)).status,200);
+    const response=await worker.fetch(studioRequest('PUT','/decks/rotation-plan',{deck:studioDeck,revision},{password}),storage);
+    assert.equal(response.status,200);
+    assert.equal((await response.json()).revision,revision+1);
+    assert.equal((await worker.fetch(studioRequest('GET','/decks',undefined,{password}),storage)).status,200);
+  }
+  const wrong=crypto.randomUUID();
+  assert.equal((await worker.fetch(studioRequest('POST','/auth',undefined,{password:wrong}),storage)).status,401);
+  assert.equal((await worker.fetch(studioRequest('PUT','/decks/rotation-plan',{deck:{...studioDeck,title:'Rejected'},revision:2},{password:wrong}),storage)).status,401);
+  const saved=await (await worker.fetch(studioRequest('GET','/decks/rotation-plan',undefined,{password:null}),storage)).json();
+  assert.equal(saved.title,studioDeck.title);
+  assert.equal(saved.revision,2);
+});
+
+test('optional legacy hashes are ignored when malformed and never replace the required primary hash',async context=>{
+  const storage=studioEnvironment(context);
+  const auth=password=>new Request('https://api.example/decks/campaign-deck/auth',{method:'POST',headers:{Origin:'https://chatgptricks.github.io','Content-Type':'application/json'},body:JSON.stringify({password})});
+  const malformed={...storage,DECK_EDITOR_PASSWORD_LEGACY_SHA256:legacyEditorHash.slice(0,63)};
+  assert.equal((await worker.fetch(auth(editorPassword),malformed)).status,200);
+  assert.equal((await worker.fetch(auth(legacyEditorPassword),malformed)).status,401);
+  assert.equal((await worker.fetch(studioRequest('POST','/auth',undefined,{password:legacyEditorPassword}),malformed)).status,401);
+  const noPrimary={...storage,DECK_EDITOR_PASSWORD_SHA256:undefined,DECK_EDITOR_PASSWORD_LEGACY_SHA256:legacyEditorHash};
+  assert.equal((await worker.fetch(auth(legacyEditorPassword),noPrimary)).status,503);
+  assert.equal((await worker.fetch(studioRequest('POST','/auth',undefined,{password:legacyEditorPassword}),noPrimary)).status,503);
+});
+
 test('stores studio images once by content and serves them publicly',async context=>{
   const storage=studioEnvironment(context);
   const bytes=new Uint8Array([0x52,0x49,0x46,0x46,1,2,3,4]);
@@ -283,4 +335,17 @@ test('stores studio images once by content and serves them publicly',async conte
   assert.equal(image.headers.get('Content-Type'),'image/webp');
   assert.deepEqual(new Uint8Array(await image.arrayBuffer()),bytes);
   assert.equal((await worker.fetch(new Request('https://api.example/studio/assets/nope'),storage)).status,404);
+});
+
+test('classic and studio SentientDash lookups accept both passwords and reject incorrect credentials',async context=>{
+  const storage={...studioEnvironment(context),DECK_EDITOR_PASSWORD_LEGACY_SHA256:legacyEditorHash,SENTIENTDASH_API_KEY:dashKey};
+  withDash(context);
+  for (const [password,status] of [[editorPassword,200],[legacyEditorPassword,200],[crypto.randomUUID(),401]]) {
+    for (const prefix of ['/decks/campaign-deck','/studio']) {
+      for (const [path,body] of [['account',{handle:'chatgptricks'}],['instagram-post',{url:'https://www.instagram.com/p/DalMfBeINkQ/'}]]) {
+        const request=new Request(`https://api.example${prefix}/${path}`,{method:'POST',headers:{Origin:'https://chatgptricks.github.io','Content-Type':'application/json',Authorization:`Bearer ${password}`},body:JSON.stringify(body)});
+        assert.equal((await worker.fetch(request,storage)).status,status,`${prefix}/${path}`);
+      }
+    }
+  }
 });

@@ -15,9 +15,6 @@ html:has(body.deck-mode){overflow:hidden}
 .deck-brand img{display:block;width:145px;height:auto;transform:none}
 .deck-player[data-theme=light] .deck-brand img,.deck-player[data-theme=accent] .deck-brand img{filter:brightness(0)}
 .deck-name{display:none}
-.deck-tools{display:flex;gap:3px;padding:3px 8px;margin-left:auto;background:#242424e8;border:1px solid #ffffff24;border-radius:30px;backdrop-filter:blur(16px)}
-.deck-tools button{border:0;padding:9px 11px;background:none;color:#f0f0e8;font-size:11px;display:flex;gap:9px;align-items:center}
-.deck-tools button span{font-size:15px}.deck-tools button:hover{color:var(--accent)}
 /* Every slide uses exactly this master surface; only its content is fitted. */
 .deck-stage{position:relative;width:100%;height:100%}
 .deck-slide{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);--copy:#c5c5bc;--rule:#ffffff32}
@@ -194,7 +191,7 @@ html:has(body.deck-mode){overflow:hidden}
 .deck-overview ol{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 24px;list-style:none;padding:0;margin:0}.deck-overview li button{display:flex;flex-direction:column;text-align:left;gap:9px;width:100%;min-height:120px;padding:16px 0;border:0;border-top:1px solid #ffffff40;background:none;color:var(--paper)}.deck-overview li button>span{font-size:12px;color:var(--accent)}.deck-overview strong{font-size:16px;font-weight:500}.deck-overview small{font-size:12px;color:#b7b7ad}.deck-overview li button:hover strong{color:var(--accent)}
 .deck-missing{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;align-items:start;gap:25px;padding:8vw}.deck-missing img{width:160px;margin-bottom:40px}.deck-missing h1{font-size:clamp(38px,7vw,80px)}.deck-missing a{color:var(--accent);border-bottom:1px solid currentColor;padding-bottom:8px}
 @media(max-width:760px){
-.deck-header{top:16px;height:38px}.deck-brand img{width:112px}.deck-tools{padding:1px 6px}.deck-tools button{font-size:10px;padding:7px 8px}.deck-tools button[data-deck-action=print],.deck-tools button[data-deck-action=fullscreen]{display:none}
+.deck-header{top:16px;height:38px}.deck-brand img{width:112px}
 .deck-content{gap:18px}.deck-composition{gap:22px}.deck-slide-top{font-size:10px}.deck-slide p{font-size:15px}.deck-statement{font-size:18px!important}.deck-note{font-size:10px!important;max-width:none}
 .deck-arrow{display:none}
 .deck-network-body,.deck-commitment-body,.deck-loop-body{grid-template-columns:1fr;gap:22px;align-items:start}
@@ -212,7 +209,7 @@ html:has(body.deck-mode){overflow:hidden}
 .deck-closing .deck-statement{font-size:16px!important}.deck-closing-label{font-size:11px!important}.deck-chips{grid-template-columns:1fr;gap:7px}.deck-chips li{font-size:17px;padding:10px 14px;gap:8px;border-radius:12px}.deck-chips li:before{width:22px;font-size:12px}
 .deck-controls{bottom:14px;gap:14px;padding:5px 8px 5px 14px}.deck-progress{width:100px;gap:3px}.deck-counter{font-size:11px;width:44px}.deck-navigation button{width:32px;height:32px}.deck-overview{padding:22px}.deck-overview ol{grid-template-columns:1fr 1fr;gap:10px 22px}
 }
-@media(max-height:500px){.deck-header{top:10px;height:36px}.deck-brand img{width:100px}.deck-tools button{font-size:9px;padding:6px 8px}.deck-controls{bottom:9px;padding:3px 9px;gap:13px}.deck-navigation button{width:28px;height:28px}.deck-progress button{padding:13px 0}}
+@media(max-height:500px){.deck-header{top:10px;height:36px}.deck-brand img{width:100px}.deck-controls{bottom:9px;padding:3px 9px;gap:13px}.deck-navigation button{width:28px;height:28px}.deck-progress button{padding:13px 0}}
 @page deck{size:16in 9in;margin:0}
 @media print{
 html:has(body.deck-mode),body.deck-mode{margin:0!important;width:16in;height:auto;overflow:visible;background:var(--ink);print-color-adjust:exact;-webkit-print-color-adjust:exact}

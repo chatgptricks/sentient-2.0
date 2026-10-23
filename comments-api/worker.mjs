@@ -37,14 +37,20 @@ async function readJson(request, limit) {
   catch { return { error: 'Invalid JSON.', status: 400 }; }
 }
 
-async function authorizedDeckEditor(password, passwordHash) {
+async function authorizedDeckEditor(password, env) {
   if (typeof password !== 'string' || !password || password.length > 256) return false;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(password));
   const candidate = [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
-  let difference = 0;
-  const expected = passwordHash.toLowerCase();
-  for (let index = 0; index < expected.length; index++) difference |= expected.charCodeAt(index) ^ candidate.charCodeAt(index);
-  return difference === 0;
+  let matched = 0;
+  for (const passwordHash of [env.DECK_EDITOR_PASSWORD_SHA256, env.DECK_EDITOR_PASSWORD_LEGACY_SHA256]) {
+    if (typeof passwordHash !== 'string' || !/^[0-9a-f]{64}$/i.test(passwordHash)) continue;
+    const expected = passwordHash.toLowerCase();
+    let difference = 0;
+    // Compare every character of every configured digest, even after a match.
+    for (let index = 0; index < 64; index++) difference |= expected.charCodeAt(index) ^ candidate.charCodeAt(index);
+    matched |= Number(difference === 0);
+  }
+  return matched !== 0;
 }
 
 const publicDeck = row => ({
@@ -70,7 +76,7 @@ async function handleDeckAuth(request, env, json, originAllowed) {
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
   const parsed = await readJson(request, 2048);
   if (parsed.error) return json(parsed.status, { error: parsed.error });
-  if (!(await authorizedDeckEditor(parsed.data?.password, env.DECK_EDITOR_PASSWORD_SHA256))) return json(401, { error: 'Incorrect editor password.' });
+  if (!(await authorizedDeckEditor(parsed.data?.password, env))) return json(401, { error: 'Incorrect editor password.' });
   return json(200, { ok: true });
 }
 
@@ -83,7 +89,7 @@ async function handleDeck(request, env, json, originAllowed) {
   const rejected = await guardDeckWrite(request, env, json, originAllowed);
   if (rejected) return rejected;
   const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
-  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return json(401, { error: 'Incorrect editor password.' });
+  if (!(await authorizedDeckEditor(password, env))) return json(401, { error: 'Incorrect editor password.' });
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
   const parsed = await readJson(request, deckBodyLimit);
   if (parsed.error) return json(parsed.status, { error: parsed.error });
@@ -144,7 +150,7 @@ async function handleInstagramPost(request, env, json, originAllowed) {
   const rejected = await guardDeckWrite(request, env, json, originAllowed);
   if (rejected) return rejected;
   const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
-  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return json(401, { error: 'Incorrect editor password.' });
+  if (!(await authorizedDeckEditor(password, env))) return json(401, { error: 'Incorrect editor password.' });
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
   const parsed = await readJson(request, 4096);
   if (parsed.error) return json(parsed.status, { error: parsed.error });
@@ -177,7 +183,7 @@ async function handleAccount(request, env, json, originAllowed) {
   const rejected = await guardDeckWrite(request, env, json, originAllowed);
   if (rejected) return rejected;
   const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
-  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return json(401, { error: 'Incorrect editor password.' });
+  if (!(await authorizedDeckEditor(password, env))) return json(401, { error: 'Incorrect editor password.' });
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
   const parsed = await readJson(request, 1024);
   if (parsed.error) return json(parsed.status, { error: parsed.error });
@@ -259,7 +265,7 @@ async function studioWrite(request, env, json, originAllowed, limit = 4096) {
   if (rate && !(await rate.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' })).success) return { response: json(429, { error: 'Too many requests. Please wait a minute.' }) };
   if (!/^[0-9a-f]{64}$/i.test(env.DECK_EDITOR_PASSWORD_SHA256 || '')) return { response: json(503, { error: 'Publishing is temporarily unavailable.' }) };
   const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
-  if (!(await authorizedDeckEditor(password, env.DECK_EDITOR_PASSWORD_SHA256))) return { response: json(401, { error: 'Incorrect editor password.' }) };
+  if (!(await authorizedDeckEditor(password, env))) return { response: json(401, { error: 'Incorrect editor password.' }) };
   if (limit === 0) return {};
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return { response: json(415, { error: 'Use JSON.' }) };
   const parsed = await readJson(request, limit);

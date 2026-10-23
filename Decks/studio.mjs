@@ -282,6 +282,7 @@ async function renderEditor(app, id) {
       <div class="studio-bar-actions">
         <button data-act="undo" title="Deshacer (⌘Z)" aria-label="Deshacer">↶</button><button data-act="redo" title="Rehacer (⇧⌘Z)" aria-label="Rehacer">↷</button>
         <button data-act="export" title="Descargar el deck como JSON">Exportar</button>
+        <button data-act="pdf">Descargar PDF</button>
         <button data-act="present">Presentar ▶</button>
         <button class="studio-primary" data-act="publish">Publicar</button>
       </div>
@@ -638,6 +639,21 @@ async function renderEditor(app, id) {
       case 'next': go(index + 1); break;
       case 'present': await putDeck(deck); window.open(presentUrl(`~${deck.id}/${index + 1}`), '_blank', 'noopener'); break;
       case 'export': download(`${deck.slug}.json`, { format:'sentient-deck', version:1, deck:{ title:deck.title, slides:deck.slides } }); break;
+      case 'pdf': {
+        if (target.disabled) break;
+        target.disabled = true;
+        target.setAttribute('aria-busy', 'true');
+        const frame = createFrame();
+        frame.iframe.style.cssText = 'position:fixed;left:-20000px;top:0;width:1600px;height:900px;border:0;pointer-events:none';
+        document.body.append(frame.iframe);
+        try {
+          const renderer = await frame.ready;
+          if (!renderer) throw new Error('No se pudo preparar el PDF.');
+          await renderer.downloadPdf(copy(deck), { onProgress:({ index, total }) => { target.textContent = `PDF ${index + 1}/${total}…`; } });
+        } catch (error) { toast(error.message || 'No se pudo descargar el PDF.', 'studio-toast-error'); }
+        finally { frame.iframe.remove(); target.disabled = false; target.removeAttribute('aria-busy'); target.textContent = 'Descargar PDF'; }
+        break;
+      }
       case 'publish': void publish(); break;
       case 'dup-slide': { const at = Number(target.dataset.index); change(() => { deck.slides.splice(at + 1, 0, { ...copy(deck.slides[at]), id:newId() }); index = at + 1; selected = null; }); break; }
       case 'del-slide': { const at = Number(target.dataset.index); if (deck.slides.length > 1) change(() => { deck.slides.splice(at, 1); index = Math.min(index > at ? index - 1 : index, deck.slides.length - 1); selected = null; }); break; }

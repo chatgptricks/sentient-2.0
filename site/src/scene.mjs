@@ -279,6 +279,7 @@ export function createScene(host, paused = false, options = {}) {
   start();
 
   return {
+    snapshot() { render(); return renderer.domElement.toDataURL('image/png'); },
     setPaused(value) {
       paused = value;
       if (paused) { stop(); render(); } else start();

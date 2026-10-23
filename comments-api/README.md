@@ -28,6 +28,8 @@ The same Worker stores shared text overrides for the campaign deck. Migration `0
 
 The plaintext password is not stored in this repository or returned by the API. Configure `DECK_EDITOR_PASSWORD_SHA256` as a Wrangler secret containing the password's 64-character SHA-256 hex digest. For example, generate the digest with a hidden terminal prompt, then supply that digest to `npx wrangler secret put DECK_EDITOR_PASSWORD_SHA256`. Local development can provide the digest as a runtime binding with `wrangler dev --var DECK_EDITOR_PASSWORD_SHA256:<digest>`. Keep plaintext credentials and local secret files outside tracked files. Without the secret, reads work and writes are unavailable. Edit attempts have a separate per-IP rate limit.
 
+During a password rotation, optionally configure `DECK_EDITOR_PASSWORD_LEGACY_SHA256` with the previous password's 64-character SHA-256 hex digest. Both passwords then work for classic deck editing, Studio publishing and protected account/post lookups. The primary secret remains required; a missing or malformed legacy digest is ignored. The Worker hashes each submitted password once and compares it against both configured digests without stopping at the first match. To preserve existing access during rollout, deploy this compatibility code and configure the legacy digest before changing the primary digest. Removing the legacy secret revokes the previous password.
+
 Apply the new migration before deploying the Worker, using the existing local/remote migration commands. A saved deck can be read or downloaded as JSON from the GET endpoint. Administrators can also export the backing database with `npx wrangler d1 export sentient-proposal-comments --remote --output=<private-path>`.
 
 ## Promotional-post lookups
@@ -53,4 +55,4 @@ Migration `0003_studio.sql` adds `studio_decks` (published decks, at most 512 Ki
 - `POST /studio/assets` — raw WebP, PNG, JPEG or GIF body; returns `{ id, url }`. `GET /studio/assets/{id}` serves it publicly with an immutable cache.
 - `POST /studio/auth` — checks the password. `POST /studio/account` and `POST /studio/instagram-post` are the SentientDash lookups; the post lookup copies the cover into `studio_assets` so a published deck never depends on SentientDash.
 
-Every write uses the deck editor password as `Authorization: Bearer …` (the same `DECK_EDITOR_PASSWORD_SHA256`) from an allowed origin.
+Every write uses a deck editor password as `Authorization: Bearer …` from an allowed origin. The primary `DECK_EDITOR_PASSWORD_SHA256` and optional `DECK_EDITOR_PASSWORD_LEGACY_SHA256` secrets apply to Studio as well as the classic deck.
