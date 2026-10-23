@@ -135,10 +135,16 @@ export async function mountDeck(hash) {
     exporting = true;
     const wasEditing = root.classList.contains('deck-editing');
     const original = current;
-    root.classList.remove('deck-editing');
     try {
+      const { choosePdfSlides } = await import('./pdf-dialog.mjs');
+      const choices = { ...deck, slides:deck.slides.map((slide, index) => ({ ...slide,
+        title:slides[index].querySelector('.deck-title')?.textContent ?? slide.title,
+        section:slides[index].querySelector('.deck-slide-top>span')?.textContent ?? slide.section })) };
+      const slideIndices = await choosePdfSlides(choices);
+      if (!slideIndices) return;
+      root.classList.remove('deck-editing');
       const { exportDeckPdf, snapshotCanvas } = await import('./pdf-export.mjs');
-      return await exportDeckPdf({ root, deck, current:original, showSlide:index => sync(index, false), onProgress,
+      return await exportDeckPdf({ root, deck, current:original, slideIndices, showSlide:index => sync(index, false), onProgress,
         beforeCapture:async () => snapshotCanvas(root, await emblem) });
     } finally {
       if (wasEditing) root.classList.add('deck-editing');

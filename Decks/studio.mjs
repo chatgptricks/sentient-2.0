@@ -641,6 +641,9 @@ async function renderEditor(app, id) {
       case 'export': download(`${deck.slug}.json`, { format:'sentient-deck', version:1, deck:{ title:deck.title, slides:deck.slides } }); break;
       case 'pdf': {
         if (target.disabled) break;
+        const { choosePdfSlides } = await import('./pdf-dialog.mjs');
+        const slideIndices = await choosePdfSlides(deck);
+        if (!slideIndices) break;
         target.disabled = true;
         target.setAttribute('aria-busy', 'true');
         const frame = createFrame();
@@ -649,7 +652,7 @@ async function renderEditor(app, id) {
         try {
           const renderer = await frame.ready;
           if (!renderer) throw new Error('No se pudo preparar el PDF.');
-          await renderer.downloadPdf(copy(deck), { onProgress:({ index, total }) => { target.textContent = `PDF ${index + 1}/${total}…`; } });
+          await renderer.downloadPdf(copy(deck), { slideIndices, onProgress:({ index, total }) => { target.textContent = `PDF ${index + 1}/${total}…`; } });
         } catch (error) { toast(error.message || 'No se pudo descargar el PDF.', 'studio-toast-error'); }
         finally { frame.iframe.remove(); target.disabled = false; target.removeAttribute('aria-busy'); target.textContent = 'Descargar PDF'; }
         break;

@@ -94,7 +94,7 @@ function select(block) {
   drawOutline();
 }
 
-async function downloadPdf(deck, { onProgress, download = true } = {}) {
+async function downloadPdf(deck, { onProgress, download = true, slideIndices } = {}) {
   render(deck, 0, { emblem:true });
   document.body.className = 'deck-mode';
   outline.remove();
@@ -104,7 +104,7 @@ async function downloadPdf(deck, { onProgress, download = true } = {}) {
   const header = root.querySelector('.deck-header');
   const cover = root.querySelector('.deck-cover-mark');
   const { exportDeckPdf, snapshotCanvas } = await import('./pdf-export.mjs');
-  return exportDeckPdf({ root, deck, download, onProgress,
+  return exportDeckPdf({ root, deck, download, onProgress, slideIndices,
     showSlide(index) {
       root.dataset.theme = surfaceOf(deck.slides[index]);
       root.dataset.layout = deck.slides[index].layout;

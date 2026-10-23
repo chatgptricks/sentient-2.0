@@ -57,7 +57,7 @@ export function snapshotCanvas(root, scene) {
   image.height = canvas.height;
   image.setAttribute('aria-hidden', 'true');
   const style = root.ownerDocument.defaultView.getComputedStyle(canvas);
-  for (const property of style) image.style.setProperty(property, style.getPropertyValue(property), style.getPropertyPriority(property));
+  for (const property of Array.from(style)) image.style.setProperty(property, style.getPropertyValue(property), style.getPropertyPriority(property));
   canvas.replaceWith(image);
   return () => { if (image.parentNode) image.replaceWith(canvas); };
 }
@@ -67,14 +67,17 @@ export function snapshotCanvas(root, scene) {
  * return a cleanup function. showSlide(index) must keep the same root mounted.
  * Set download:false to return the generated Blob without starting a download.
  */
-export async function exportDeckPdf({ root, deck, current=0, showSlide, onProgress, filename, beforeCapture, download=true }) {
+export async function exportDeckPdf({ root, deck, current=0, showSlide, onProgress, filename, beforeCapture, download=true, slideIndices }) {
   if (!root?.isConnected || !deck?.slides?.length || typeof showSlide !== 'function') throw new Error('The presentation is not ready for export.');
   if (activeExports.has(root)) throw new Error('This presentation is already being exported.');
   activeExports.add(root);
   const doc = root.ownerDocument;
   const view = doc.defaultView;
-  const total = deck.slides.length;
-  const original = Math.max(0, Math.min(total - 1, Number.isInteger(current) ? current : 0));
+  const indices = slideIndices === undefined ? deck.slides.map((_, i) => i)
+    : [...new Set(slideIndices)].filter(i => Number.isInteger(i) && i >= 0 && i < deck.slides.length).sort((a, b) => a - b);
+  if (!indices.length) { activeExports.delete(root); throw new Error('Choose at least one slide.'); }
+  const total = indices.length;
+  const original = Math.max(0, Math.min(deck.slides.length - 1, Number.isInteger(current) ? current : 0));
   const report = (index, phase) => {
     try { onProgress?.({ index, total, phase }); } catch { /* Progress UI does not affect the document. */ }
   };
@@ -92,8 +95,9 @@ export async function exportDeckPdf({ root, deck, current=0, showSlide, onProgre
     await doc.fonts?.ready;
     const fontEmbedCSS = await getFontEmbedCSS(root, { preferredFontFormat:'woff2' });
     let pdf;
-    for (let index = 0; index < total; index++) {
-      report(index, 'preparing');
+    for (let position = 0; position < total; position++) {
+      const index = indices[position];
+      report(position, 'preparing');
       await showSlide(index);
       if (!root.isConnected) throw new Error('The presentation changed during export.');
       await doc.fonts?.ready;
@@ -106,7 +110,7 @@ export async function exportDeckPdf({ root, deck, current=0, showSlide, onProgre
       try {
         cleanup = await beforeCapture?.({ root, slide, index });
         await waitForImages(root);
-        report(index, 'capturing');
+        report(position, 'capturing');
         const bounds = root.getBoundingClientRect();
         const width = Math.round(bounds.width);
         const height = Math.round(bounds.height);
