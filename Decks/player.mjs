@@ -99,7 +99,7 @@ export function parseDeckHash(hash) {
 export async function mountDeck(hash) {
   const route = parseDeckHash(hash);
   const deck = decks.find(item => item.slug === route?.slug) ?? (route ? await studioDeck(route.slug) : null);
-  const shared = decks.includes(deck);
+  const shared = deck?.slug === 'campaign-deck' && !deck.slides.some(slide => slide.blocks);
   document.body.dataset.page = 'deck';
   document.body.className = 'deck-mode';
   if (!deck) {
@@ -158,8 +158,8 @@ export async function mountDeck(hash) {
     const deckApi = config.apiUrl ? `${String(config.apiUrl).replace(/\/+$/, '')}/decks/${encodeURIComponent(deck.slug)}` : '';
     pickers.connect({ coverBase:deckApi, lookup:url => editor.lookupPost(url), lookupAccount:handle => editor.lookupAccount(handle) });
   };
-  // Shared text edits and SentientDash lookups belong to the published decks.
-  if (shared) void configureEditor();
+  // Every deck uses the same inline editor and its own shared text revision.
+  void configureEditor();
   window.addEventListener('pagehide', () => { editor?.dispose(); fit.dispose(); void emblem?.then(scene => scene?.dispose()); }, { once:true });
   window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
   const slides = [...root.querySelectorAll('.deck-slide')];

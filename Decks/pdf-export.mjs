@@ -1,6 +1,6 @@
 // Capture the presentation's live screen layout. No print stylesheet or second renderer.
 const activeExports = new WeakSet();
-const excluded = '.deck-edit-toolbar,.deck-picker,.deck-overview,.deck-access-dialog,.deck-announcement,.deck-title-measure,.studio-outline,[data-pdf-exclude]';
+const excluded = '.deck-controls,.deck-edit-toolbar,.deck-picker,.deck-overview,.deck-access-dialog,.deck-announcement,.deck-title-measure,.studio-outline,[data-pdf-exclude]';
 
 const nextFrame = view => new Promise(resolve => view.requestAnimationFrame(resolve));
 const settle = async view => { await nextFrame(view); await nextFrame(view); };

@@ -56,3 +56,5 @@ Migration `0003_studio.sql` adds `studio_decks` (published decks, at most 512 Ki
 - `POST /studio/auth` — checks the password. `POST /studio/account` and `POST /studio/instagram-post` are the SentientDash lookups; the post lookup copies the cover into `studio_assets` so a published deck never depends on SentientDash.
 
 Every write uses a deck editor password as `Authorization: Bearer …` from an allowed origin. The primary `DECK_EDITOR_PASSWORD_SHA256` and optional `DECK_EDITOR_PASSWORD_LEGACY_SHA256` secrets apply to Studio as well as the classic deck.
+
+Inline text editing is available at `GET`/`PUT /decks/<slug>` and `POST /decks/<slug>/auth` for every deck. Each slug has its own revision and saved fields. Migration `0004_deck_text_edits.sql` adds storage for additional decks; the existing campaign table and its saved edits remain in place. Apply the migration before deploying this Worker.

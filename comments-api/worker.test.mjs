@@ -35,6 +35,7 @@ const deckRequest = (method, body, options={}) => new Request(`https://api.examp
 const deckEnvironment = context => {
   const database = new DatabaseSync(':memory:');
   database.exec(readFileSync(new URL('./migrations/0002_deck_edits.sql',import.meta.url),'utf8'));
+  database.exec(readFileSync(new URL('./migrations/0004_deck_text_edits.sql',import.meta.url),'utf8'));
   context.after(()=>database.close());
   return {...env,DECK_EDITOR_PASSWORD_SHA256:editorHash,DB:{prepare(sql){
     const statement=database.prepare(sql);
@@ -99,7 +100,7 @@ test('deck writes require the configured server password and permitted origin',a
   assert.equal((await worker.fetch(deckRequest('PUT',edit),{...storage,DECK_EDITOR_PASSWORD_SHA256:undefined})).status,503);
   assert.equal((await worker.fetch(deckRequest('PUT',edit),{...storage,DECK_EDIT_RATE:{limit:async()=>({success:false})}})).status,429);
   assert.equal((await worker.fetch(deckRequest('GET'),storage)).status,200);
-  assert.equal((await worker.fetch(deckRequest('GET',undefined,{slug:'another-deck'}),storage)).status,404);
+  assert.equal((await worker.fetch(deckRequest('GET',undefined,{slug:'not_a_slug'}),storage)).status,404);
 });
 
 test('deck editor authentication validates the password without storing or changing text',async context=>{
@@ -347,5 +348,23 @@ test('classic and studio SentientDash lookups accept both passwords and reject i
         assert.equal((await worker.fetch(request,storage)).status,status,`${prefix}/${path}`);
       }
     }
+  }
+});
+
+test('inline editing saves each deck independently and rejects stale versions',async context=>{
+  const storage=deckEnvironment(context);
+  for(const slug of ['campaign-deck','launch-amplification','investor-deck']) {
+    const auth=await worker.fetch(deckRequest('POST',{password:editorPassword},{slug:`${slug}/auth`}),storage);
+    assert.equal(auth.status,200);
+    const fields={'cover.blocks.0.lines.0.text':slug};
+    const saved=await worker.fetch(deckRequest('PUT',{fields,revision:0},{slug}),storage);
+    assert.equal(saved.status,200);
+    assert.equal((await saved.json()).deck,slug);
+  }
+  for(const slug of ['campaign-deck','launch-amplification','investor-deck']) {
+    const read=await worker.fetch(deckRequest('GET',undefined,{slug,password:null}),storage);
+    assert.deepEqual((await read.json()).fields,{'cover.blocks.0.lines.0.text':slug});
+    const stale=await worker.fetch(deckRequest('PUT',{fields:{title:'stale'},revision:0},{slug}),storage);
+    assert.equal(stale.status,409);
   }
 });

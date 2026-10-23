@@ -244,8 +244,13 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     }
   }, { signal });
 
-  brand?.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); }, { signal });
-  brand?.addEventListener('dblclick', openAccess, { signal });
+  const logoSelector = '.deck-brand,.deck-end-glow,.deck-end-logo,.deck-cover-emblem:not([data-art]),img[alt="Sentient" i],img[src*="sentient-logo"],[role="img"][aria-label="Sentient" i]';
+  root.addEventListener('click', event => {
+    if (event.target.closest(logoSelector)) { event.preventDefault(); event.stopPropagation(); }
+  }, { signal });
+  root.addEventListener('dblclick', event => {
+    if (event.target.closest(logoSelector)) openAccess(event);
+  }, { signal });
   dialog.querySelector('.deck-access-close').addEventListener('click', closeAccess, { signal });
   dialog.addEventListener('cancel', event => { event.preventDefault(); closeAccess(); }, { signal });
   dialog.addEventListener('click', event => { if (event.target === dialog) closeAccess(); }, { signal });

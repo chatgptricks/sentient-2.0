@@ -53,8 +53,8 @@ async function authorizedDeckEditor(password, env) {
   return matched !== 0;
 }
 
-const publicDeck = row => ({
-  deck: deckSlug,
+const publicDeck = (row, slug = deckSlug) => ({
+  deck: slug,
   fields: row ? JSON.parse(row.fields) : {},
   revision: row?.revision ?? 0,
   updatedAt: row?.updated_at ?? null,
@@ -80,10 +80,11 @@ async function handleDeckAuth(request, env, json, originAllowed) {
   return json(200, { ok: true });
 }
 
-async function handleDeck(request, env, json, originAllowed) {
+async function handleDeck(request, env, json, originAllowed, slug = deckSlug) {
+  const table = slug === deckSlug ? 'deck_edits' : 'deck_text_edits';
   if (request.method === 'GET') {
-    const row = await env.DB.prepare('SELECT fields, revision, updated_at FROM deck_edits WHERE slug = ?').bind(deckSlug).first();
-    return json(200, publicDeck(row));
+    const row = await env.DB.prepare(`SELECT fields, revision, updated_at FROM ${table} WHERE slug = ?`).bind(slug).first();
+    return json(200, publicDeck(row, slug));
   }
   if (request.method !== 'PUT') return json(405, { error: 'Method not allowed.' });
   const rejected = await guardDeckWrite(request, env, json, originAllowed);
@@ -100,13 +101,13 @@ async function handleDeck(request, env, json, originAllowed) {
   // Both statements compare the version in the write itself. A concurrent
   // editor cannot overwrite an accepted save using an earlier revision.
   const saved = edit.revision === 0
-    ? await env.DB.prepare('INSERT INTO deck_edits (slug, fields, revision, updated_at) VALUES (?, ?, 1, ?) ON CONFLICT(slug) DO NOTHING').bind(deckSlug, serialized, updatedAt).run()
-    : await env.DB.prepare('UPDATE deck_edits SET fields = ?, revision = revision + 1, updated_at = ? WHERE slug = ? AND revision = ?').bind(serialized, updatedAt, deckSlug, edit.revision).run();
+    ? await env.DB.prepare(`INSERT INTO ${table} (slug, fields, revision, updated_at) VALUES (?, ?, 1, ?) ON CONFLICT(slug) DO NOTHING`).bind(slug, serialized, updatedAt).run()
+    : await env.DB.prepare(`UPDATE ${table} SET fields = ?, revision = revision + 1, updated_at = ? WHERE slug = ? AND revision = ?`).bind(serialized, updatedAt, slug, edit.revision).run();
   if (saved.meta.changes !== 1) {
-    const current = await env.DB.prepare('SELECT fields, revision, updated_at FROM deck_edits WHERE slug = ?').bind(deckSlug).first();
-    return json(409, { error: 'The deck changed since you opened the editor. Reload its latest content before saving.', ...publicDeck(current) });
+    const current = await env.DB.prepare(`SELECT fields, revision, updated_at FROM ${table} WHERE slug = ?`).bind(slug).first();
+    return json(409, { error: 'The deck changed since you opened the editor. Reload its latest content before saving.', ...publicDeck(current, slug) });
   }
-  return json(200, { deck: deckSlug, fields: edit.fields, revision: edit.revision + 1, updatedAt });
+  return json(200, { deck: slug, fields: edit.fields, revision: edit.revision + 1, updatedAt });
 }
 
 // Promotional-post lookups. The SentientDash website key stays in this Worker
@@ -429,8 +430,9 @@ export default {
     const json = (status, value) => new Response(JSON.stringify(value), { status, headers });
     if (origin && !allowed.includes(origin)) return json(403, {error:'Origin not allowed.'});
     const url = new URL(request.url);
-    const deckRoute = url.pathname === `/decks/${deckSlug}`;
-    const deckAuthRoute = url.pathname === `/decks/${deckSlug}/auth`;
+    const editableDeck = /^\/decks\/([a-z0-9][a-z0-9-]{1,63})(\/auth)?$/.exec(url.pathname);
+    const deckRoute = Boolean(editableDeck && !editableDeck[2]);
+    const deckAuthRoute = Boolean(editableDeck?.[2]);
     const postRoute = url.pathname === `/decks/${deckSlug}/instagram-post`;
     const accountRoute = url.pathname === `/decks/${deckSlug}/account`;
     const coverRoute = new RegExp(`^/decks/${deckSlug}/covers/([^/]+)/([^/]+)$`).exec(url.pathname);
@@ -449,7 +451,7 @@ export default {
       if (deckAuthRoute) return await handleDeckAuth(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (postRoute) return await handleInstagramPost(request, env, json, Boolean(origin && allowed.includes(origin)));
       if (accountRoute) return await handleAccount(request, env, json, Boolean(origin && allowed.includes(origin)));
-      if (deckRoute) return await handleDeck(request, env, json, Boolean(origin && allowed.includes(origin)));
+      if (deckRoute) return await handleDeck(request, env, json, Boolean(origin && allowed.includes(origin)), editableDeck[1]);
       if (request.method === 'GET') {
         const page = url.searchParams.get('page');
         if (!pages.has(page)) return json(400, {error:'Unknown page.'});

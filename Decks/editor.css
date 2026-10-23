@@ -26,3 +26,5 @@
 .deck-editing .deck-relevance [contenteditable]:focus,.deck-editing .deck-optimisation [contenteditable]:focus { outline-color:#17300d; }
 @media (max-width:700px) { .deck-edit-toolbar { top:18px; right:20px; max-width:calc(100vw - 40px); } .deck-edit-feedback { position:absolute; top:54px; right:0; width:min(320px,calc(100vw - 40px)); } }
 @media print { .deck-access-dialog,.deck-edit-toolbar { display:none!important; } .deck-editing [contenteditable] { outline:none!important; } }
+
+.deck-player .deck-cover-emblem:not([data-art]) { pointer-events:auto; }
