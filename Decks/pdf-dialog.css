@@ -3,6 +3,9 @@
   inset:0;
   margin:auto;
   padding:0;
+  box-sizing:border-box;
+  overflow:hidden;
+  height:min(85dvh,760px);
   width:min(660px,calc(100vw - 32px));
   max-height:min(85dvh,760px);
   border:1px solid #ffffff30;
@@ -14,7 +17,7 @@
 }
 .deck-pdf-dialog::backdrop { background:#000b; backdrop-filter:blur(8px); }
 .deck-pdf-dialog * { box-sizing:border-box; }
-.deck-pdf-form { display:flex; flex-direction:column; max-height:min(85dvh,760px); margin:0; }
+.deck-pdf-form { display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; height:100%; margin:0; }
 .deck-pdf-head { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 24px 16px; }
 .deck-pdf-head h2 { margin:0; font-size:24px; line-height:1.15; font-weight:600; letter-spacing:-.04em; }
 .deck-pdf-dialog button { border:1px solid #ffffff24; border-radius:999px; padding:8px 13px; background:#262624; color:inherit; font:inherit; cursor:pointer; }
