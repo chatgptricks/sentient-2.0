@@ -36,11 +36,13 @@ const deckEnvironment = context => {
   const database = new DatabaseSync(':memory:');
   database.exec(readFileSync(new URL('./migrations/0002_deck_edits.sql',import.meta.url),'utf8'));
   database.exec(readFileSync(new URL('./migrations/0004_deck_text_edits.sql',import.meta.url),'utf8'));
+  database.exec(readFileSync(new URL('./migrations/0005_deck_text_versions.sql',import.meta.url),'utf8'));
   context.after(()=>database.close());
   return {...env,DECK_EDITOR_PASSWORD_SHA256:editorHash,DB:{prepare(sql){
     const statement=database.prepare(sql);
     return {bind(...values){return {
       async first(){return statement.get(...values) ?? null;},
+      async all(){return {results:statement.all(...values)};},
       async run(){const result=statement.run(...values);return {meta:{changes:Number(result.changes)}};},
     };}};
   }}};
@@ -367,4 +369,27 @@ test('inline editing saves each deck independently and rejects stale versions',a
     const stale=await worker.fetch(deckRequest('PUT',{fields:{title:'stale'},revision:0},{slug}),storage);
     assert.equal(stale.status,409);
   }
+});
+
+test('named JSON text copies are shared, isolated and never change the original',async context=>{
+  const storage=deckEnvironment(context), slug='launch-amplification', id=crypto.randomUUID();
+  const send=(method,path='',body,options={})=>worker.fetch(deckRequest(method,body,{slug:`${slug}${path}`,...options}),storage);
+  assert.equal((await send('PUT','',{fields:{'cover.title':'Original'},revision:0})).status,200);
+  const copy={id,name:'Acme launch',fields:{'cover.title':'Acme launch copy'}};
+  for(const name of ['', '   ', 'Original', 'x'.repeat(81)]) assert.equal((await send('POST','/versions',{...copy,name})).status,400);
+  assert.equal((await send('GET','/versions',undefined,{password:null})).status,401);
+  assert.equal((await send('POST','/versions',copy)).status,201);
+  assert.equal((await send('POST','/versions',copy)).status,200); // idempotent retry
+  assert.equal((await send('POST','/versions',{...copy,id:crypto.randomUUID(),name:'ACME LAUNCH'})).status,409);
+  assert.deepEqual((await (await send('GET','')).json()).fields,{'cover.title':'Original'});
+  const listed=await (await send('GET','/versions')).json();
+  assert.equal(listed.versions.length,1);
+  assert.equal(listed.versions[0].name,copy.name);
+  const reopened=await (await send('GET',`/versions/${id}`)).json();
+  assert.deepEqual(reopened.fields,copy.fields);
+  const other=await worker.fetch(deckRequest('GET',undefined,{slug:`investor-deck/versions/${id}`}),storage);
+  assert.equal(other.status,404);
+  assert.equal((await send('PUT',`/versions/${id}`,{fields:{'cover.title':'Updated copy'},revision:1})).status,200);
+  assert.equal((await send('PUT',`/versions/${id}`,{fields:{'cover.title':'Stale copy'},revision:1})).status,409);
+  assert.deepEqual((await (await send('GET','')).json()).fields,{'cover.title':'Original'});
 });

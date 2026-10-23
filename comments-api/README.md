@@ -58,3 +58,5 @@ Migration `0003_studio.sql` adds `studio_decks` (published decks, at most 512 Ki
 Every write uses a deck editor password as `Authorization: Bearer …` from an allowed origin. The primary `DECK_EDITOR_PASSWORD_SHA256` and optional `DECK_EDITOR_PASSWORD_LEGACY_SHA256` secrets apply to Studio as well as the classic deck.
 
 Inline text editing is available at `GET`/`PUT /decks/<slug>` and `POST /decks/<slug>/auth` for every deck. Each slug has its own revision and saved fields. Migration `0004_deck_text_edits.sql` adds storage for additional decks; the existing campaign table and its saved edits remain in place. Apply the migration before deploying this Worker.
+
+Named text copies use `GET`/`POST /decks/<slug>/versions` and `GET`/`PUT /decks/<slug>/versions/<id>`, with the same editor password and permitted origin required for every operation. Migration `0005_deck_text_versions.sql` stores each copy as bounded JSON text fields, a required unique name, and an independent revision. Copies do not write to the original or duplicate the deck design. Normal presentation loads always read the original endpoint; version selection is confined to the current edit session.

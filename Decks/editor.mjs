@@ -1,4 +1,5 @@
 import './editor.css';
+import { chooseSaveTarget, chooseTextVersion } from './version-dialogs.mjs';
 
 const MAX_FIELD_LENGTH = 1000;
 const safeFieldKey = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,159}$/;
@@ -55,7 +56,14 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   toolbar.className = 'deck-edit-toolbar';
   toolbar.hidden = true;
   toolbar.innerHTML = '<p class="deck-edit-feedback" role="status" aria-live="polite"></p><button class="deck-edit-pdf" type="button">Download PDF</button><button class="deck-edit-done" type="button">Done <span aria-hidden="true">✓</span></button>';
-  root.append(dialog, toolbar);
+  const versionsToolbar = document.createElement('div');
+  versionsToolbar.className = 'deck-version-toolbar';
+  versionsToolbar.dataset.pdfExclude = '';
+  versionsToolbar.hidden = true;
+  versionsToolbar.innerHTML = '<button type="button">Other versions</button><span class="deck-version-current">Original</span>';
+  root.append(dialog, toolbar, versionsToolbar);
+  const versionsButton = versionsToolbar.querySelector('button');
+  const versionLabel = versionsToolbar.querySelector('.deck-version-current');
   const passwordInput = dialog.querySelector('input');
   const accessFeedback = dialog.querySelector('.deck-access-feedback');
   const continueButton = dialog.querySelector('.deck-access-continue');
@@ -65,6 +73,12 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   let credential = '';
   let revision = 0;
   let serverFields = Object.create(null);
+  let originalFields = Object.create(null);
+  let originalRevision = 0;
+  let activeVersion = null;
+  let pendingSave = null;
+  let lastCopyName = '';
+  let choosing = false;
   let savedSnapshot = '';
   let editing = false;
   let saving = false;
@@ -76,8 +90,9 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   const snapshot = () => JSON.stringify(fields.map(({ key, element }) => [key, textOf(element)]));
   const dirty = () => editing && snapshot() !== savedSnapshot;
   const notifyApplied = () => onFieldsApplied?.({ ...serverFields });
-  const apply = values => {
-    for (const { key, element } of fields) {
+  const apply = (values, reset = false) => {
+    for (const { key, element, original } of fields) {
+      if (reset) element.textContent = original;
       if (Object.hasOwn(values, key)) {
         // `@chatgptricks` is the real Instagram handle. Saved copy from before
         // carries the `chatpgtricks` typo, so correct it when it is shown.
@@ -110,7 +125,11 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     if (!response.ok || !payload || !Number.isSafeInteger(payload.revision) || payload.revision < 0) throw new Error('unavailable');
     revision = payload.revision;
     serverFields = validFields(payload.fields);
-    apply(serverFields);
+    originalFields = { ...serverFields };
+    originalRevision = revision;
+    activeVersion = null;
+    versionLabel.textContent = 'Original';
+    apply(serverFields, true);
     loadingError = false;
   };
   // Public viewing is immediately available even if the storage service is offline.
@@ -146,8 +165,10 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     savedSnapshot = snapshot();
     editFeedback.textContent = '';
     toolbar.hidden = false;
+    versionsToolbar.hidden = false;
+    versionLabel.textContent = activeVersion?.name ?? 'Original';
     closeAccess();
-    onEditStart?.();
+    if (!activeVersion) onEditStart?.();
   };
   const leave = () => {
     editing = false;
@@ -160,41 +181,51 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     }
     root.classList.remove('deck-editing');
     toolbar.hidden = true;
+    versionsToolbar.hidden = true;
+    pendingSave = null;
+    lastCopyName = '';
     editFeedback.textContent = '';
     brand?.focus?.({ preventScroll: true });
   };
-  const save = async () => {
-    if (!editing || saving || exporting) return;
-    if (!dirty()) { leave(); return; }
-    const values = { ...serverFields };
+  const save = async (target = pendingSave ?? { mode:'current' }) => {
+    if (!editing || saving || exporting || choosing) return;
+    const asCopy = target.mode === 'copy';
+    if (!asCopy && !dirty()) { leave(); return; }
+    const textOnly = asCopy || Boolean(activeVersion);
+    const values = textOnly ? Object.create(null) : { ...serverFields };
+    pendingSave = target;
     for (const { key, element, original } of fields) {
+      if (textOnly && element.hidden) continue;
       const value = textOf(element);
       if (value.length > MAX_FIELD_LENGTH) {
         editFeedback.textContent = 'This text is too long. Shorten it and try again.';
         element.focus({ preventScroll: false });
         return;
       }
-      if (value === original) delete values[key];
+      if (!textOnly && value === original) delete values[key];
       else values[key] = value;
     }
     saving = true;
     doneButton.disabled = true;
     pdfButton.disabled = true;
+    versionsButton.disabled = true;
     doneButton.setAttribute('aria-busy', 'true');
     doneButton.textContent = 'Saving…';
     editFeedback.textContent = '';
     // Freeze the text while the shared snapshot is being written.
     fields.forEach(({ element }) => element.setAttribute('contenteditable', 'false'));
     try {
-      const { response, payload } = await request(endpoint, {
-        method: 'PUT',
+      const destination = asCopy ? `${endpoint}/versions` : activeVersion ? `${endpoint}/versions/${activeVersion.id}` : endpoint;
+      const body = asCopy ? { fields:values, name:target.name, id:target.id } : { fields:values, revision };
+      const { response, payload } = await request(destination, {
+        method: asCopy ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` },
-        body: JSON.stringify({ fields: values, revision })
+        body: JSON.stringify(body)
       });
       // A retry can encounter its own completed write if the first response was lost.
       const recoveredWrite = response.status === 409 && Number.isSafeInteger(payload?.revision) && sameFields(validFields(payload?.fields), values);
       if (response.status === 409 && !recoveredWrite) {
-        editFeedback.textContent = 'The deck changed in another session. Your edits are still here; reload after copying them to continue.';
+        editFeedback.textContent = payload?.error || 'This version changed in another session. Your edits are still here.';
         return;
       }
       if (response.status === 401 || response.status === 403) {
@@ -211,7 +242,14 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
       if ((!response.ok && !recoveredWrite) || !payload || !Number.isSafeInteger(payload.revision)) throw new Error('unavailable');
       revision = payload.revision;
       serverFields = validFields(payload.fields ?? values);
-      apply(serverFields);
+      if (asCopy) activeVersion = { id:payload.id, name:payload.name };
+      if (activeVersion) apply({ ...originalFields, ...serverFields }, true);
+      else {
+        originalFields = { ...serverFields };
+        originalRevision = revision;
+        apply(serverFields, true);
+      }
+      versionLabel.textContent = activeVersion?.name ?? 'Original';
       savedSnapshot = snapshot();
       leave();
     } catch {
@@ -220,16 +258,74 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
       saving = false;
       doneButton.disabled = false;
       pdfButton.disabled = false;
+      versionsButton.disabled = false;
       doneButton.removeAttribute('aria-busy');
       doneButton.innerHTML = 'Done <span aria-hidden="true">✓</span>';
       if (editing) fields.forEach(({ element }) => element.setAttribute('contenteditable', 'plaintext-only'));
     }
   };
 
+  const finishEditing = async () => {
+    if (!editing || saving || exporting || choosing) return;
+    choosing = true;
+    doneButton.disabled = pdfButton.disabled = versionsButton.disabled = true;
+    let target;
+    try { target = await chooseSaveTarget({ currentName:activeVersion?.name ?? 'Original', copyName:lastCopyName }); }
+    finally {
+      choosing = false;
+      doneButton.disabled = pdfButton.disabled = versionsButton.disabled = false;
+    }
+    if (target) {
+      if (target.mode === 'copy') {
+        if (pendingSave?.mode === 'copy' && pendingSave.name === target.name) target.id = pendingSave.id;
+        lastCopyName = target.name;
+      }
+      await save(target);
+    }
+  };
+
+  versionsButton.addEventListener('click', async () => {
+    if (!editing || saving || exporting || choosing) return;
+    choosing = true;
+    doneButton.disabled = pdfButton.disabled = versionsButton.disabled = true;
+    fields.forEach(({ element }) => element.setAttribute('contenteditable', 'false'));
+    try {
+      const headers = { Authorization:`Bearer ${credential}` };
+      const list = await request(`${endpoint}/versions`, { headers });
+      if (!list.response.ok || !Array.isArray(list.payload?.versions)) throw new Error(list.payload?.error || 'Could not load versions.');
+      const selected = await chooseTextVersion(list.payload.versions, activeVersion?.id);
+      if (!selected) return;
+      if (dirty() && !window.confirm('Discard your unsaved edits and open this version?')) return;
+      const [original, version] = await Promise.all([
+        request(endpoint),
+        selected.id ? request(`${endpoint}/versions/${encodeURIComponent(selected.id)}`, { headers }) : Promise.resolve(null),
+      ]);
+      if (!original.response.ok || !Number.isSafeInteger(original.payload?.revision)) throw new Error('Could not load the original.');
+      if (version && (!version.response.ok || !Number.isSafeInteger(version.payload?.revision))) throw new Error(version.payload?.error || 'Could not load this version.');
+      originalFields = validFields(original.payload.fields);
+      originalRevision = original.payload.revision;
+      activeVersion = version ? { id:version.payload.id, name:version.payload.name } : null;
+      serverFields = version ? validFields(version.payload.fields) : { ...originalFields };
+      revision = version ? version.payload.revision : originalRevision;
+      apply({ ...originalFields, ...serverFields }, true);
+      savedSnapshot = snapshot();
+      pendingSave = null;
+      lastCopyName = '';
+      versionLabel.textContent = activeVersion?.name ?? 'Original';
+      editFeedback.textContent = '';
+    } catch (error) {
+      editFeedback.textContent = error.message || 'Could not load versions. Your edits are still here.';
+    } finally {
+      choosing = false;
+      doneButton.disabled = pdfButton.disabled = versionsButton.disabled = false;
+      if (editing) fields.forEach(({ element }) => element.setAttribute('contenteditable', 'plaintext-only'));
+    }
+  }, { signal });
+
   pdfButton.addEventListener('click', async () => {
-    if (!editing || saving || exporting || !onDownloadPdf) return;
+    if (!editing || saving || exporting || choosing || !onDownloadPdf) return;
     exporting = true;
-    pdfButton.disabled = doneButton.disabled = true;
+    pdfButton.disabled = doneButton.disabled = versionsButton.disabled = true;
     pdfButton.setAttribute('aria-busy', 'true');
     document.activeElement?.blur();
     try {
@@ -239,7 +335,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
       editFeedback.textContent = 'Could not download PDF. Try again.';
     } finally {
       exporting = false;
-      pdfButton.disabled = doneButton.disabled = false;
+      pdfButton.disabled = doneButton.disabled = versionsButton.disabled = false;
       pdfButton.removeAttribute('aria-busy');
     }
   }, { signal });
@@ -292,7 +388,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
       }
     }
   }, { signal });
-  doneButton.addEventListener('click', () => void save(), { signal });
+  doneButton.addEventListener('click', () => void finishEditing(), { signal });
   root.addEventListener('input', event => {
     if (!editing || !event.target.closest('[data-edit-field]')) return;
     editFeedback.textContent = '';
@@ -305,7 +401,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     if (!editing || !event.target.isContentEditable) return;
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
       event.preventDefault();
-      void save();
+      void finishEditing();
     }
   }, { signal });
   window.addEventListener('beforeunload', event => {
@@ -345,6 +441,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
       root.classList.remove('deck-editing');
       dialog.remove();
       toolbar.remove();
+      versionsToolbar.remove();
     }
   };
 }

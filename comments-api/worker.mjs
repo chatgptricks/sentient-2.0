@@ -60,9 +60,9 @@ const publicDeck = (row, slug = deckSlug) => ({
   updatedAt: row?.updated_at ?? null,
 });
 
-async function guardDeckWrite(request, env, json, originAllowed) {
+async function guardDeckWrite(request, env, json, originAllowed, rateLimit = true) {
   if (!originAllowed) return json(403, { error: 'Origin required.' });
-  if (env.DECK_EDIT_RATE && !(await env.DECK_EDIT_RATE.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' })).success) {
+  if (rateLimit && env.DECK_EDIT_RATE && !(await env.DECK_EDIT_RATE.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' })).success) {
     return json(429, { error: 'Too many edit attempts. Please wait a minute.' });
   }
   if (!/^[0-9a-f]{64}$/i.test(env.DECK_EDITOR_PASSWORD_SHA256 || '')) return json(503, { error: 'Deck editing is temporarily unavailable.' });
@@ -108,6 +108,50 @@ async function handleDeck(request, env, json, originAllowed, slug = deckSlug) {
     return json(409, { error: 'The deck changed since you opened the editor. Reload its latest content before saving.', ...publicDeck(current, slug) });
   }
   return json(200, { deck: slug, fields: edit.fields, revision: edit.revision + 1, updatedAt });
+}
+
+const textVersion = row => ({ id:row.id, name:row.name, revision:row.revision, fields:JSON.parse(row.fields), createdAt:row.created_at, updatedAt:row.updated_at });
+const versionIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function handleTextVersions(request, env, json, originAllowed, slug, id) {
+  if (!['GET', 'POST', 'PUT'].includes(request.method)) return json(405, { error:'Method not allowed.' });
+  const rejected = await guardDeckWrite(request, env, json, originAllowed, request.method !== 'GET');
+  if (rejected) return rejected;
+  const password = /^Bearer (.+)$/i.exec(request.headers.get('Authorization') || '')?.[1];
+  if (!(await authorizedDeckEditor(password, env))) return json(401, { error:'Incorrect editor password.' });
+  if (id && !versionIdPattern.test(id)) return json(404, { error:'Version not found.' });
+  const read = versionId => env.DB.prepare('SELECT * FROM deck_text_versions WHERE deck_slug = ? AND id = ?').bind(slug, versionId).first();
+  if (request.method === 'GET') {
+    if (id) {
+      const row = await read(id);
+      return row ? json(200, textVersion(row)) : json(404, { error:'Version not found.' });
+    }
+    const { results } = await env.DB.prepare('SELECT id, name, revision, updated_at FROM deck_text_versions WHERE deck_slug = ? ORDER BY updated_at DESC, name COLLATE NOCASE').bind(slug).all();
+    return json(200, { versions:results.map(row => ({ id:row.id, name:row.name, revision:row.revision, updatedAt:row.updated_at })) });
+  }
+  if ((request.method === 'POST' && id) || (request.method === 'PUT' && !id)) return json(405, { error:'Method not allowed.' });
+  if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error:'Use JSON.' });
+  const parsed = await readJson(request, deckBodyLimit + 2048);
+  if (parsed.error) return json(parsed.status, { error:parsed.error });
+  const creating = request.method === 'POST';
+  const edit = validateDeckEdit({ fields:parsed.data?.fields, revision:creating ? 0 : parsed.data?.revision });
+  if (!edit) return json(400, { error:'Use bounded text fields and a valid revision.' });
+  const now = new Date().toISOString();
+  const serialized = JSON.stringify(edit.fields);
+  if (creating) {
+    const name = typeof parsed.data?.name === 'string' ? parsed.data.name.trim() : '';
+    const versionId = parsed.data?.id;
+    if (!name || name.toLowerCase() === 'original' || name.length > 80 || /[\u0000-\u001f]/.test(name) || !versionIdPattern.test(versionId ?? '')) return json(400, { error:'Give this copy a name of 1 to 80 characters.' });
+    const inserted = await env.DB.prepare('INSERT INTO deck_text_versions (deck_slug, id, name, fields, revision, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?) ON CONFLICT DO NOTHING').bind(slug, versionId, name, serialized, now, now).run();
+    const row = await read(versionId);
+    if (inserted.meta.changes !== 1 && (!row || row.name !== name || row.fields !== serialized)) return json(409, { error:'A copy with this name already exists. Choose another name.' });
+    return json(inserted.meta.changes === 1 ? 201 : 200, textVersion(row));
+  }
+  const updated = await env.DB.prepare('UPDATE deck_text_versions SET fields = ?, revision = revision + 1, updated_at = ? WHERE deck_slug = ? AND id = ? AND revision = ?').bind(serialized, now, slug, id, edit.revision).run();
+  const row = await read(id);
+  if (!row) return json(404, { error:'Version not found.' });
+  if (updated.meta.changes !== 1) return json(409, { error:'This version changed in another session. Your edits are still here.', ...textVersion(row) });
+  return json(200, textVersion(row));
 }
 
 // Promotional-post lookups. The SentientDash website key stays in this Worker
@@ -433,6 +477,7 @@ export default {
     const editableDeck = /^\/decks\/([a-z0-9][a-z0-9-]{1,63})(\/auth)?$/.exec(url.pathname);
     const deckRoute = Boolean(editableDeck && !editableDeck[2]);
     const deckAuthRoute = Boolean(editableDeck?.[2]);
+    const versionRoute = /^\/decks\/([a-z0-9][a-z0-9-]{1,63})\/versions(?:\/([^/]+))?$/.exec(url.pathname);
     const postRoute = url.pathname === `/decks/${deckSlug}/instagram-post`;
     const accountRoute = url.pathname === `/decks/${deckSlug}/account`;
     const coverRoute = new RegExp(`^/decks/${deckSlug}/covers/([^/]+)/([^/]+)$`).exec(url.pathname);
@@ -444,6 +489,11 @@ export default {
     if (coverRoute) {
       try { return await handleCover(request, env, json, coverRoute[1], coverRoute[2], ctx); }
       catch { return json(503, {error:'Cover unavailable.'}); }
+    }
+    if (versionRoute) {
+      if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':'GET, POST, PUT, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type, Authorization', 'Access-Control-Max-Age':'3600'}});
+      try { return await handleTextVersions(request, env, json, Boolean(origin && allowed.includes(origin)), versionRoute[1], versionRoute[2]); }
+      catch { return json(503, {error:'Versions are temporarily unavailable. Your edits are still here.'}); }
     }
     if (url.pathname !== '/comments' && !deckRoute && !deckAuthRoute && !postRoute && !accountRoute) return json(404, {error:'Not found.'});
     if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':deckAuthRoute || postRoute || accountRoute ? 'POST, OPTIONS' : deckRoute ? 'GET, PUT, OPTIONS' : 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers':deckRoute || postRoute || accountRoute ? 'Content-Type, Authorization' : 'Content-Type', 'Access-Control-Max-Age':'3600'}});
