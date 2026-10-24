@@ -249,6 +249,7 @@ async function handleAccount(request, env, json, originAllowed) {
   const handle = parseInstagramHandle(parsed.data?.handle);
   if (!handle) return json(400, { error: 'Use an Instagram handle or profile link.' });
   if (!env.SENTIENTDASH_API_KEY) return json(503, { error:'Profile lookup is not configured yet.' });
+  let stage = 'profile';
   try {
     // The website key authenticates this bounded public-profile lookup.
     const response = await sentientDash(env, '/api/decks/profile-preview', {
@@ -262,14 +263,18 @@ async function handleAccount(request, env, json, originAllowed) {
     let photoUrl;
     try { photoUrl = new URL(profile.profile_pic_url); } catch { return json(502, { error:'Instagram did not return a profile photo.' }); }
     if (photoUrl.protocol !== 'https:' || !/(^|\.)(cdninstagram\.com|fbcdn\.net)$/.test(photoUrl.hostname)) return json(502, { error:'Instagram returned an unsupported profile photo address.' });
-    const photo = await fetch(photoUrl.href, { redirect:'error', signal:AbortSignal.timeout(15000) });
+    stage = 'photo';
+    // Workers supports "manual"; checking status also refuses photo redirects.
+    const photo = await fetch(photoUrl.href, { redirect:'manual', signal:AbortSignal.timeout(15000) });
     const type = (photo.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
     if (!photo.ok || !studioAssetTypes.has(type)) return json(502, { error:'Could not load the profile photo. Your account selection is unchanged.' });
     const bytes = await readBytes(photo, studioAssetLimit);
     if (!bytes?.length || bytes === 'too-large') return json(502, { error:'The profile photo could not be stored.' });
+    stage = 'storage';
     const id = await storeAsset(env, bytes, type);
     return json(200, { handle, followers:profile.followers_count, avatar:assetUrl(request, id), capturedAt:new Date().toISOString() });
-  } catch {
+  } catch (error) {
+    console.error('Deck profile lookup failed', { stage, name:error?.name, message:String(error?.message ?? '').replace(/https?:\/\/\S+/g, '[url]').slice(0,180) });
     return json(502, { error: 'Could not update this Instagram profile. Your existing account details are still here.' });
   }
 }
