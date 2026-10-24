@@ -41,5 +41,5 @@ export const unpublishDeck = (password, slug) => call(`/studio/decks/${encodeURI
 export const uploadImage = (password, blob) => call('/studio/assets', { method:'POST', password, body:blob, type:blob.type, timeout:60000 });
 // SentientDash data through the Worker: an account's exact followers, or a
 // pasted Instagram post with its cover stored as a studio image.
-export const lookupAccount = (password, handle) => call('/studio/account', { method:'POST', password, body:{ handle }, timeout:60000 });
+export const lookupAccount = (password, handle) => call('/studio/account', { method:'POST', password, body:{ handle }, timeout:90000 });
 export const lookupPost = (password, url) => call('/studio/instagram-post', { method:'POST', password, body:{ url }, timeout:60000 });

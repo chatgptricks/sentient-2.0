@@ -11,7 +11,7 @@ import { fetchPublished } from './studio-api.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
 const asset = path => assetUrl(path, import.meta.url);
-// Editable text carries its own field name, so the editor saves exactly what each slide shows.
+// Editable fields retain each slide's text and selected account identity.
 const text = (tag, field, value, className='') => `<${tag}${className ? ` class="${className}"` : ''} data-edit-field="${field}">${escape(value)}</${tag}>`;
 const statement = slide => slide.emphasis ? text('p', 'emphasis', slide.emphasis, 'deck-statement') : '';
 const pad = i => String(i+1).padStart(2,'0');
@@ -38,7 +38,7 @@ function composition(slide) {
       return `<div class="deck-network-body"><div class="deck-metric">${text('strong', 'metric', slide.metric)}${text('span', 'label', slide.label)}</div><div class="deck-network-side"><ul class="deck-tags">${slide.tags.map((tag,i) => `<li>${text('span', `tag-${i}`, tag)}</li>`).join('')}</ul><ul class="deck-platforms">${slide.platforms.map((platform,i) => `<li>${text('span', `platform-${i}`, platform)}</li>`).join('')}</ul></div></div>${statement(slide)}`;
     case 'accounts': {
       const catalog = accountCatalog(slide);
-      return `<ol class="deck-account-grid">${slide.accounts.map((account,i) => `<li class="deck-account"><div class="deck-account-media"><img class="deck-account-avatar" src="${asset(account.image)}" alt="${escape(account.handle)}" width="320" height="320" decoding="async">${accountPicker(catalog, i)}</div><div class="deck-account-copy">${text('h3', `account-${i}-handle`, account.handle, 'deck-account-handle')}${text('strong', `account-${i}-followers`, account.followers, 'deck-account-followers')}${text('span', `account-${i}-label`, 'Followers', 'deck-account-label')}</div><span data-edit-field="account-${i}-id" hidden>${escape(account.id)}</span><span data-edit-field="account-${i}-asof" hidden>${escape(slide.followersAsOf)}</span></li>`).join('')}</ol>${accountRefresh}`;
+      return `<ol class="deck-account-grid">${slide.accounts.map((account,i) => `<li class="deck-account"><div class="deck-account-media"><img class="deck-account-avatar" src="${asset(account.image)}" alt="${escape(account.handle)}" width="320" height="320" decoding="async">${accountPicker(catalog, i)}</div><div class="deck-account-copy">${text('h3', `account-${i}-handle`, account.handle, 'deck-account-handle')}${text('strong', `account-${i}-followers`, account.followers, 'deck-account-followers')}${text('span', `account-${i}-label`, 'Followers', 'deck-account-label')}</div><span data-edit-field="account-${i}-id" hidden>${escape(account.id)}</span><span data-edit-field="account-${i}-avatar" hidden>${escape(account.image)}</span><span data-edit-field="account-${i}-asof" hidden>${escape(slide.followersAsOf)}</span></li>`).join('')}</ol>${accountRefresh}`;
     }
     case 'promos':
       return `<div class="deck-promo-grid">${slide.posts.map((post,i) => `<article class="deck-promo"><div class="deck-promo-media"><a class="deck-promo-image-link" href="${escape(post.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escape(`View ${post.title} on Instagram`)}"><img class="deck-promo-image" src="${asset(post.image)}" alt="${escape(`${post.title} promotional post from ${post.account}`)}" width="${i ? '1080' : '720'}" height="${i ? '1350' : '960'}" decoding="async"></a>${postPicker(i)}<span data-edit-field="post-${i}-url" hidden>${escape(post.url)}</span><span data-edit-field="post-${i}-source" hidden>${escape(post.source)}</span></div><div class="deck-promo-copy">${text('p', `post-${i}-account`, post.account, 'deck-promo-account')}${text('h3', `post-${i}-title`, post.title, 'deck-promo-title')}<dl class="deck-promo-metrics"><div>${text('dt', `post-${i}-likes-label`, 'Likes')}${text('dd', `post-${i}-likes`, post.likes)}</div><div>${text('dt', `post-${i}-comments-label`, 'Comments')}${text('dd', `post-${i}-comments`, post.comments)}</div></dl>${text('p', `post-${i}-date`, post.date, 'deck-promo-date')}<a class="deck-promo-source" href="${escape(post.url)}" target="_blank" rel="noopener noreferrer">${text('span', `post-${i}-link-label`, 'View post ↗')}</a></div></article>`).join('')}</div>`;
@@ -99,7 +99,6 @@ export function parseDeckHash(hash) {
 export async function mountDeck(hash) {
   const route = parseDeckHash(hash);
   const deck = decks.find(item => item.slug === route?.slug) ?? (route ? await studioDeck(route.slug) : null);
-  const shared = deck?.slug === 'campaign-deck' && !deck.slides.some(slide => slide.blocks);
   document.body.dataset.page = 'deck';
   document.body.className = 'deck-mode';
   if (!deck) {
@@ -115,7 +114,7 @@ export async function mountDeck(hash) {
   const root = document.querySelector('.deck-player');
   registerEditableFields(root, deck);
   const fit = initDeckFit(root);
-  const pickers = shared ? initDeckPickers({ root, deck, asset }) : { sync() {}, refreshAccounts() {}, connect() {} };
+  const pickers = initDeckPickers({ root, deck, asset });
   const brand = root.querySelector('.deck-brand');
   const header = root.querySelector('.deck-header');
   const coverMark = root.querySelector('.deck-cover-mark');
@@ -154,7 +153,7 @@ export async function mountDeck(hash) {
   const configureEditor = async () => {
     const config = await fetch(new URL('../comments-config.json', import.meta.url)).then(response => response.json()).catch(() => ({}));
     if (!root.isConnected) return;
-    editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:() => { pickers.sync(); fit.update(); }, onEditStart:() => void pickers.refreshAccounts(), onDownloadPdf:downloadPdf });
+    editor = initDeckEditor({ root, deck, apiUrl:config.apiUrl, onFieldsApplied:() => { pickers.sync(); fit.update(); }, onDownloadPdf:downloadPdf });
     const deckApi = config.apiUrl ? `${String(config.apiUrl).replace(/\/+$/, '')}/decks/${encodeURIComponent(deck.slug)}` : '';
     pickers.connect({ coverBase:deckApi, lookup:url => editor.lookupPost(url), lookupAccount:handle => editor.lookupAccount(handle) });
   };

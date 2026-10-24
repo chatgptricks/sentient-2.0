@@ -7,6 +7,7 @@ import { blockGroups, blockTypes, campaignAsStudioDeck, fixedSurface, newBlock, 
 import { deleteDeck, getDeck, getDeckBySlug, listDecks, putDeck, slugify } from './studio-store.mjs';
 import * as api from './studio-api.mjs';
 import { accountCatalog } from './pickers.mjs';
+import { chooseInstagramAccount } from './account-dialog.mjs';
 import { campaignDeck } from './campaign-deck.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
@@ -512,7 +513,7 @@ async function renderEditor(app, id) {
           const values = block[list.key] ?? [];
           return `<fieldset class="studio-list"><legend>${list.label} <small>${values.length}${list.max ? ` / ${list.max}` : ''}</small></legend>
             ${values.map((item, i) => `<details class="studio-item" ${values.length <= 3 ? 'open' : ''}><summary><span>${i + 1}. ${escape(item[list.fields[0].key === 'image' ? list.fields[2]?.key ?? 'title' : list.fields[0].key] ?? '')}</span><span class="studio-item-tools"><button data-act="item-up" data-list="${list.key}" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Subir">↑</button><button data-act="item-down" data-list="${list.key}" data-i="${i}" ${i === values.length - 1 ? 'disabled' : ''} aria-label="Bajar">↓</button><button data-act="item-del" data-list="${list.key}" data-i="${i}" ${values.length <= (list.min ?? 0) ? 'disabled' : ''} aria-label="Eliminar">✕</button></span></summary>
-              ${list.account ? `<label class="studio-field"><span>Cuenta de Sentient</span><select data-account="${base}.${list.key}.${i}"><option value="">Elegir…</option>${[...catalog.values()].map(account => `<option value="${escape(account.id)}">${escape(account.handle)} · ${Number(account.followers).toLocaleString('en-US')}</option>`).join('')}</select></label><button class="studio-small" data-act="followers" data-item="${base}.${list.key}.${i}">↻ Seguidores exactos de SentientDash</button>` : ''}
+              ${list.account ? `<label class="studio-field"><span>Cuenta de Instagram</span><select data-account="${base}.${list.key}.${i}"><option value="">Elegir…</option><option value="__custom__">Agregar otra cuenta de Instagram…</option>${[...catalog.values()].map(account => `<option value="${escape(account.id)}">${escape(account.handle)} · ${Number(account.followers).toLocaleString('en-US')}</option>`).join('')}</select></label><button class="studio-small" data-act="followers" data-item="${base}.${list.key}.${i}">↻ Actualizar seguidores y foto</button>` : ''}
               ${block.type === 'promos' ? `<form class="studio-lookup" data-post="${base}.${list.key}.${i}"><input type="url" placeholder="Pega un link de Instagram" aria-label="Link de Instagram"><button class="studio-small" type="submit">Buscar en SentientDash</button></form>` : ''}
               ${list.fields.map(definition => fieldMarkup(definition, `${base}.${list.key}.${i}`, item[definition.key])).join('')}
             </details>`).join('')}
@@ -675,14 +676,15 @@ async function renderEditor(app, id) {
       case 'followers': {
         const path = target.dataset.item;
         const handle = getPath(slide(), `${path}.handle`);
-        if (!(await ensurePassword('Leer seguidores de SentientDash usa la contraseña del editor de decks.'))) return;
+        if (!(await ensurePassword('Actualizar el perfil usa la contraseña del editor de decks.'))) return;
         target.disabled = true;
         target.textContent = 'Consultando SentientDash…';
         try {
           const result = await api.lookupAccount(password, handle);
-          change(() => setPath(slide(), `${path}.followers`, Number(result.followers).toLocaleString('en-US')));
+          if (getPath(slide(), `${path}.handle`) !== handle) break;
+          change(() => Object.assign(getPath(slide(), path), { handle:`@${result.handle}`, followers:Number(result.followers).toLocaleString('en-US'), image:result.avatar, asOf:result.capturedAt }));
           toast(`${handle}: ${Number(result.followers).toLocaleString('en-US')} seguidores${result.capturedAt ? ` (${dateTime(result.capturedAt)})` : ''}.`);
-        } catch (error) { toast(error.message, 'studio-toast-error'); target.disabled = false; target.textContent = '↻ Seguidores exactos de SentientDash'; }
+        } catch (error) { toast(error.message, 'studio-toast-error'); target.disabled = false; target.textContent = '↻ Actualizar seguidores y foto'; }
         break;
       }
     }
@@ -699,6 +701,15 @@ async function renderEditor(app, id) {
     const { target } = event;
     if (target.dataset.path && target.tagName === 'SELECT') { renderInspector(); return; }
     if (target.dataset.account) {
+      if (target.value === '__custom__') {
+        const item = getPath(slide(), target.dataset.account);
+        if (!(await ensurePassword('Cargar el perfil usa la contraseña del editor de decks.'))) { renderInspector(); return; }
+        const profile = await chooseInstagramAccount(handle => api.lookupAccount(password, handle));
+        if (profile && getPath(slide(), target.dataset.account) === item) {
+          change(() => Object.assign(item, { handle:`@${profile.handle}`, followers:Number(profile.followers).toLocaleString('en-US'), image:profile.avatar, asOf:profile.capturedAt }));
+        } else renderInspector();
+        return;
+      }
       const account = catalog.get(target.value);
       if (!account) return;
       change(() => Object.assign(getPath(slide(), target.dataset.account), { handle:account.handle, followers:Number(account.followers).toLocaleString('en-US'), image:account.avatar }));

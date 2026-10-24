@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import worker, {parseInstagramPost, validateComment, validateDeckEdit, validateStudioDeck} from './worker.mjs';
+import worker, {parseInstagramHandle, parseInstagramPost, validateComment, validateDeckEdit, validateStudioDeck} from './worker.mjs';
 const note = {id:crypto.randomUUID(),page:'home',author:'Reviewer',message:'Change this headline.',anchor:{selector:'main > section:nth-of-type(1)',quote:'Headline',x:.5,y:.5,pageY:.1}};
 test('validates untrusted notes and anchors',()=>{
   assert.equal(validateComment(note).author,'Reviewer');
@@ -35,6 +35,7 @@ const deckRequest = (method, body, options={}) => new Request(`https://api.examp
 const deckEnvironment = context => {
   const database = new DatabaseSync(':memory:');
   database.exec(readFileSync(new URL('./migrations/0002_deck_edits.sql',import.meta.url),'utf8'));
+  database.exec(readFileSync(new URL('./migrations/0003_studio.sql',import.meta.url),'utf8'));
   database.exec(readFileSync(new URL('./migrations/0004_deck_text_edits.sql',import.meta.url),'utf8'));
   database.exec(readFileSync(new URL('./migrations/0005_deck_text_versions.sql',import.meta.url),'utf8'));
   context.after(()=>database.close());
@@ -167,6 +168,14 @@ const withDash=(context,overrides={})=>{
   globalThis.fetch=async(input,init={})=>{
     const url=new URL(input);
     calls.push(url.pathname);
+    if (url.pathname==='/api/decks/profile-preview') {
+      assert.equal(init.headers.Authorization,`Bearer ${dashKey}`);
+      assert.equal(init.method,'POST');
+      const handle=JSON.parse(init.body).handle;
+      if (!['chatgptricks','outside_account'].includes(handle)) return Response.json({detail:'Not found'},{status:404});
+      return Response.json({handle,followers_count:2751234,profile_pic_url:'https://scontent.cdninstagram.com/avatar.jpg'});
+    }
+    if (url.hostname==='scontent.cdninstagram.com') return new Response('JPEG',{headers:{'Content-Type':'image/jpeg'}});
     assert.equal(init.headers.Authorization,`Bearer ${dashKey}`);
     if (overrides[url.pathname]) return overrides[url.pathname]();
     if (url.pathname==='/api/v1/accounts') return Response.json({data:[{handle:'artificialntellligence'},{handle:'chatgptricks'}]});
@@ -229,11 +238,22 @@ test('account lookup returns exact SentientDash followers for the editor',async 
   const lookup=(body,options={})=>new Request('https://api.example/decks/campaign-deck/account',{method:'POST',headers:{Origin:'https://chatgptricks.github.io','Content-Type':'application/json',...(options.password===null?{}:{Authorization:`Bearer ${editorPassword}`})},body:JSON.stringify(body)});
   const response=await worker.fetch(lookup({handle:'@ChatGPTricks'}),storage);
   assert.equal(response.status,200);
-  assert.deepEqual(await response.json(),{handle:'chatgptricks',followers:2751234,capturedAt:'2026-10-14T16:05:22+00:00'});
+  const result=await response.json();
+  assert.equal(result.handle,'chatgptricks');
+  assert.equal(result.followers,2751234);
+  assert.match(result.avatar,/^https:\/\/api\.example\/studio\/assets\/[0-9a-f]{64}$/);
+  assert.ok(Number.isFinite(Date.parse(result.capturedAt)));
+  const photo=await worker.fetch(new Request(result.avatar),storage);
+  assert.equal(await photo.text(),'JPEG');
   assert.equal((await worker.fetch(lookup({handle:'chatgptricks'},{password:null}),storage)).status,401);
   assert.equal((await worker.fetch(lookup({handle:'bad handle!'}),storage)).status,400);
   assert.equal((await worker.fetch(lookup({handle:'unknown'}),storage)).status,404);
-  assert.equal((await worker.fetch(lookup({handle:'chatgptricks'}),{...storage,SENTIENTDASH_API_KEY:undefined})).status,503);
+  const external=await worker.fetch(lookup({handle:'https://www.instagram.com/outside_account/'}),storage);
+  assert.equal(external.status,200);
+  assert.equal((await external.json()).handle,'outside_account');
+  const otherDeck=new Request('https://api.example/decks/launch-amplification/account',lookup({handle:'outside_account'}));
+  assert.equal((await worker.fetch(otherDeck,storage)).status,200);
+  assert.equal((await worker.fetch(lookup({handle:'outside_account'}),{...storage,SENTIENTDASH_API_KEY:undefined})).status,503);
 });
 
 // Deck studio: published decks and their images.
@@ -392,4 +412,10 @@ test('named JSON text copies are shared, isolated and never change the original'
   assert.equal((await send('PUT',`/versions/${id}`,{fields:{'cover.title':'Updated copy'},revision:1})).status,200);
   assert.equal((await send('PUT',`/versions/${id}`,{fields:{'cover.title':'Stale copy'},revision:1})).status,409);
   assert.deepEqual((await (await send('GET','')).json()).fields,{'cover.title':'Original'});
+});
+
+test('external profile lookup accepts only Instagram handles or profile URLs',()=>{
+  assert.equal(parseInstagramHandle('@Nike'),'nike');
+  assert.equal(parseInstagramHandle('https://www.instagram.com/nike/?igsh=test'),'nike');
+  for(const input of ['https://evil.example/nike/','http://instagram.com/nike/','https://www.instagram.com/p/shortcode/','https://instagram.com:8443/nike/','bad handle!']) assert.equal(parseInstagramHandle(input),null);
 });

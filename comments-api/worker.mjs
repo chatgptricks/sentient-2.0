@@ -169,8 +169,8 @@ export function parseInstagramPost(value) {
   return { account: match[1]?.toLowerCase() ?? null, shortcode: match[2] };
 }
 
-async function sentientDash(env, path) {
-  return fetch(`${sentientDashUrl(env)}${path}`, { headers: { Authorization: `Bearer ${env.SENTIENTDASH_API_KEY}`, Accept: 'application/json' }, redirect: 'follow' });
+async function sentientDash(env, path, options = {}) {
+  return fetch(`${sentientDashUrl(env)}${path}`, { ...options, headers:{ Authorization:`Bearer ${env.SENTIENTDASH_API_KEY}`, Accept:'application/json', ...options.headers }, redirect:'follow' });
 }
 
 async function findPost(env, post) {
@@ -223,6 +223,20 @@ async function handleInstagramPost(request, env, json, originAllowed) {
   }
 }
 
+export function parseInstagramHandle(value) {
+  let handle = String(value ?? '').trim();
+  if (/^https?:\/\//i.test(handle)) {
+    let url;
+    try { url = new URL(handle); } catch { return null; }
+    if (url.protocol !== 'https:' || !/^(www\.)?instagram\.com$/i.test(url.hostname) || url.username || url.password || url.port) return null;
+    const match = /^\/([a-z0-9_.]{1,30})\/?$/i.exec(url.pathname);
+    if (!match) return null;
+    handle = match[1];
+  }
+  handle = handle.replace(/^@/, '').toLowerCase();
+  return handlePattern.test(handle) ? handle : null;
+}
+
 async function handleAccount(request, env, json, originAllowed) {
   if (request.method !== 'POST') return json(405, { error: 'Method not allowed.' });
   const rejected = await guardDeckWrite(request, env, json, originAllowed);
@@ -232,19 +246,31 @@ async function handleAccount(request, env, json, originAllowed) {
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json(415, { error: 'Use JSON.' });
   const parsed = await readJson(request, 1024);
   if (parsed.error) return json(parsed.status, { error: parsed.error });
-  const handle = String(parsed.data?.handle ?? '').trim().replace(/^@/, '').toLowerCase();
-  if (!handlePattern.test(handle)) return json(400, { error: 'Use an Instagram handle.' });
-  if (!env.SENTIENTDASH_API_KEY) return json(503, { error: 'SentientDash is not connected yet.' });
+  const handle = parseInstagramHandle(parsed.data?.handle);
+  if (!handle) return json(400, { error: 'Use an Instagram handle or profile link.' });
+  if (!env.SENTIENTDASH_API_KEY) return json(503, { error:'Profile lookup is not configured yet.' });
   try {
-    const response = await sentientDash(env, `/api/v1/accounts/${handle}`);
-    if (response.status === 404) return json(404, { error: `SentientDash has no data for @${handle} with this API key.` });
-    if (response.status === 429) return json(429, { error: 'SentientDash is busy. Try again in a minute.' });
-    if (!response.ok) return json(502, { error: 'SentientDash is unavailable right now. Try again.' });
-    const { data, data_updated_at: updated } = await response.json();
-    if (!Number.isSafeInteger(data?.followers)) return json(404, { error: `SentientDash has no follower count for @${handle}.` });
-    return json(200, { handle, followers: data.followers, capturedAt: updated?.profile ?? null });
+    // The website key authenticates this bounded public-profile lookup.
+    const response = await sentientDash(env, '/api/decks/profile-preview', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({handle}), signal:AbortSignal.timeout(70000),
+    });
+    if (response.status === 404) return json(404, { error: `Could not find @${handle}. Check the username and try again.` });
+    if (response.status === 429) return json(429, { error: 'Profile lookup is busy. Try again in a minute.' });
+    if (!response.ok) return json(502, { error: 'Could not read this Instagram profile. Try again.' });
+    const profile = await response.json();
+    if (profile.handle !== handle || !Number.isSafeInteger(profile.followers_count) || profile.followers_count < 0) return json(502, { error:'Instagram did not return a matching profile and exact follower count.' });
+    let photoUrl;
+    try { photoUrl = new URL(profile.profile_pic_url); } catch { return json(502, { error:'Instagram did not return a profile photo.' }); }
+    if (photoUrl.protocol !== 'https:' || !/(^|\.)(cdninstagram\.com|fbcdn\.net)$/.test(photoUrl.hostname)) return json(502, { error:'Instagram returned an unsupported profile photo address.' });
+    const photo = await fetch(photoUrl.href, { redirect:'error', signal:AbortSignal.timeout(15000) });
+    const type = (photo.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+    if (!photo.ok || !studioAssetTypes.has(type)) return json(502, { error:'Could not load the profile photo. Your account selection is unchanged.' });
+    const bytes = await readBytes(photo, studioAssetLimit);
+    if (!bytes?.length || bytes === 'too-large') return json(502, { error:'The profile photo could not be stored.' });
+    const id = await storeAsset(env, bytes, type);
+    return json(200, { handle, followers:profile.followers_count, avatar:assetUrl(request, id), capturedAt:new Date().toISOString() });
   } catch {
-    return json(502, { error: 'SentientDash is unavailable right now. Try again.' });
+    return json(502, { error: 'Could not update this Instagram profile. Your existing account details are still here.' });
   }
 }
 
@@ -479,7 +505,7 @@ export default {
     const deckAuthRoute = Boolean(editableDeck?.[2]);
     const versionRoute = /^\/decks\/([a-z0-9][a-z0-9-]{1,63})\/versions(?:\/([^/]+))?$/.exec(url.pathname);
     const postRoute = url.pathname === `/decks/${deckSlug}/instagram-post`;
-    const accountRoute = url.pathname === `/decks/${deckSlug}/account`;
+    const accountRoute = /^\/decks\/[a-z0-9][a-z0-9-]{1,63}\/account$/.test(url.pathname);
     const coverRoute = new RegExp(`^/decks/${deckSlug}/covers/([^/]+)/([^/]+)$`).exec(url.pathname);
     if (url.pathname.startsWith('/studio/')) {
       if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:{...headers, 'Access-Control-Allow-Methods':'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type, Authorization', 'Access-Control-Max-Age':'3600'}});

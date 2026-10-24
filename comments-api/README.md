@@ -42,7 +42,7 @@ The campaign deck's editor can replace a showcased promotional post by pasting i
 
 Configure the key as a secret: create an account-scoped website key at SentientDash `/api.html` covering the Sentient accounts, then run `npx wrangler secret put SENTIENTDASH_API_KEY` here and paste it at the hidden prompt. `SENTIENTDASH_API_URL` optionally overrides the default `https://cortex-api-db2e.onrender.com`. The API key is never stored in this repository.
 
-`POST /decks/campaign-deck/account` accepts JSON `{ handle }` with the same editor authorisation and returns `{ handle, followers, capturedAt }` from SentientDash `GET /api/v1/accounts/{handle}` (the exact latest follower count and when it was recorded). The deck uses it when an account is chosen and from its "Update followers" button.
+`POST /decks/{slug}/account` accepts JSON `{ handle }` with the same editor authorisation and returns `{ handle, followers, avatar, capturedAt }` for any valid Instagram handle or profile URL. The shared account picker works in classic and Studio decks, including named versions.
 
 ## Deck Studio publishing
 
@@ -60,3 +60,5 @@ Every write uses a deck editor password as `Authorization: Bearer …` from an a
 Inline text editing is available at `GET`/`PUT /decks/<slug>` and `POST /decks/<slug>/auth` for every deck. Each slug has its own revision and saved fields. Migration `0004_deck_text_edits.sql` adds storage for additional decks; the existing campaign table and its saved edits remain in place. Apply the migration before deploying this Worker.
 
 Named text copies use `GET`/`POST /decks/<slug>/versions` and `GET`/`PUT /decks/<slug>/versions/<id>`, with the same editor password and permitted origin required for every operation. Migration `0005_deck_text_versions.sql` stores each copy as bounded JSON text fields, a required unique name, and an independent revision. Copies do not write to the original or duplicate the deck design. Normal presentation loads always read the original endpoint; version selection is confined to the current edit session.
+
+Account profile lookups accept any Instagram handle or profile URL through the authenticated SentientDash `/api/decks/profile-preview` action. They do not create or track Dashboard accounts, and they do not require adding the account to a website API key. The protected deck endpoint stores the returned profile photo in the existing content-addressed image store and returns its stable URL together with the follower count. The existing website key needs its accounts grant; stored-data scope restrictions remain unchanged. Profile refresh runs on explicit selection or the Update profiles control. Account identity, photo reference and snapshot date can also be retained in named versions.

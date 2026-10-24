@@ -43,6 +43,9 @@
 .deck-version-dialog button { font:inherit; cursor:pointer; border:1px solid #ffffff24; border-radius:100px; padding:10px 16px; background:#262624; color:inherit; }
 .deck-version-dialog header button { border:0; background:none; font-size:25px; padding:0 6px; }
 .deck-version-dialog input { width:100%; min-height:44px; padding:10px 12px; border:1px solid #ffffff30; border-radius:8px; background:#090c08; color:#f3f2e9; font:inherit; }
+.deck-account-feedback { margin:0; color:#b3b3a8; font-size:12px; }
+.deck-account-feedback:empty { display:none; }
+.deck-account-dialog button:disabled { opacity:.6; cursor:wait; }
 .deck-version-copy-form { display:grid; gap:12px; margin-bottom:14px; }
 .deck-version-dialog .deck-version-primary { background:#d0ff00; border-color:#d0ff00; color:#17230c; font-weight:600; }
 .deck-version-save-current { width:100%; }

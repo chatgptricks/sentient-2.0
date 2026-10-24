@@ -79,6 +79,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   let pendingSave = null;
   let lastCopyName = '';
   let choosing = false;
+  let profilesLoading = false;
   let savedSnapshot = '';
   let editing = false;
   let saving = false;
@@ -188,14 +189,14 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     brand?.focus?.({ preventScroll: true });
   };
   const save = async (target = pendingSave ?? { mode:'current' }) => {
-    if (!editing || saving || exporting || choosing) return;
+    if (!editing || saving || exporting || choosing || profilesLoading) return;
     const asCopy = target.mode === 'copy';
     if (!asCopy && !dirty()) { leave(); return; }
     const textOnly = asCopy || Boolean(activeVersion);
     const values = textOnly ? Object.create(null) : { ...serverFields };
     pendingSave = target;
     for (const { key, element, original } of fields) {
-      if (textOnly && element.hidden) continue;
+      if (textOnly && element.hidden && !element.hasAttribute('data-account-meta')) continue;
       const value = textOf(element);
       if (value.length > MAX_FIELD_LENGTH) {
         editFeedback.textContent = 'This text is too long. Shorten it and try again.';
@@ -266,7 +267,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   };
 
   const finishEditing = async () => {
-    if (!editing || saving || exporting || choosing) return;
+    if (!editing || saving || exporting || choosing || profilesLoading) return;
     choosing = true;
     doneButton.disabled = pdfButton.disabled = versionsButton.disabled = true;
     let target;
@@ -285,7 +286,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   };
 
   versionsButton.addEventListener('click', async () => {
-    if (!editing || saving || exporting || choosing) return;
+    if (!editing || saving || exporting || choosing || profilesLoading) return;
     choosing = true;
     doneButton.disabled = pdfButton.disabled = versionsButton.disabled = true;
     fields.forEach(({ element }) => element.setAttribute('contenteditable', 'false'));
@@ -323,7 +324,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
   }, { signal });
 
   pdfButton.addEventListener('click', async () => {
-    if (!editing || saving || exporting || choosing || !onDownloadPdf) return;
+    if (!editing || saving || exporting || choosing || profilesLoading || !onDownloadPdf) return;
     exporting = true;
     pdfButton.disabled = doneButton.disabled = versionsButton.disabled = true;
     pdfButton.setAttribute('aria-busy', 'true');
@@ -338,6 +339,11 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
       pdfButton.disabled = doneButton.disabled = versionsButton.disabled = false;
       pdfButton.removeAttribute('aria-busy');
     }
+  }, { signal });
+
+  root.addEventListener('deck-account-busy', event => {
+    profilesLoading = Boolean(event.detail);
+    doneButton.disabled = pdfButton.disabled = versionsButton.disabled = profilesLoading || saving || exporting || choosing;
   }, { signal });
 
   const logoSelector = '.deck-brand,.deck-end-glow,.deck-end-logo,.deck-cover-emblem:not([data-art]),img[alt="Sentient" i],img[src*="sentient-logo"],[role="img"][aria-label="Sentient" i]';
@@ -416,7 +422,7 @@ export function initDeckEditor({ root, deck, apiUrl, onFieldsApplied, onEditStar
     try {
       // SentientDash can take a while on a cold start; allow it longer than a save.
       result = await request(`${endpoint}/${route}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify(body), timeout: 60000
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` }, body: JSON.stringify(body), timeout: route === 'account' ? 90000 : 60000
       });
     } catch {
       throw new Error('SentientDash took too long to answer. Try again.');
