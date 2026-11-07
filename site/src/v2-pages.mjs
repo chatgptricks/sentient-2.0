@@ -3,6 +3,7 @@ import { servicePreview } from './service-previews.mjs';
 import { escapeHtml } from './social-meta.mjs';
 import { v2Campaigns } from './v2-campaigns.mjs';
 import { reviseV2About } from './v2-about.mjs';
+import { reviseV2Services } from './v2-services.mjs';
 
 const routes = ['/', '/viral-launch-campaigns', '/growth-campaigns', '/about', '/universe'];
 const v2Route = route => route === '/' ? '/v2/' : `/v2${route}`;
@@ -39,18 +40,44 @@ function pageStyles(page) {
 export function createV2Pages(originalPages) {
   return Object.fromEntries(Object.entries(originalPages).map(([route, original]) => {
     const page = original.match(/<body data-page="([^"]+)"/)[1];
-    let html = original;
+    // Selected work has no requested edits. Protect its full markup even when
+    // applying shared copy rules to the rest of the V2 documents.
+    const protectedWork = page === 'home' ? original.match(/<section\b(?=[^>]*\bid="work")[^>]*>[\s\S]*?<\/section>/)?.[0] : null;
+    const workMarker = '<!-- preserve-original-selected-work -->';
+    let html = protectedWork ? original.replace(protectedWork, workMarker) : original;
     // V2 has its own document and navigation. V1 and its notes remain untouched.
     html = html.replace(/<span class="header-note">[\s\S]*?<\/span>/, '');
+    html = html.replace(/<span class="section-index">[^<]*<\/span>/g, '');
+    html = html.replace(/>0\d \/ ([^<]+)</g, '>$1<');
+    html = html.replace('<span class="step-number">01</span>', '');
+    html = html.replaceAll('Get a campaign plan', 'Free strategy call')
+      .replaceAll('Get a launch plan', 'Free strategy call')
+      .replaceAll('Get a distribution plan', 'Free strategy call')
+      .replace('Start a project <span', 'Free strategy call <span')
+      .replace('Let’s make something move.</a>', 'Free strategy call.</a>')
+      .replace('Tell us what you’re building. Let’s find the right story, audience, and campaign for it.', 'Tell us what you’re building. On your free strategy call, we’ll explore the right story, audience, and campaign for it.')
+      .replace('Share your brief.<br><span>Then we shape your campaign plan together.</span>', 'Request your free strategy call.<br><span>Share a little context so we can prepare.</span>')
+      .replace(/(<button class="button form-submit" type="submit">)Free strategy call(<\/button>)/, '$1Request a free strategy call$2');
     if (page === 'home') {
       html = html.replace('<span>01 / SENTIENT</span>', '<span>SENTIENT</span>');
       html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, '<p><strong class="v2-inline-number">25M+</strong> followers in owned media.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>');
-      html = html.replace('<span>Get a campaign plan</span>', '<span>Free strategy call</span>');
       html = html.replace(/<aside class="owned-proof shell"[\s\S]*?<\/aside>/, '');
       html = replaceSection(html, 'services', `${network()}${serviceCards()}`);
       html = replaceSection(html, 'client-proof', clientCarousel());
       html = replaceSection(html, 'campaign-wall', receipts());
     }
+    if (page === 'launch') {
+      html = html.replace('A product launch. A funding round. A big announcement. Turn your next milestone into a story that travels.', 'A launch, funding round, or announcement. One post from your founder, coordinated distribution through our owned accounts and creators, and a campaign built for demos, press, and inbound.');
+      html = html.replace('Your next milestone.<br>A story that travels.', 'One founder post.<br>A coordinated campaign wave.');
+      html = html.replace('Shape a founder post and supporting creative for your launch.', 'We script and structure the post. Your founder publishes it after you approve every word.');
+    }
+    if (page === 'growth') {
+      html = html.replace('Your ongoing distribution partner. We bring product drops to our owned audiences and creator partners, then track what turns attention into action.', 'Your ongoing distribution partner. Publish through owned pages and partner creators, find what drives clicks and conversions, then amplify the winners with paid ads.');
+      html = html.replace('Your product. Our audience.<br>Build momentum with every campaign.', 'Publish. Learn. Scale.<br>Owned media, creators, and paid amplification.');
+      html = html.replace('Find the creative that drives engagement, clicks, and conversions.', 'Find what drives clicks and conversions, then amplify the winners with paid ads.');
+      html = html.replace(/(<div class="growth-steps">[\s\S]*?<\/section>)/, block => block.replace(/<span>0\d<\/span>/g, ''));
+    }
+    html = reviseV2Services(html, page);
     if (page === 'about') html = reviseV2About(html);
     // Keep every page-to-page journey inside V2, including Universe's call link.
     html = html.replace(/\bhref="(\/[^"\s]*)"/g, (match, url) => {
@@ -70,6 +97,7 @@ export function createV2Pages(originalPages) {
     const originalHref = route;
     const comparison = `<aside class="v2-comparison" aria-label="Website version"><span>V2 <span>· Updated proposal</span></span><a href="${originalHref}">View V1 ${arrow}</a></aside>`;
     html = html.replace('<button class="menu-toggle"', `${comparison}<button class="menu-toggle"`);
+    if (protectedWork) html = html.replace(workMarker, protectedWork);
     return [v2Route(route), html];
   }));
 }

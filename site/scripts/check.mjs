@@ -23,6 +23,9 @@ for (const [route, original] of Object.entries(originalPages)) {
   assert.ok(version, `${route}: corresponding V2 route exists`);
   assert.match(version, /data-version="v2"/);
   assert.doesNotMatch(version, /src="\/comments\.js"/, 'V2 must not share V1 note anchors');
+  const editableContent = version.replace(selectedWork(version) || '', '');
+  assert.doesNotMatch(editableContent, /Get a (?:campaign|launch|distribution) plan/, `${versionRoute}: contact CTAs use the shared call offer`);
+  assert.doesNotMatch(editableContent, /<span[^>]*>0\d \/ [A-Z]|class="(?:section-index|step-number)"/, `${versionRoute}: no decorative section numbering outside protected Selected work`);
   const navigation = version.replace(/<aside class="v2-comparison"[\s\S]*?<\/aside>/, '');
   for (const [, href] of navigation.matchAll(/href="(\/[^"\s]*)"/g)) {
     const path = href.split(/[?#]/)[0].replace(/\/$/, '') || '/';
@@ -44,6 +47,11 @@ for (const [route, html] of routeHtml) {
 }
 const growthText = routeHtml.get('/growth-campaigns').split('<div class="growth-content">')[1].split('<section class="contact-wrap')[0].replace(/<[^>]*>/g, ' ').trim().split(/\s+/);
 assert.ok(growthText.length < 150, `Growth body is ${growthText.length} words`);
+const v2GrowthText = routeHtml.get('/v2/growth-campaigns').split('<div class="growth-content">')[1].split('<section class="contact-wrap')[0].replace(/<[^>]*>/g, ' ').trim().split(/\s+/);
+assert.ok(v2GrowthText.length < 150, `V2 Growth body is ${v2GrowthText.length} words`);
+for (const route of ['/v2/viral-launch-campaigns', '/v2/growth-campaigns']) {
+  assert.match(routeHtml.get(route), /@artificialntellligence/, `${route}: service campaign examples include another verified owned account`);
+}
 assert.equal(universeAccounts.length,31);
 assert.equal(new Set(universeAccounts.map(a=>a.handle)).size,31,'Unique Instagram worlds');
 assert.equal(universeAccounts.filter(a=>a.relationship==='owned').length,26);
