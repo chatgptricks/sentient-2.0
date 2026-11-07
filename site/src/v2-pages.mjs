@@ -19,7 +19,6 @@ const clientCarousel = () => `<section class="client-proof v2-client-carousel" a
 
 const receipts = () => `<section class="v2-receipts shell" id="campaign-wall" aria-labelledby="v2-receipts-title"><div class="v2-section-heading"><div><span class="eyebrow">SELECTED CAMPAIGNS</span><h2 id="v2-receipts-title">The <em class="type-accent">receipts.</em></h2></div><p>Campaigns across<br>our owned accounts.</p></div><div class="v2-post-grid">${v2Campaigns.map(campaign => `<a class="v2-post" href="${campaign.source}" target="_blank" rel="noopener noreferrer" aria-label="View ${escapeHtml(campaign.client)} campaign by @${escapeHtml(campaign.handle)}"><div class="v2-post-image"><img src="${campaign.image}" alt="${escapeHtml(campaign.alt)}" width="720" height="960" loading="lazy" decoding="async"><span>${arrow}</span></div><div class="v2-post-caption"><strong>${escapeHtml(campaign.client)}</strong><span>@${escapeHtml(campaign.handle)}</span></div></a>`).join('')}</div></section>`;
 
-const useCases = () => `<section class="v2-use-cases shell" id="work" aria-labelledby="v2-work-title"><div class="v2-section-heading"><div><span class="eyebrow">SELECTED WORK</span><h2 id="v2-work-title">Recent<br><em class="type-accent">campaigns.</em></h2></div><p>Robotics, AI gaming,<br>and product launches.</p></div><div class="v2-use-grid">${v2Campaigns.slice(0, 2).map(campaign => `<article class="v2-use-case"><a href="${campaign.source}" target="_blank" rel="noopener noreferrer"><img src="${campaign.image}" alt="${escapeHtml(campaign.alt)}" width="720" height="960" loading="lazy"></a><div><span class="eyebrow">${escapeHtml(campaign.category)}</span><h3>${escapeHtml(campaign.client)}</h3><p>${escapeHtml(campaign.context)}</p><a class="text-link" href="${campaign.source}" target="_blank" rel="noopener noreferrer">See the original post ${arrow}</a><small>@${escapeHtml(campaign.handle)} · ${escapeHtml(campaign.date)}</small></div></article>`).join('')}</div></section>`;
 
 function replaceSection(html, className, replacement) {
   const pattern = new RegExp(`<section class="${className}[^\"]*"[\\s\\S]*?<\\/section>`);
@@ -43,22 +42,14 @@ export function createV2Pages(originalPages) {
     let html = original;
     // V2 has its own document and navigation. V1 and its notes remain untouched.
     html = html.replace(/<span class="header-note">[\s\S]*?<\/span>/, '');
-    html = html.replace(/<span class="section-index">[^<]*<\/span>/g, '');
-    html = html.replace(/>0\d \/ ([^<]+)</g, '>$1<');
     if (page === 'home') {
       html = html.replace('<span>01 / SENTIENT</span>', '<span>SENTIENT</span>');
       html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, '<p><strong class="v2-inline-number">25M+</strong> followers in owned media.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>');
       html = html.replace('<span>Get a campaign plan</span>', '<span>Free strategy call</span>');
-      html = html.replace('class="hero-proof" href="#work"', 'class="hero-proof" href="#campaign-wall"');
       html = html.replace(/<aside class="owned-proof shell"[\s\S]*?<\/aside>/, '');
       html = replaceSection(html, 'services', `${network()}${serviceCards()}`);
       html = replaceSection(html, 'client-proof', clientCarousel());
       html = replaceSection(html, 'campaign-wall', receipts());
-      html = replaceSection(html, 'work-section featured-work shell', useCases());
-    }
-    if (page === 'growth') {
-      html = html.replace('Your ongoing distribution partner. We bring product drops to our owned audiences and creator partners, then track what turns attention into action.', 'Ongoing campaigns through our owned pages and partner creators. Use organic reach to find the creative that converts, then amplify the winners with paid ads.');
-      html = html.replace('Find the creative that drives engagement, clicks, and conversions.', 'Find what drives clicks and conversions, then amplify the winners with paid ads.');
     }
     if (page === 'about') html = reviseV2About(html);
     // Keep every page-to-page journey inside V2, including Universe's call link.

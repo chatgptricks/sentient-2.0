@@ -12,6 +12,10 @@ assert.equal(routes.includes('/universe'), features.universe, 'Universe route fo
 if (!features.universe) await assert.rejects(stat(resolve(root, 'dist/universe')), { code: 'ENOENT' });
 const routeHtml = new Map();
 for (const route of routes) routeHtml.set(route, await readFile(resolve(root, 'dist', route === '/' ? 'index.html' : `${route.slice(1)}/index.html`), 'utf8'));
+const selectedWork = html => html.match(/<section\b(?=[^>]*\bid="work")[^>]*>[\s\S]*?<\/section>/)?.[0];
+const originalWork = selectedWork(routeHtml.get('/'));
+assert.ok(originalWork, 'V1 Selected work exists');
+assert.equal(selectedWork(routeHtml.get('/v2/')), originalWork, 'V2 must preserve the complete uncommented Selected work section');
 for (const [route, original] of Object.entries(originalPages)) {
   assert.equal(routeHtml.get(route), original, `${route}: V1 HTML must remain byte-for-byte unchanged`);
   const versionRoute = route === '/' ? '/v2/' : `/v2${route}`;
