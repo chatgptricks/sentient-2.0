@@ -8,10 +8,12 @@ export async function build() {
   const basePath = normalizeBasePath(process.env.BASE_PATH || '');
   const staticHosting = process.env.STATIC_HOSTING === '1';
   const { pages } = await import(`../src/pages.mjs?v=${Date.now()}`);
+  const { createV2Pages } = await import('../src/v2-pages.mjs');
+  const allPages = { ...pages, ...createV2Pages(pages) };
   const localUrl = url => {
     if (!url.startsWith('/') || url.startsWith('//')) return url;
     const [, path, suffix = ''] = url.match(/^([^?#]*)(.*)$/);
-    const routePath = staticHosting && path !== '/' && pages[path] ? `${path}/` : path;
+    const routePath = staticHosting && path !== '/' && allPages[path] && !path.endsWith('/') ? `${path}/` : path;
     return `${basePath}${routePath}${suffix}`;
   };
   const renderHtml = html => {
@@ -32,7 +34,7 @@ export async function build() {
     await rm(resolve(root, 'dist/universe'), { recursive: true, force: true });
     await rm(resolve(root, 'dist/js/universe.js'), { force: true });
   }
-  for (const [route, html] of Object.entries(pages)) {
+  for (const [route, html] of Object.entries(allPages)) {
     const target = resolve(root, 'dist', route === '/' ? 'index.html' : `${route.slice(1)}/index.html`);
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, renderHtml(html));
@@ -59,6 +61,6 @@ export async function build() {
   }
   await writeFile(resolve(root, 'dist/comments-config.json'), JSON.stringify({apiUrl: process.env.COMMENTS_API_URL || JSON.parse(await readFile(resolve(root, 'public/comments-config.json'), 'utf8')).apiUrl}));
   await writeFile(resolve(root, 'dist/.nojekyll'), '');
-  return Object.keys(pages);
+  return Object.keys(allPages);
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) console.log(`Built: ${(await build()).join(', ')}`);

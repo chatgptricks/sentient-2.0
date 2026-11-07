@@ -1,0 +1,110 @@
+.v2-about-story .story-founders {
+  gap: 40px;
+  padding-bottom: 72px;
+}
+.v2-about-story .story-portrait {
+  aspect-ratio: 1.04;
+  border: 1px solid #d2ed9f30;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at 50% 32%, #697b3b 0, #324222 48%, #152112 100%);
+}
+.v2-about-story .story-founder--louis .story-portrait {
+  background: radial-gradient(ellipse at 50% 32%, #536c55 0, #2a4030 48%, #142219 100%);
+}
+.v2-about-story .story-portrait::after {
+  inset: 58% 0 0;
+  background: linear-gradient(transparent, #080d08f0);
+}
+.v2-about-story .story-portrait > img,
+.v2-about-story .story-founder--ivan .story-portrait > img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.v2-about-story .story-portrait-caption {
+  left: 30px;
+  right: 30px;
+  bottom: 26px;
+}
+.v2-about-story .story-portrait-caption h2 {
+  font-size: clamp(29px, 3vw, 46px);
+}
+.v2-about-story .v2-presence {
+  padding-top: 52px;
+  padding-bottom: 84px;
+  border-top: 1px solid #e0edce28;
+}
+.v2-presence-heading {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+  padding-bottom: 35px;
+}
+.v2-presence-heading > .eyebrow { padding-top: 7px; }
+.v2-about-story .v2-presence-heading h2 {
+  font-size: clamp(32px, 4vw, 58px);
+  line-height: 1.15;
+  margin: 0;
+}
+.v2-presence-heading h2 em { color: var(--acid); font-style: normal; }
+.v2-presence-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+}
+.v2-presence-card { margin: 0; min-width: 0; }
+.v2-presence-image {
+  border: 1px solid #e0edce24;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #172017;
+}
+.v2-presence-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+.v2-presence-card figcaption { padding-top: 20px; }
+.v2-presence-card h3 {
+  color: #f3f6e9;
+  font-family: var(--font);
+  font-size: clamp(17px, 1.7vw, 24px);
+  font-weight: 500;
+  letter-spacing: -.02em;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+.v2-presence-card p {
+  color: #b6c1ad;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 400px;
+}
+@media (max-width: 760px) {
+  .v2-about-story .story-founders { gap: 36px; padding-bottom: 48px; }
+  .v2-about-story .story-founder { display: block; }
+  .v2-about-story .story-portrait { aspect-ratio: 1.05; height: auto; }
+  .v2-about-story .story-portrait-caption { display: block; left: 24px; right: 24px; bottom: 23px; }
+  .v2-about-story .story-portrait-caption h2 { font-size: clamp(28px, 5vw, 38px); }
+  .v2-about-story .story-founder-role { font-size: 10px; }
+  .v2-about-story .story-founder-bio { display: block; padding-top: 23px; }
+  .v2-about-story .mobile-founder-name { display: none; }
+  .v2-about-story .story-founder-bio p { font-size: 15px; line-height: 1.8; margin: 0 0 15px; }
+  .v2-about-story .story-founder-bio .story-founder-specialty { font-size: 12px; margin-bottom: 15px; }
+  .v2-about-story .story-person-link { margin-top: 21px; padding-top: 15px; }
+  .v2-about-story .v2-presence { padding-top: 35px; padding-bottom: 54px; }
+  .v2-presence-heading { grid-template-columns: 1fr; gap: 23px; padding-bottom: 28px; }
+  .v2-presence-heading > .eyebrow { padding-top: 0; }
+  .v2-about-story .v2-presence-heading h2 { font-size: clamp(32px, 8vw, 46px); }
+  .v2-presence-heading h2 br { display: none; }
+  .v2-presence-grid { grid-template-columns: 1fr; gap: 34px; }
+  .v2-presence-card h3 { font-size: 21px; }
+  .v2-presence-card figcaption { padding-top: 17px; }
+}

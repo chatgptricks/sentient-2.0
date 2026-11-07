@@ -6,16 +6,30 @@ import assert from 'node:assert/strict';
 import { build, root } from './build.mjs';
 import { universeAccounts } from '../src/universe-data.mjs';
 import { features } from '../src/site-config.mjs';
+import { pages as originalPages } from '../src/pages.mjs';
 const routes = await build();
 assert.equal(routes.includes('/universe'), features.universe, 'Universe route follows its feature flag');
 if (!features.universe) await assert.rejects(stat(resolve(root, 'dist/universe')), { code: 'ENOENT' });
 const routeHtml = new Map();
 for (const route of routes) routeHtml.set(route, await readFile(resolve(root, 'dist', route === '/' ? 'index.html' : `${route.slice(1)}/index.html`), 'utf8'));
+for (const [route, original] of Object.entries(originalPages)) {
+  assert.equal(routeHtml.get(route), original, `${route}: V1 HTML must remain byte-for-byte unchanged`);
+  const versionRoute = route === '/' ? '/v2/' : `/v2${route}`;
+  const version = routeHtml.get(versionRoute);
+  assert.ok(version, `${route}: corresponding V2 route exists`);
+  assert.match(version, /data-version="v2"/);
+  assert.doesNotMatch(version, /src="\/comments\.js"/, 'V2 must not share V1 note anchors');
+  const navigation = version.replace(/<aside class="v2-comparison"[\s\S]*?<\/aside>/, '');
+  for (const [, href] of navigation.matchAll(/href="(\/[^"\s]*)"/g)) {
+    const path = href.split(/[?#]/)[0].replace(/\/$/, '') || '/';
+    assert.ok(!Object.hasOwn(originalPages, path), `${versionRoute}: website navigation must stay inside V2 (${href})`);
+  }
+}
 let references = 0;
 for (const [route, html] of routeHtml) {
   if (!features.universe) assert.doesNotMatch(html, /href="\/universe(?:["/#?])/, `${route}: hidden Universe has no entry points`);
   assert.equal((html.match(/<h1[ >]/g) || []).length, 1, `${route}: exactly one H1`);
-  if(route !== '/universe') assert.match(html, /method="post" action="\/api\/inquiries"/);
+  if(!route.endsWith('/universe')) assert.match(html, /method="post" action="\/api\/inquiries"/);
   for (const [, url] of html.matchAll(/(?:src|href)="([^"\s]+)"/g)) {
     if (url.startsWith('#')) assert.ok(html.includes(`id="${url.slice(1)}"`), `${route}: missing anchor ${url}`);
     if (!url.startsWith('/') || url === '/api/inquiries') continue;
