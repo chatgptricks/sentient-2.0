@@ -27,6 +27,28 @@ function replaceSection(html, className, replacement) {
   return html.replace(pattern, () => replacement);
 }
 
+function simplifyLabels(html) {
+  const redundant = new Set([
+    'OUR OWN MEDIA. YOUR ADVANTAGE.', 'TWO WAYS TO GROW',
+    'LAUNCHES · RAISES · ANNOUNCEMENTS', 'ONGOING DISTRIBUTION · CONVERSION',
+    'SELECTED CAMPAIGNS', 'THE NEXT BIG THING COULD BE YOURS.',
+    'THE PEOPLE BEHIND SENTIENT', 'BEYOND THE FEED',
+    'A DIFFERENT WAY TO EXPLORE', 'BUILD. DISTRIBUTE. LEARN. REPEAT.',
+    'THE SENTIENT NETWORK / INTERACTIVE ATLAS',
+  ]);
+  return html
+    .replace(/<div class="hero-topline shell">[\s\S]*?<\/div>/, '')
+    .replace(/<span class="hero-kicker">[^<]*<\/span>/, '')
+    .replace(/<span class="hero-art-label"[^>]*>[^<]*<\/span>/, '')
+    .replace(/(<div class="hero-foot shell">)<span>[\s\S]*?DISTRIBUTION<\/span>/, '$1')
+    .replace(/(<div class="service-landing-footer">)<span>[^<]*<\/span>/, '$1')
+    .replace(/<(span|small)\b[^>]*\bclass="[^"]*\beyebrow\b[^"]*"[^>]*>([^<]*)<\/\1>/g, (markup, _tag, text) => redundant.has(text.trim()) ? '' : markup)
+    .replace(/(<ol class="process-grid">[\s\S]*?<\/ol>)/, block => block.replace(/<span>THE (?:ANGLE|POST|NETWORK|FOLLOW-THROUGH)<\/span>/g, ''))
+    .replace('<span>GOOD PRODUCTS.<br>UNREASONABLE AMBITION.</span>', '')
+    .replace('<span>CREATIVITY × DISTRIBUTION</span>', '')
+    .replace('<span>THE CONSTELLATION</span>', '<span>Accounts</span>');
+}
+
 function pageStyles(page) {
   const files = ['styles.css','art-direction.css','brand-proof.css'];
   if (['launch','growth'].includes(page)) files.push('service-fields.css');
@@ -79,6 +101,7 @@ export function createV2Pages(originalPages) {
     }
     html = reviseV2Services(html, page);
     if (page === 'about') html = reviseV2About(html);
+    html = simplifyLabels(html);
     // Keep every page-to-page journey inside V2, including Universe's call link.
     html = html.replace(/\bhref="(\/[^"\s]*)"/g, (match, url) => {
       const [path, suffix = ''] = url.match(/^([^?#]*)(.*)$/).slice(1);

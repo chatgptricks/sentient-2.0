@@ -1,10 +1,8 @@
 /* Additive V2 styling. No V1 asset or selector is changed. */
 body[data-version=v2] .header-inner{gap:30px}
-body[data-version=v2] .hero-topline>span:last-child{letter-spacing:.18em}
 body[data-version=v2] .hero-desc p{max-width:450px}
 .v2-inline-number{color:var(--acid);font-size:1.4em;font-weight:600;letter-spacing:-.04em}
 .v2-owned{padding:72px 0 48px;background:radial-gradient(ellipse at 10% 0,#baff0010,transparent 65%),#10150e;border-top:1px solid #d5eea22a;border-bottom:1px solid #d5eea22a}
-.v2-owned>.shell>.eyebrow{color:var(--acid)}
 .v2-owned-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin:26px 0 36px}
 .v2-owned-heading h2{font:900 clamp(26px,3.7vw,57px)/1.12 var(--display);letter-spacing:-.025em;margin:0}
 .v2-owned-heading h2>span{font-family:var(--font);font-size:1.8em;color:var(--acid);font-weight:600;letter-spacing:-.08em}
@@ -22,7 +20,7 @@ body[data-version=v2] .hero-desc p{max-width:450px}
 .v2-services .offer h3{font-size:clamp(28px,3.3vw,49px);line-height:1.13}
 .v2-services .offer-bottom p{max-width:420px;line-height:1.65;font-size:14px}
 .v2-services .offer-art{height:150px;margin:12px 0}
-.v2-services .offer-top .eyebrow{font-size:9px;line-height:1.7}
+.v2-services .offer-top{justify-content:flex-end}
 .v2-client-carousel{margin-top:65px}
 .v2-client-controls{display:flex;gap:8px}
 .v2-client-controls button{width:38px;height:38px;border:1px solid #bcd29d44;border-radius:50%;color:#e9eedf;background:transparent;font-size:18px;cursor:pointer}
@@ -64,3 +62,6 @@ body[data-version=v2] .process-grid li{padding-top:28px}
 body[data-version=v2] .growth-steps h2{margin-top:0}
 .v2-campaign-handle{display:block;font:400 10px/1.5 var(--font);margin-top:5px;opacity:.8}
 @media(max-width:650px){body[data-version=v2] .process-grid li,body[data-version=v2] .growth-steps>div{padding-left:0}body[data-version=v2] .service-landing-copy>.button{display:inline-flex;margin-top:20px;min-height:45px;padding:12px 16px;font-size:12px}}
+body[data-version=v2] .hero-foot{justify-content:flex-end;border-top:0}
+body[data-version=v2] .process-grid h3{margin-top:0}
+@media(max-width:650px){body[data-version=v2] .hero-body{padding-top:clamp(90px,14svh,120px)}body[data-version=v2] .hero-foot{display:none}}
