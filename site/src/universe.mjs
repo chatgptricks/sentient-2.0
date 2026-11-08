@@ -4,7 +4,7 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { gsap } from 'gsap';
 import { Flip } from 'gsap/Flip';
 import { loadNetworkAccounts, formatFollowers, installAvatarFallbacks } from '../public/network-data.js';
-import { renderUniverse, accountDisplayHandle, accountRelationship, accountSnapshotDate, accountAvatarFallback } from './universe-page.mjs';
+import { renderUniverse, accountDisplayHandle, accountRelationship, accountAvatarFallback } from './universe-page.mjs';
 import sentientIcon from '../public/assets/sentient-symbol.svg';
 gsap.registerPlugin(Flip);
 const dataElement=document.getElementById('universe-data');
@@ -90,8 +90,8 @@ function initUniverse(accounts){
   else if(!panel.contains(document.activeElement))lastOpener=document.activeElement?.matches('button, a[href], input, [tabindex]')?document.activeElement:listToggle;
   selected=handle;visited.add(handle);try{localStorage.setItem('sentient-universe-explored',JSON.stringify([...visited]));}catch{}
   updateProgress();
-  const date=accountSnapshotDate(account.followersAsOf),count=formatFollowers(account);
-  const followers=count?`<div class="account-audience"><strong>${escape(count)}</strong><span>followers${date?`<small>Snapshot · ${escape(date)}</small>`:''}</span></div>`:'';
+  const count=formatFollowers(account);
+  const followers=count?`<div class="account-audience"><strong>${escape(count)}</strong><span>followers</span></div>`:'';
   $('#account-details').innerHTML=`<img class="account-portrait" src="${escape(account.avatar)}"${accountAvatarFallback(account)} alt="" width="74" height="74"><span class="account-relationship ${account.relationship}">${accountRelationship(account).toUpperCase()}</span><h2 tabindex="-1">@${escape(accountDisplayHandle(account))}</h2><p class="account-name">${escape(account.name||'')}</p>${account.topic?`<p class="account-topic">${escape(account.topic)}</p>`:''}${followers}<a class="button" href="${escape(account.profileUrl)}" target="_blank" rel="noopener noreferrer">Visit Instagram</a>`;
   panelOpen=true;panelTween=showSurface(panel,true,panelTween);
   setDirectory(false);

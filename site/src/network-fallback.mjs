@@ -1,4 +1,5 @@
 import { universeAccounts } from './universe-data.mjs';
+import { accountSnapshot } from './network-account-snapshot.mjs';
 
 // Rounded figures and display names supplied for the website review.
 // Canonical handles keep the original Instagram links and account identities.
@@ -20,7 +21,7 @@ const additions = [
 ];
 const accountByHandle = new Map([...universeAccounts, ...additions].map(account => [account.handle, account]));
 
-export const fallbackAccounts = reference.map(([handle, followerLabel, followerCount, displayHandle]) => ({
+export const referenceAccounts = reference.map(([handle, followerLabel, followerCount, displayHandle]) => ({
   ...accountByHandle.get(handle),
   handle,
   ...(displayHandle ? { displayHandle } : {}),
@@ -30,4 +31,11 @@ export const fallbackAccounts = reference.map(([handle, followerLabel, followerC
   followersAsOf: null,
   followerSource: 'provided-reference',
   referenceReceivedOn: '2026-11-08',
+}));
+
+// The reviewed reference remains an internal backup. Public first-load figures
+// use the last successful Cortex snapshot; D1 and browser storage keep newer ones.
+export const fallbackAccounts = accountSnapshot.accounts.map(account => ({
+  ...account,
+  avatar: account.avatarFallback,
 }));

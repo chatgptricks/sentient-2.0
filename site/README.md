@@ -74,6 +74,8 @@ The root GitHub Actions workflow checks the site and deploys pushes to `main` at
 
 Private local data, visual review captures, internal briefs, and provenance manifests are excluded from Git.
 
+Home and Universe share current owned-account data from Cortex. Successful public account and campaign responses are retained in D1 and in browser storage, so connection failures use the last saved figures. Browser storage is scoped to the site's API configuration, rejects invalid snapshots, and is cleared for an explicit authorization rejection. A bundled Cortex account snapshot and campaign covers remain available before a visitor's first successful connection. Original observation dates remain in the stored data but are not displayed in cards, tooltips, the directory, or account details. The network headline stays at `25M+` independently of individual account figures.
+
 ## Presentation decks
 
 Presentation sources live in the repository's `Decks/` folder, with their own design and styles and the same GitHub Pages deployment. The campaign deck has an opening cover and twelve slides following the supplied brief, and opens at https://chatgptricks.github.io/sentient-2.0/#/campaign-deck; append `/2` to link to slide two. Local preview uses `http://localhost:4322/#/campaign-deck`.

@@ -1,5 +1,69 @@
 const handlePattern = /^[a-z0-9_.]{1,30}$/;
+const snapshotVersion = 1;
+const snapshotPrefix = 'sentient-network:last-good:';
 let connection;
+
+function snapshotKey(resource) {
+  const config = document.querySelector('link[rel="sentient-api"]')?.href;
+  return config ? `${snapshotPrefix}${snapshotVersion}:${config}:${resource}` : null;
+}
+
+function validEndpoint(value) {
+  try {
+    const url = new URL(value);
+    return !url.username && !url.password && !url.search && !url.hash
+      && (url.protocol === 'https:' || url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname));
+  } catch { return false; }
+}
+
+function readSnapshot(resource, validate, endpoint) {
+  try {
+    const key = snapshotKey(resource);
+    const raw = key && globalThis.localStorage?.getItem(key);
+    if (!raw || raw.length > 2 * 1024 * 1024) return null;
+    const record = JSON.parse(raw);
+    const payload = record.payload;
+    if (record.version !== snapshotVersion || !Number.isFinite(Date.parse(record.savedAt))
+      || !Number.isFinite(Date.parse(payload?.fetchedAt)) || !validEndpoint(payload?.endpoint)
+      || endpoint && payload.endpoint !== endpoint || !validate(payload)) return null;
+    return { ...payload, stale:true, fallback:'last-saved', savedAt:record.savedAt };
+  } catch { return null; }
+}
+
+function saveSnapshot(resource, payload, validate) {
+  try {
+    if (!Number.isFinite(Date.parse(payload.fetchedAt)) || !validEndpoint(payload.endpoint)) return;
+    const key = snapshotKey(resource);
+    if (!key) return;
+    const previous = readSnapshot(resource, validate, payload.endpoint);
+    if (previous && Date.parse(previous.fetchedAt) > Date.parse(payload.fetchedAt)) return;
+    const savedAt = payload.savedAt || new Date().toISOString();
+    globalThis.localStorage?.setItem(key, JSON.stringify({ version:snapshotVersion, savedAt, payload }));
+  } catch { /* Blocked or full browser storage must not stop live data. */ }
+}
+
+async function loadSnapshot(resource, validate, fallback, onSaved) {
+  const previous = readSnapshot(resource, validate);
+  if (previous) onSaved?.(previous);
+  let endpoint;
+  try {
+    endpoint = await networkEndpoint();
+    const payload = await fetchNetworkData(resource);
+    if (!validate(payload)) throw new Error('Invalid network data');
+    // A delayed response or an older server backup must not replace a newer
+    // successful snapshot already saved by another page or tab.
+    const newer = readSnapshot(resource, validate, endpoint);
+    if (newer && Date.parse(newer.fetchedAt) > Date.parse(payload.fetchedAt)) return newer;
+    saveSnapshot(resource, payload, validate);
+    return payload;
+  } catch (error) {
+    if ([401,403].includes(error.status)) {
+      try { globalThis.localStorage?.removeItem(snapshotKey(resource)); } catch {}
+      return { source:'fallback', [resource]:fallback };
+    }
+    return readSnapshot(resource, validate, endpoint) || { source:'fallback', [resource]:fallback };
+  }
+}
 
 export function formatFollowers(account) {
   if (account.followerLabel) return account.followerLabel;
@@ -35,7 +99,14 @@ export async function networkEndpoint() {
 export async function fetchNetworkData(resource) {
   const endpoint = await networkEndpoint();
   const response = await fetch(`${endpoint}/network/${resource}`, { signal: AbortSignal.timeout(18000) });
-  if (!response.ok) throw new Error('Network data unavailable');
+  if (!response.ok) {
+    let status = response.status;
+    try {
+      const error = await response.json();
+      if ([401,403].includes(error.sourceStatus)) status = error.sourceStatus;
+    } catch {}
+    throw Object.assign(new Error('Network data unavailable'), { status });
+  }
   return { ...(await response.json()), endpoint };
 }
 
@@ -54,20 +125,25 @@ export function validateAccounts(payload) {
   });
 }
 
-export async function loadNetworkAccounts(fallback) {
-  try {
-    const payload = await fetchNetworkData('accounts');
-    if (!validateAccounts(payload)) throw new Error('Invalid network account data');
+function resolveAccountImages(payload) {
+  if (payload.source === 'cortex') {
     const siteBase = new URL('.', document.querySelector('link[rel="sentient-api"]').href);
-    payload.accounts = payload.accounts.map(account => ({
+    return { ...payload, accounts:payload.accounts.map(account => ({
       ...account,
       avatar: account.avatar.startsWith('/network/') ? `${payload.endpoint}${account.avatar}` : new URL(account.avatar.slice(1), siteBase).href,
       ...(account.avatarFallback ? { avatarFallback: new URL(account.avatarFallback.slice(1), siteBase).href } : {}),
-    }));
-    return payload;
-  } catch {
-    return { source: 'fallback', accounts: fallback };
+    })) };
   }
+  return payload;
+}
+
+export async function loadNetworkAccounts(fallback, { onSaved } = {}) {
+  return resolveAccountImages(await loadSnapshot('accounts', validateAccounts, fallback,
+    onSaved ? payload => onSaved(resolveAccountImages(payload)) : undefined));
+}
+
+export async function loadNetworkPosts(fallback, { onSaved } = {}) {
+  return loadSnapshot('posts', validatePosts, fallback, onSaved);
 }
 
 // Shuffle accounts first, then select one campaign from each account. This
