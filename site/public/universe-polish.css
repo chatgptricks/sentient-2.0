@@ -159,6 +159,7 @@ body[data-page=universe] .account-panel {
 }
 body[data-page=universe] .universe-directory { top: 151px; padding: 19px; }
 body[data-page=universe] .directory-heading { font-size: 10px; letter-spacing: .05em; }
+body[data-page=universe] .universe-data-status { margin: 0 0 8px; color: #93a58f; font-size: 10px; line-height: 1.5; }
 body[data-page=universe] .directory-account { padding: 13px 0; }
 body[data-page=universe] .directory-account strong { font-size: 14px; }
 body[data-page=universe] .directory-account small { font-size: 11px; color: #a0b19c; }
@@ -270,3 +271,5 @@ body[data-page=universe] .universe-heading h1{font-family:var(--display);font-we
 @media(max-width:850px){body[data-page=universe] .universe-heading h1{font-size:29px}}
 @media(max-width:650px){body[data-page=universe] .universe-heading h1{font-size:23px;line-height:1.14;white-space:nowrap}}
 @media(max-width:370px){body[data-page=universe] .universe-heading h1{font-size:24px}}
+
+.universe-app[data-network-source=pending] :is(.universe-toolbar,.universe-directory,.universe-bottom){visibility:hidden}

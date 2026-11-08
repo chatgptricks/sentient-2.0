@@ -3,10 +3,22 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { gsap } from 'gsap';
 import { Flip } from 'gsap/Flip';
+import { loadNetworkAccounts, formatFollowers, installAvatarFallbacks } from '../public/network-data.js';
+import { renderUniverse, accountDisplayHandle, accountRelationship, accountSnapshotDate, accountAvatarFallback } from './universe-page.mjs';
 import sentientIcon from '../public/assets/sentient-symbol.svg';
 gsap.registerPlugin(Flip);
 const dataElement=document.getElementById('universe-data');
-if(dataElement) initUniverse(JSON.parse(dataElement.textContent));
+if(dataElement) {
+ installAvatarFallbacks();
+ const initialAccounts=JSON.parse(dataElement.textContent);
+ let network={accounts:initialAccounts,source:'fallback'};
+ try { network=await loadNetworkAccounts(initialAccounts); } catch { /* The static directory remains usable when the connection is unavailable. */ }
+ const app=document.querySelector('.universe-app');
+ if(app) {
+  app.outerHTML=renderUniverse(network.accounts,network);
+ }
+ initUniverse(network.accounts);
+}
 
 function initUniverse(accounts){
  const $=selector=>document.querySelector(selector);
@@ -21,7 +33,7 @@ function initUniverse(accounts){
  let visited=new Set();try{visited=new Set(JSON.parse(localStorage.getItem('sentient-universe-explored')||'[]').filter(h=>accounts.some(a=>a.handle===h)));}catch{}
  const accountMap=new Map(accounts.map(a=>[a.handle,a]));
  const nodes=[];const resources=[];
- const isMatch=a=>(filter==='all'||a.relationship===filter)&&`${a.handle} ${a.name||''} ${a.topic||''}`.toLowerCase().includes(query);
+ const isMatch=a=>(filter==='all'||a.relationship===filter)&&`${a.handle} ${accountDisplayHandle(a)} ${a.name||''} ${a.topic||''}`.toLowerCase().includes(query);
  const finishFilterMotion=()=>{
   Flip.killFlipsOf(directoryItems,true);filterFlip=null;
   gsap.killTweensOf(directoryItems);
@@ -78,9 +90,9 @@ function initUniverse(accounts){
   else if(!panel.contains(document.activeElement))lastOpener=document.activeElement?.matches('button, a[href], input, [tabindex]')?document.activeElement:listToggle;
   selected=handle;visited.add(handle);try{localStorage.setItem('sentient-universe-explored',JSON.stringify([...visited]));}catch{}
   updateProgress();
-  const date=account.followersAsOf;
-  const followers=Number.isFinite(account.followerCount)&&date?`<div class="account-audience"><strong>${Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(account.followerCount)}</strong><span>followers<small>Snapshot · ${escape(date)}</small></span></div>`:'';
-  $('#account-details').innerHTML=`<img class="account-portrait" src="${escape(account.avatar)}" alt="" width="74" height="74"><span class="account-relationship ${account.relationship}">${account.relationship==='owned'?'SENTIENT OWNED':'CREATOR PARTNER'}</span><h2 tabindex="-1">@${escape(account.handle)}</h2><p class="account-name">${escape(account.name||'')}</p>${account.topic?`<p class="account-topic">${escape(account.topic)}</p>`:''}${followers}<a class="button" href="${escape(account.profileUrl)}" target="_blank" rel="noopener noreferrer">Visit Instagram</a>`;
+  const date=accountSnapshotDate(account.followersAsOf),count=formatFollowers(account);
+  const followers=count?`<div class="account-audience"><strong>${escape(count)}</strong><span>followers${date?`<small>Snapshot · ${escape(date)}</small>`:''}</span></div>`:'';
+  $('#account-details').innerHTML=`<img class="account-portrait" src="${escape(account.avatar)}"${accountAvatarFallback(account)} alt="" width="74" height="74"><span class="account-relationship ${account.relationship}">${accountRelationship(account).toUpperCase()}</span><h2 tabindex="-1">@${escape(accountDisplayHandle(account))}</h2><p class="account-name">${escape(account.name||'')}</p>${account.topic?`<p class="account-topic">${escape(account.topic)}</p>`:''}${followers}<a class="button" href="${escape(account.profileUrl)}" target="_blank" rel="noopener noreferrer">Visit Instagram</a>`;
   panelOpen=true;panelTween=showSurface(panel,true,panelTween);
   setDirectory(false);
   reflectSelection();
@@ -171,7 +183,7 @@ function initUniverse(accounts){
    const midpoint=position.clone().multiplyScalar(.52).add(new THREE.Vector3(0,1.3,2.6));
    const connection=new THREE.QuadraticBezierCurve3(new THREE.Vector3(),midpoint,position);
    const lineGeometry=new THREE.BufferGeometry().setFromPoints(connection.getPoints(40));const lineMaterial=new THREE.LineBasicMaterial({color:owned?0xb0cf59:0x81d8e4,transparent:true,opacity:owned?.065:.11,depthWrite:false});const line=new THREE.Line(lineGeometry,lineMaterial);scene.add(line);resources.push(lineGeometry,lineMaterial);
-   const element=document.createElement('button');element.type='button';element.className=`universe-node ${owned?'owned':'partner'}`;element.dataset.account=account.handle;element.setAttribute('aria-label',`Explore @${account.handle}, ${owned?'Sentient owned':'creator partner'}`);element.setAttribute('aria-pressed','false');element.innerHTML=`<span class="node-orbit"><img src="${escape(account.avatar)}" alt="" width="58" height="58"><i class="node-discovered" aria-hidden="true">✓</i></span><span class="node-handle">@${escape(account.handle)}</span>`;element.addEventListener('pointerenter',()=>{controls.autoRotate=false;});element.addEventListener('focus',()=>{controls.autoRotate=false;});element.addEventListener('click',()=>selectAccount(account.handle,element));nodeLayer.appendChild(element);
+   const element=document.createElement('button');element.type='button';element.className=`universe-node ${owned?'owned':'partner'}`;element.dataset.account=account.handle;element.setAttribute('aria-label',`Explore @${accountDisplayHandle(account)}, ${accountRelationship(account).toLowerCase()}`);element.setAttribute('aria-pressed','false');element.innerHTML=`<span class="node-orbit"><img src="${escape(account.avatar)}"${accountAvatarFallback(account)} alt="" width="58" height="58"><i class="node-discovered" aria-hidden="true">✓</i></span><span class="node-handle">@${escape(accountDisplayHandle(account))}</span>`;element.addEventListener('pointerenter',()=>{controls.autoRotate=false;});element.addEventListener('focus',()=>{controls.autoRotate=false;});element.addEventListener('click',()=>selectAccount(account.handle,element));nodeLayer.appendChild(element);
    nodes.push({account,position,basePosition:position.clone(),clusterIndex:ordinal,clusterCount,element,line,match:true});
   });
   let mobileLayout,mobileAspect;

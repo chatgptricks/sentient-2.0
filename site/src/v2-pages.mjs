@@ -1,4 +1,8 @@
-import { universeAccounts } from './universe-data.mjs';
+import { fallbackAccounts } from './network-fallback.mjs';
+import { renderAccountCards } from './network-markup.mjs';
+import { renderUniverse } from './universe-page.mjs';
+import { latestOwnAudience } from './network-snapshot.mjs';
+import { formatAudience } from '../public/network-data.js';
 import { servicePreview } from './service-previews.mjs';
 import { escapeHtml } from './social-meta.mjs';
 import { v2Campaigns } from './v2-campaigns.mjs';
@@ -8,11 +12,9 @@ import { reviseV2Services } from './v2-services.mjs';
 const routes = ['/', '/viral-launch-campaigns', '/growth-campaigns', '/about', '/universe'];
 const v2Route = route => route === '/' ? '/v2/' : `/v2${route}`;
 const arrow = '<span aria-hidden="true">↗</span>';
-const followers = value => value >= 1e6 ? `${(value / 1e6).toFixed(2)}M` : `${Math.round(value / 1000)}K`;
-const owned = universeAccounts.filter(account => account.relationship === 'owned').sort((a, b) => b.followerCount - a.followerCount).slice(0, 8);
 const brands = [['OpenAI','openai'],['Meta','meta'],['Adobe','adobe'],['Higgsfield','higgsfield'],['InVideo','invideo'],['Freepik','freepik'],['Polymarket','polymarket'],['Wegic','wegic'],['Stake','stake'],['ChatGPT','chatgpt']];
 
-const network = () => `<section class="v2-owned" id="owned-media" aria-labelledby="v2-owned-title"><div class="shell"><span class="eyebrow">OUR OWN MEDIA. YOUR ADVANTAGE.</span><div class="v2-owned-heading"><h2 id="v2-owned-title"><span>25M+</span> followers.<br><em>Our audience. Your advantage.</em></h2><div><p>We built the communities.<br>Now let’s get them talking about you.</p><a class="text-link" href="/universe">Explore our accounts ${arrow}</a></div></div><div class="v2-owned-accounts">${owned.map(account => `<a href="${account.profileUrl}" target="_blank" rel="noopener noreferrer" title="${account.followerCount.toLocaleString('en-US')} followers · ${account.followersAsOf}"><img src="${account.avatar}" alt="" width="64" height="64" loading="lazy"><strong>@${account.handle}</strong><span>${followers(account.followerCount)} followers</span></a>`).join('')}</div><p class="v2-snapshot">Selected owned accounts · individual follower snapshots, April–May 2026.</p></div></section>`;
+const network = () => `<section class="v2-owned" id="owned-media" aria-labelledby="v2-owned-title" data-network-source="fallback"><div class="shell"><div class="v2-owned-heading"><h2 id="v2-owned-title"><span data-network-total>${formatAudience(latestOwnAudience.followerCount)}</span> followers.<br><em>Our audience. Your advantage.</em></h2><div><p>We built the communities.<br>Now let’s get them talking about you.</p><a class="text-link" href="/universe">Explore our accounts ${arrow}</a></div></div><div class="v2-owned-accounts">${renderAccountCards(fallbackAccounts)}</div><p class="v2-snapshot">Selected accounts · reference follower figures.</p></div><script type="application/json" id="network-fallback-data">${JSON.stringify(fallbackAccounts).replace(/</g, '\\u003c')}</script></section>`;
 
 const serviceCards = () => `<section class="services v2-services" id="services"><div class="services-heading shell"><span class="eyebrow">TWO WAYS TO GROW</span><h2 data-reveal>How we turn attention<br><em class="type-accent">into growth.</em></h2><p>Two ways to grow. One focus:<br>turning attention into customers.</p></div><div class="offer-grid shell" id="mobile-offers" data-mobile-carousel tabindex="0" aria-label="Campaign services"><a class="offer launch-offer" href="/viral-launch-campaigns"><div class="offer-top"><span class="eyebrow">LAUNCHES · RAISES · ANNOUNCEMENTS</span><span class="offer-arrow" aria-hidden="true">↗</span></div><h3>Viral launch<br><em class="type-accent">campaigns.</em></h3><div class="offer-art" aria-hidden="true">${servicePreview('launch')}</div><div class="offer-bottom"><p>One post from your founder. A coordinated wave across owned accounts and creators. Built to turn your next milestone into demos, press, and inbound.</p><span class="offer-link">Explore viral launches ${arrow}</span></div></a><a class="offer growth-offer" href="/growth-campaigns"><div class="offer-top"><span class="eyebrow">ONGOING DISTRIBUTION · CONVERSION</span><span class="offer-arrow" aria-hidden="true">↗</span></div><h3>Growth<br><em class="type-accent">campaigns.</em></h3><div class="offer-art growth-art" aria-hidden="true">${servicePreview('growth')}</div><div class="offer-bottom"><p>Publish through our owned pages and partner creators. Analyse what drives clicks and conversions. Put paid spend behind the winners to test, optimise, and scale what works.</p><span class="offer-link">Explore growth campaigns ${arrow}</span></div></a></div><div class="mobile-rail-controls" data-carousel-controls="mobile-offers"><span>Swipe to explore</span><div><button type="button" data-carousel-prev aria-label="Previous service">←</button><output data-carousel-status aria-live="polite">1 of 2</output><button type="button" data-carousel-next aria-label="Next service">→</button></div></div></section>`;
 
@@ -82,7 +84,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       .replace(/(<button class="button form-submit" type="submit">)Free strategy call(<\/button>)/, '$1Request a free strategy call$2');
     if (page === 'home') {
       html = html.replace('<span>01 / SENTIENT</span>', '<span>SENTIENT</span>');
-      html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, '<p><strong class="v2-inline-number">25M+</strong> followers in owned media.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>');
+      html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, `<p><strong class="v2-inline-number" data-network-total>${formatAudience(latestOwnAudience.followerCount)}</strong> followers across connected owned accounts.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>`);
       html = html.replace(/<aside class="owned-proof shell"[\s\S]*?<\/aside>/, '');
       html = replaceSection(html, 'services', `${network()}${serviceCards()}`);
       html = replaceSection(html, 'client-proof', clientCarousel());
@@ -101,6 +103,10 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
     }
     html = reviseV2Services(html, page);
     if (page === 'about') html = reviseV2About(html);
+    if (page === 'universe') {
+      html = replaceSection(html, 'universe-app', renderUniverse(fallbackAccounts, { source: 'pending' }));
+      html = html.replaceAll('Explore all 31 Sentient owned and partner Instagram accounts in an interactive 3D universe.', 'Explore Sentient accounts and their latest available follower figures in an interactive 3D universe.');
+    }
     html = simplifyLabels(html);
     // Preview links stay under V2; the primary site keeps canonical routes.
     html = html.replace(/\bhref="(\/[^"\s]*)"/g, (match, url) => {
@@ -121,6 +127,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
     if (!(primary && page === 'home')) {
       html = html.replace(/<link rel="icon"[\s\S]*?<\/head>/, `<link rel="icon" href="/favicon.svg" type="image/svg+xml">${pageStyles(page)}${page === 'universe' ? '<script type="module" src="/js/universe.js"></script>' : ''}</head>`);
     }
+    html = html.replace('</head>', '<link rel="sentient-api" href="/comments-config.json"></head>');
     if (protectedWork) html = html.replace(workMarker, protectedWork);
     return [primary ? route : v2Route(route), html];
   }));

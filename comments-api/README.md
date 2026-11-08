@@ -16,6 +16,16 @@ Run `npm test`, `npx wrangler d1 migrations apply sentient-proposal-comments --r
 
 D1 is the persistent source of truth. Site rebuilds and Worker deployments do not recreate or clear its rows. Cloudflare administrators can review/export notes with `npx wrangler d1 execute sentient-proposal-comments --remote --command "SELECT * FROM comments"`. Take a database export before any manual cleanup.
 
+## Public owned-account network
+
+`GET /network/accounts` reads public stored profiles from Cortex `/api/v1` using the existing server-only `SENTIENTDASH_API_KEY`. It accepts no query parameters or writes. The JSON contains `source: "cortex"`, a separate retrieval `fetchedAt`, `stale: false`, and `accounts` with canonical `handle`, public `name`, `relationship: "owned"`, `followerCount`, `followersAsOf`, local `avatar`, and Instagram `profileUrl`. Counts without a valid Cortex profile observation date remain unknown rather than acquiring the retrieval date.
+
+Ownership is restricted to the key's selected accounts. The primary read is the paginated bulk `/api/v1/tracker/accounts` projection, using only `group: "sentient"`, observed `full_name`, `followers`, and `captured_at`. Account profiles and promotional posts share that ownership snapshot. A Tracker-scope `403` uses the separately authorized public `/accounts` and profile area. In that path, when the existing key grants settings reads, the Worker follows `/api/v1/settings/accounts` pagination and includes only active `group_name: "sentient"` records. A settings-scope `403` uses a verified Sentient ownership registry as a filter on the scoped `/accounts` list; the registry supplies no names or follower metrics. Partners, competitors, and caller-supplied handles never enter the public feed.
+
+`GET /network/accounts/{handle}/avatar` serves the current cached public Instagram profile photo only after checking that handle is still in the website key's owned-account selection. The account JSON's `avatar` points to this proxy; `avatarFallback` is an existing matching site asset or `null`. Under the user's authorization to publish these owned-account photos, the proxy reads the fixed Cortex cached-media path `/api/dashboard/avatar/{handle}` without invoking profile previews, scraping, or refresh jobs. It refuses arbitrary paths and queries, validates membership before consulting its five-minute image cache, accepts only bounded JPEG/PNG/WebP/GIF images up to 2 MiB, and never forwards the website credential to a signed R2 storage redirect. A missing photograph is never replaced with another account's identity or a generic agency logo.
+
+Successful ownership and profile snapshots are cached for five minutes, keyed by a hash of the source and credential, with concurrent refreshes coalesced. An expired snapshot is never served after an upstream failure: the endpoint returns `503` so the website can use its explicit reference fallback. API credentials, internal registry labels, settings, and broader Cortex data are never returned. This read path does not change D1 or upstream accounts and does not refresh/scrape Instagram.
+
 ## Shared deck text
 
 The same Worker stores shared text overrides for the campaign deck. Migration `0002_deck_edits.sql` adds `deck_edits` to the existing D1 database; it does not change proposal comments. The only permitted deck slug is `campaign-deck`.

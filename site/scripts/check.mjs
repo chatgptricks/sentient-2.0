@@ -30,8 +30,8 @@ for (const route of routes) {
   assert.match(version, /data-version="v2"/);
   assert.doesNotMatch(version, /View V1|v2-comparison| · V2<\/title>/, `${route}: no public version comparison`);
   if (route !== '/') {
-    assert.match(version, /href="\/comments\.css"/, `${route}: review styles are loaded`);
-    assert.match(version, /src="\/comments\.js"/, `${route}: shared review notes are enabled`);
+    assert.match(version, /href="\/comments\.css\?v=[a-f0-9]{12}"/, `${route}: review styles are loaded`);
+    assert.match(version, /src="\/comments\.js\?v=[a-f0-9]{12}"/, `${route}: shared review notes are enabled`);
   }
   const canonical = version.match(/<link rel="canonical" href="([^"]+)"/)[1];
   assert.equal(canonical, originalPages[route].match(/<link rel="canonical" href="([^"]+)"/)[1], `${route}: primary canonical URL`);

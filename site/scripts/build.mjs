@@ -52,7 +52,7 @@ export async function build() {
     await mkdir(dirname(target), { recursive: true });
     await writeFile(target, renderHtml(html));
   }
-  const entryPoints = [resolve(root, 'src/motion.mjs')];
+  const entryPoints = [resolve(root, 'src/motion.mjs'), resolve(root, 'src/network-home.mjs')];
   if (pages['/universe']) entryPoints.push(resolve(root, 'src/universe.mjs'));
   await bundle({ entryPoints, outdir: resolve(root, 'dist/js'), loader: { '.svg': 'text' }, bundle: true, splitting: true, format: 'esm', minify: true, target: ['es2022'], logLevel: 'warning' });
   await bundle({ entryPoints: [resolve(root, '../Decks/router.mjs'), resolve(root, '../Decks/studio-frame.mjs')], outdir: resolve(root, 'dist/Decks'), nodePaths:[resolve(root, 'node_modules')], external: ['/assets/*'], loader: { '.svg': 'text' }, bundle: true, splitting: true, format: 'esm', minify: true, target: ['es2022'], logLevel: 'warning' });
@@ -73,12 +73,24 @@ export async function build() {
     await rewriteAssets(resolve(root, 'dist'));
   }
   await writeFile(resolve(root, 'dist/comments-config.json'), JSON.stringify({apiUrl: process.env.COMMENTS_API_URL || JSON.parse(await readFile(resolve(root, 'public/comments-config.json'), 'utf8')).apiUrl}));
-  // Returning reviewers must receive the current mode router even while a
-  // previous router.js response is still fresh in the browser's cache.
-  const routerVersion = createHash('sha256').update(await readFile(resolve(root, 'dist/Decks/router.js'))).digest('hex').slice(0, 12);
-  const homePath = resolve(root, 'dist/index.html');
-  const homeHtml = await readFile(homePath, 'utf8');
-  await writeFile(homePath, homeHtml.replace(/(src="[^"]*\/Decks\/router\.js)"/, `$1?v=${routerVersion}"`));
+  // Include the runtime graph in asset URLs so returning reviewers receive
+  // coordinated scripts and styles instead of older cached files.
+  const runtimeHash = createHash('sha256');
+  const fingerprint = async directory => {
+    const entries = await readdir(directory, { withFileTypes: true });
+    for (const entry of entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
+      const path = resolve(directory, entry.name);
+      if (entry.isDirectory()) await fingerprint(path);
+      else if (['.js', '.css'].includes(extname(path))) runtimeHash.update(path.slice(root.length)).update(await readFile(path));
+    }
+  };
+  await fingerprint(resolve(root, 'dist'));
+  const version = runtimeHash.digest('hex').slice(0, 12);
+  for (const route of Object.keys(allPages)) {
+    const path = resolve(root, 'dist', route === '/' ? 'index.html' : `${route.slice(1)}/index.html`);
+    const html = await readFile(path, 'utf8');
+    await writeFile(path, html.replace(/\b(src|href)="([^"?]+\.(?:js|css))"/g, '$1="$2?v=' + version + '"'));
+  }
   await writeFile(resolve(root, 'dist/.nojekyll'), '');
   return Object.keys(allPages);
 }

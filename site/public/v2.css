@@ -9,12 +9,16 @@ body[data-version=v2] .hero-desc p{max-width:450px}
 .v2-owned-heading h2 em{font-style:normal;font-size:.54em;color:#b4c1a7;letter-spacing:0}
 .v2-owned-heading p{color:#bac6ae;font-size:15px;line-height:1.65;margin:0 0 20px}
 .v2-owned-heading .text-link{font-size:12px;display:flex;gap:30px}
-.v2-owned-accounts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #d9efb323;border-left:1px solid #d9efb323}
-.v2-owned-accounts>a{display:grid;grid-template-columns:48px 1fr;gap:4px 14px;align-items:center;padding:24px 18px;border-right:1px solid #d9efb323;border-bottom:1px solid #d9efb323;transition:background .2s;min-width:0}
+.v2-owned-accounts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid #d9efb323;border-left:1px solid #d9efb323}
+.v2-owned-accounts>a{display:flex;flex-wrap:wrap;gap:16px 12px;align-items:center;padding:24px 16px;border-right:1px solid #d9efb323;border-bottom:1px solid #d9efb323;transition:background .2s;min-width:0}
 .v2-owned-accounts>a:hover{background:#c5ff0010}
-.v2-owned-accounts img{grid-row:span 2;width:48px;height:48px;object-fit:cover;border-radius:50%;border:1px solid #d5eea244}
-.v2-owned-accounts strong{font-size:11px;align-self:end;overflow-wrap:anywhere}
+.v2-owned-accounts img{flex:0 0 auto;width:40px;height:40px;object-fit:cover;border-radius:50%;border:1px solid #d5eea244}
+.v2-owned-accounts strong{flex:1;min-width:0;font-size:11px;align-self:center;overflow-wrap:anywhere}
 .v2-owned-accounts a>span{font-size:11px;color:#99aa8d;align-self:start}
+.v2-owned-accounts a>.v2-account-count{display:flex;flex:0 0 100%;flex-direction:column;gap:8px;color:var(--acid);margin-top:4px}
+.v2-account-count b{font-size:clamp(38px,4.1vw,62px);line-height:.95;font-weight:600;letter-spacing:-.065em;font-variant-numeric:tabular-nums}
+.v2-account-count small{font-size:10px;line-height:1.2;color:#a7b79a;letter-spacing:.08em;text-transform:uppercase}
+.v2-account-date{flex:0 0 100%;font-size:9px;line-height:1.4;color:#94a586}
 .v2-snapshot{font-size:10px;color:#87977b;margin:17px 0 0}
 .v2-services .services-heading h2{font-size:clamp(32px,4.4vw,68px)}
 .v2-services .offer h3{font-size:clamp(28px,3.3vw,49px);line-height:1.13}
@@ -43,7 +47,7 @@ body[data-version=v2] .hero-desc p{max-width:450px}
 .v2-post:hover img{transform:scale(1.035)}
 .v2-post-image>span{position:absolute;bottom:12px;right:12px;background:var(--acid);color:#151d12;border-radius:50%;width:32px;height:32px;display:grid;place-items:center}
 .v2-post-caption{padding-top:15px;display:flex;flex-direction:column;gap:5px}
-.v2-post-caption strong{font-size:15px;font-weight:500}
+.v2-post-caption strong{font-size:15px;font-weight:500;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .v2-post-caption>span{font-size:11px;color:#9dad8e}
 .v2-comparison{display:flex;align-items:center;gap:16px;border:1px solid #c5df9c45;border-radius:50px;padding:9px 13px;font-size:10px;margin-right:auto}
 .v2-comparison>span{color:var(--acid);font-weight:600;white-space:nowrap}
@@ -65,3 +69,5 @@ body[data-version=v2] .growth-steps h2{margin-top:0}
 body[data-version=v2] .hero-foot{justify-content:flex-end;border-top:0}
 body[data-version=v2] .process-grid h3{margin-top:0}
 @media(max-width:650px){body[data-version=v2] .hero-body{padding-top:clamp(90px,14svh,120px)}body[data-version=v2] .hero-foot{display:none}}
+
+@media(max-width:650px){.v2-account-count b{font-size:42px}.v2-owned-accounts>a{row-gap:14px}.v2-owned-accounts strong{font-size:10px}.v2-account-date{font-size:8px}}
