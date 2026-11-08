@@ -181,11 +181,11 @@ test('refuses truncated or cyclic pagination instead of claiming an incomplete t
 });
 
 test('missing credentials, revoked scope and no eligible campaigns use the static-site failure path', async () => {
-  assert.equal((await handleNetworkPosts(request(), {}, json, async () => { throw new Error('must not fetch'); })).status, 503);
+  assert.equal((await handleNetworkPosts(request(), {}, json, async () => { throw new Error('must not fetch'); })).status, 401);
   for (const status of [401, 403, 429, 503]) {
     const fixture = source({ failure: status });
     const response = await handleNetworkPosts(request(), fixture.env, json, fixture.cortex);
-    assert.equal(response.status, 503);
+    assert.equal(response.status, [401, 403].includes(status) ? status : 503);
     assert.ok(!(await response.text()).includes('private upstream'));
   }
   const empty = source();

@@ -48,7 +48,7 @@ test('network route enforces CORS, read-only methods and no caller-controlled so
   assert.equal(preflight.status,204);
   assert.equal(preflight.headers.get('Access-Control-Allow-Methods'),'GET, OPTIONS');
   assert.equal(preflight.headers.get('Access-Control-Allow-Origin'),'https://chatgptricks.github.io');
-  assert.equal((await worker.fetch(request('/network/accounts'),{...env,SENTIENTDASH_API_KEY:undefined})).status,503);
+  assert.equal((await worker.fetch(request('/network/accounts'),{...env,SENTIENTDASH_API_KEY:undefined})).status,401);
   assert.equal((await worker.fetch(request('/network/accounts',{origin:null}),env)).status,503, 'Public reads need no browser authentication and fail only because the source is unavailable');
   assert.equal(calls,1);
 });
@@ -59,7 +59,7 @@ test('network failure diagnostics expose stage and HTTP status without credentia
   const env = environment();
   context.mock.method(globalThis,'fetch',async () => Response.json({detail:`Sensitive upstream text ${env.SENTIENTDASH_API_KEY}`},{status:401}));
   const response = await worker.fetch(request(),env);
-  assert.equal(response.status,503);
+  assert.equal(response.status,401);
   assert.deepEqual(await response.json(),{
     error:'Network profiles are temporarily unavailable.',code:'NETWORK_PROFILES_UNAVAILABLE',
     networkStage:'source-status',sourceStatus:401,sourcePath:'/api/v1/tracker/accounts',

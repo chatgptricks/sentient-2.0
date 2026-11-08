@@ -1,4 +1,5 @@
 import { getOwnedAccountHandles, getPublicOwnedAccountHandles } from './network-accounts.mjs';
+import { withSavedNetwork, rejectNetworkAuthorization } from './network-snapshots.mjs';
 
 const handlePattern = /^[a-z0-9_.]{1,30}$/;
 const shortcodePattern = /^[A-Za-z0-9_-]{1,64}$/;
@@ -184,15 +185,16 @@ async function readCampaigns(env, requestCortex) {
   };
 }
 
-export async function getNetworkPosts(env, requestCortex) {
+async function getLiveNetworkPosts(env, requestCortex) {
   const key = await cacheKey(env);
+  const bypass = requestCortex?.networkCacheBypass === true;
   const fresh = value => value?.source === 'cortex' && Array.isArray(value.posts) && value.posts.length > 0 && value.posts.length <= 20
     && Number.isFinite(Date.parse(value.fetchedAt)) && Date.now() - Date.parse(value.fetchedAt) >= 0 && Date.now() - Date.parse(value.fetchedAt) < freshFor;
   const previous = snapshots.get(key);
-  if (fresh(previous)) return structuredClone(previous);
+  if (!bypass && fresh(previous)) return structuredClone(previous);
   snapshots.delete(key);
   const inFlight = pending.get(key);
-  if (inFlight && Date.now() - inFlight.startedAt >= 0 && Date.now() - inFlight.startedAt < pendingFor) {
+  if (!bypass && inFlight && Date.now() - inFlight.startedAt >= 0 && Date.now() - inFlight.startedAt < pendingFor) {
     retainTask(requestCortex, inFlight.task);
     return structuredClone(await bounded(inFlight.task, pendingFor - (Date.now() - inFlight.startedAt), 'campaign-pending-timeout'));
   }
@@ -201,7 +203,7 @@ export async function getNetworkPosts(env, requestCortex) {
   const load = (async () => {
     const cache = globalThis.caches?.default;
     try {
-      const response = await bounded(Promise.resolve(cache?.match(key)), 1500, 'cache-match-timeout');
+      const response = bypass ? null : await bounded(Promise.resolve(cache?.match(key)), 1500, 'cache-match-timeout');
       if (response?.ok) {
         const value = await bounded(response.json(), 1500, 'cache-json-timeout');
         if (fresh(value)) { snapshots.set(key, value); return value; }
@@ -221,6 +223,10 @@ export async function getNetworkPosts(env, requestCortex) {
   finally { if (pending.get(key)?.task === task) pending.delete(key); }
 }
 
+export function getNetworkPosts(env, requestCortex) {
+  return withSavedNetwork('posts', env, requestCortex, () => getLiveNetworkPosts(env, requestCortex));
+}
+
 export async function handleNetworkPosts(request, env, json, requestCortex) {
   if (request.method !== 'GET') return json(405, { error: 'Method not allowed.' });
   if (new URL(request.url).search) return json(400, { error: 'This endpoint does not accept query parameters.' });
@@ -232,7 +238,7 @@ export async function handleNetworkPosts(request, env, json, requestCortex) {
       ...(typeof error?.sourcePath === 'string' && /^\/api\/v1\/[a-zA-Z0-9_/.-]+$/.test(error.sourcePath) ? { sourcePath: error.sourcePath } : {}),
     };
     console.warn('Network campaigns unavailable', diagnostics);
-    return json(503, { error: 'Campaign highlights are temporarily unavailable.', code: 'NETWORK_POSTS_UNAVAILABLE', ...diagnostics });
+    return json([401, 403].includes(error?.status) ? error.status : 503, { error: 'Campaign highlights are temporarily unavailable.', code: 'NETWORK_POSTS_UNAVAILABLE', ...diagnostics });
   }
 }
 
@@ -273,6 +279,10 @@ export async function handleNetworkPostCover(request, env, json, requestCortex, 
     } catch { /* A cache read failure still permits a fresh source request. */ }
     const signal = AbortSignal.timeout(12000);
     let upstream = await requestCortex(`/api/v1/accounts/${handle}/posts/${shortcode}/cover`, { redirect: 'manual', signal });
+    if ([401, 403].includes(upstream.status)) {
+      await rejectNetworkAuthorization(env, requestCortex, upstream.status);
+      return json(upstream.status, { error: 'Cover unavailable.' });
+    }
     if ([301, 302, 303, 307, 308].includes(upstream.status)) {
       const url = new URL(upstream.headers.get('Location'));
       if (url.protocol !== 'https:' || url.username || url.password || url.port || !/(^|\.)r2\.cloudflarestorage\.com$/.test(url.hostname)) throw unavailable();

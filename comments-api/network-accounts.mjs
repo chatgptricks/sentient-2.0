@@ -2,6 +2,7 @@
 // that scope. This verified registry is only the ownership filter when the key
 // grants public accounts but not settings; it never supplies profile metrics.
 // Registry verified against the Sentient Dashboard group on 2026-11-08.
+import { withSavedNetwork } from './network-snapshots.mjs';
 const verifiedOwnedHandles = new Set([
   'aigleeson', 'ainterestingupdate', 'artificialcoding', 'artificialmente.ia',
   'artificialntellligence', 'chatgptips', 'chatgptricks', 'costarica', 'em3rging',
@@ -53,16 +54,17 @@ function retain(requestCortex, task) {
 
 async function cached(env, kind, load, requestCortex) {
   const key = await cacheKey(env, kind);
+  const bypass = requestCortex?.networkCacheBypass === true;
   const isFresh = entry => entry && Array.isArray(entry.accounts) && entry.accounts.length > 0 && entry.accounts.length <= 1000
     && entry.accounts.every(account => validHandle(account?.handle))
     && (kind !== 'tracker' || Array.isArray(entry.publicHandles) && entry.publicHandles.every(validHandle))
     && Number.isFinite(Date.parse(entry.fetchedAt)) && Date.now() - Date.parse(entry.fetchedAt) >= 0 && Date.now() - Date.parse(entry.fetchedAt) < freshFor;
   const existing = memory.get(key);
-  if (isFresh(existing)) return structuredClone(existing);
+  if (!bypass && isFresh(existing)) return structuredClone(existing);
   memory.delete(key);
   const lifetime = kind === 'profiles' ? 28000 : 16000;
   const existingTask = pending.get(key);
-  if (existingTask && Date.now() - existingTask.startedAt < lifetime) {
+  if (!bypass && existingTask && Date.now() - existingTask.startedAt < lifetime) {
     retain(requestCortex,existingTask.task);
     return structuredClone(await deadline(existingTask.task,Math.max(1,lifetime-(Date.now()-existingTask.startedAt)),`pending-${kind}-timeout`));
   }
@@ -70,7 +72,7 @@ async function cached(env, kind, load, requestCortex) {
   const task = (async () => {
     const edge = globalThis.caches?.default;
     try {
-      const response = await deadline(Promise.resolve().then(() => edge?.match(key)),1500,'cache-read-timeout');
+      const response = bypass ? null : await deadline(Promise.resolve().then(() => edge?.match(key)),1500,'cache-read-timeout');
       if (response?.ok) {
         const entry = await deadline(response.json(),1500,'cache-body-timeout');
         if (isFresh(entry)) { memory.set(key, entry); return entry; }
@@ -160,7 +162,7 @@ function projectAccount(handle, name, followers, observedAt) {
 
 async function trackerAccounts(env, requestCortex) {
   const scopeKey = await cacheKey(env, 'tracker-permission');
-  if ((trackerScopeGaps.get(scopeKey) || 0) > Date.now()) return null;
+  if (!requestCortex?.networkCacheBypass && (trackerScopeGaps.get(scopeKey) || 0) > Date.now()) return null;
   try {
     return await cached(env, 'tracker', async () => {
       const signal = AbortSignal.timeout(12000);
@@ -218,7 +220,7 @@ export async function getPublicOwnedAccountHandles(env, requestCortex) {
   return [...tracker.publicHandles];
 }
 
-export async function getOwnedAccounts(env, requestCortex) {
+async function getLiveOwnedAccounts(env, requestCortex) {
   return cached(env, 'profiles', async () => {
     const tracker = await trackerAccounts(env, requestCortex);
     if (tracker) {
@@ -248,4 +250,8 @@ export async function getOwnedAccounts(env, requestCortex) {
     accounts.sort((left, right) => (right.followerCount ?? -1) - (left.followerCount ?? -1) || left.handle.localeCompare(right.handle));
     return { source: 'cortex', stale: false, accounts };
   },requestCortex);
+}
+
+export function getOwnedAccounts(env, requestCortex) {
+  return withSavedNetwork('accounts', env, requestCortex, () => getLiveOwnedAccounts(env, requestCortex));
 }

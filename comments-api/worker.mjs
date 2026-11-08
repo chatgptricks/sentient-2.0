@@ -549,7 +549,7 @@ export default {
           ...(typeof error.sourcePath === 'string' ? { sourcePath:error.sourcePath } : {}),
           ...(Number.isInteger(error.scopedCount) ? { scopedCount:error.scopedCount } : {}),
         });
-        return json(503, {
+        return json([401, 403].includes(error?.status) ? error.status : 503, {
           error:'Network profiles are temporarily unavailable.',
           code:'NETWORK_PROFILES_UNAVAILABLE',
           networkStage:typeof error?.networkStage === 'string' && /^[a-z0-9-]{1,80}$/.test(error.networkStage) ? error.networkStage : 'unexpected',
