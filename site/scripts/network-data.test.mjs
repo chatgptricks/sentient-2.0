@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fallbackAccounts } from '../src/network-fallback.mjs';
+import { fallbackCampaignPosts } from '../src/network-post-fallback.mjs';
+import { stat } from 'node:fs/promises';
 import { formatFollowers, validateAccounts, validatePosts, selectCampaignPosts, loadNetworkAccounts } from '../public/network-data.js';
 
 const liveAccount = { handle: 'chatgptricks', name: 'ChatGPTricks', relationship: 'owned', followerCount: 3000123, followersAsOf: '2026-11-07T12:00:00Z', avatar: '/assets/universe/avatar-chatgptricks.jpg', profileUrl: 'https://www.instagram.com/chatgptricks/' };
@@ -31,6 +33,20 @@ test('random campaign slots contain unique posts from unique accounts on every d
   assert.ok(draws.size > 1, 'Reload draws must vary');
   const limited = selectCampaignPosts([campaign('one', 'a'), campaign('one', 'b'), campaign('two', 'c')]);
   assert.equal(limited.length, 2, 'Never repeat an account to fabricate variety');
+});
+
+test('the offline campaign pool contains twenty real covered posts with enough account variety', async () => {
+  assert.equal(fallbackCampaignPosts.length, 20);
+  assert.equal(new Set(fallbackCampaignPosts.map(post => post.shortcode)).size, 20);
+  assert.ok(new Set(fallbackCampaignPosts.map(post => post.handle)).size >= 5);
+  for (const post of fallbackCampaignPosts) {
+    assert.equal(post.source, `https://www.instagram.com/p/${post.shortcode}/`);
+    assert.ok(Number.isSafeInteger(post.likes) && post.likes >= 0);
+    assert.ok(Number.isFinite(Date.parse(post.metricsUpdatedAt)));
+    const file = new URL(`../public${post.image}`, import.meta.url);
+    assert.ok((await stat(file)).size > 0);
+  }
+  assert.equal(selectCampaignPosts(fallbackCampaignPosts).length, 5);
 });
 
 test('public responses reject invalid measurements, duplicate accounts, and unsafe post links', () => {

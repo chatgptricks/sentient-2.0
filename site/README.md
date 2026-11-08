@@ -40,9 +40,9 @@ Shared contact copy and service CTAs use “Free strategy call”. Service galle
 
 ## Connected accounts and campaign highlights
 
-Home and Universe read the same public account projection from the comments Worker's `/network/accounts` endpoint. Cortex is the primary source: only Sentient-owned accounts within the existing website key's scope are included. Home shows the ten largest connected accounts; Universe shows the complete returned directory. Follower figures retain their source observation dates, and the audience total is calculated from the connected account counts rather than a fixed marketing claim. Retrieval time is separate from measurement time.
+Home and Universe read the same public account projection from the comments Worker's `/network/accounts` endpoint. Cortex is the primary source: only Sentient-owned accounts within the existing website key's scope are included. Home shows the ten largest connected accounts; Universe shows the complete returned directory. Individual follower figures retain their source observation dates. The network-wide 25M+ headline stays fixed as requested; it is separate from the connected-account figures. Retrieval time is separate from measurement time.
 
-`src/network-fallback.mjs` holds the ten rounded reference values supplied for review, in the supplied order. It is the complete fallback for either page when Cortex is unavailable. Reference display aliases preserve their canonical Instagram account links. The preserved original roster remains in `src/universe-data.mjs`; it is not the current published directory. `src/network-snapshot.mjs` supplies the last verified aggregate for the initial HTML before the browser connects.
+`src/network-fallback.mjs` holds the ten rounded reference values supplied for review, in the supplied order. It is the complete fallback for either page when Cortex is unavailable. Reference display aliases preserve their canonical Instagram account links. The preserved original roster remains in `src/universe-data.mjs`; it is not the current published directory.
 
 Profile images use a bounded Worker proxy for the same scoped, owned accounts. Matching local images provide an outage fallback; an unrelated Sentient logo is never substituted for another account's photo. The API key remains in the Worker secret store. The browser receives only the public fields and images, never authentication headers or raw source responses.
 
@@ -70,7 +70,7 @@ The Node server saves inquiries in `.local/inquiries.jsonl`. Nothing is emailed 
 
 ## GitHub Pages
 
-The root GitHub Actions workflow checks the site and deploys pushes to `main` at https://chatgptricks.github.io/sentient-2.0/. Public builds use `BASE_PATH=/sentient-2.0 STATIC_HOSTING=1` for route and asset paths. GitHub Pages has no inquiry backend, so the public form is visibly disabled; local inquiry handling remains available during development.
+The root GitHub Actions workflow checks the site and deploys pushes to `main` at https://chatgptricks.github.io/sentient-2.0/. Public builds use `BASE_PATH=/sentient-2.0 STATIC_HOSTING=1` for route and asset paths. The public forms submit to the Cloudflare Worker's `/inquiries` endpoint and persist privately in D1. A fixed mail recipient, sender and delivery binding/provider control team notifications. The receipt distinguishes durable storage from accepted email delivery; an unavailable notifier never produces a false sent confirmation. Local inquiry handling remains available during development. See `../comments-api/README.md` for mail configuration and migrations.
 
 Private local data, visual review captures, internal briefs, and provenance manifests are excluded from Git.
 

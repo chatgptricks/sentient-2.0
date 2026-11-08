@@ -18,6 +18,9 @@ export function renderCampaignCards(posts, endpoint = '') {
     const title = post.client || post.title || post.caption?.split('\n').find(Boolean)?.slice(0, 75) || 'Campaign highlight';
     const image = post.image.startsWith('/network/') ? `${endpoint}${post.image}` : post.image;
     const likes = Number.isSafeInteger(post.likes) ? ` · ${Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(post.likes)} likes` : '';
-    return `<a class="v2-post" href="${escapeHtml(post.source)}" target="_blank" rel="noopener noreferrer" aria-label="View campaign by @${escapeHtml(post.handle)}"><div class="v2-post-image"><img src="${escapeHtml(image)}" alt="${escapeHtml(post.alt || title)}" width="720" height="960" loading="lazy" decoding="async"><span><span aria-hidden="true">↗</span></span></div><div class="v2-post-caption"><strong>${escapeHtml(title)}</strong><span>@${escapeHtml(post.handle)}${likes}</span></div></a>`;
+    const metricDate = accountSnapshotDate(post.metricsUpdatedAt);
+    const observation = metricDate ? ` title="Likes last recorded ${escapeHtml(metricDate)}"` : '';
+    const fallback = post.imageFallback ? ` data-avatar-fallback="${escapeHtml(post.imageFallback)}"` : '';
+    return `<a class="v2-post" href="${escapeHtml(post.source)}" target="_blank" rel="noopener noreferrer" aria-label="View campaign by @${escapeHtml(post.handle)}"${observation}><div class="v2-post-image"><img src="${escapeHtml(image)}"${fallback} alt="${escapeHtml(post.alt || title)}" width="720" height="960" loading="lazy" decoding="async"><span><span aria-hidden="true">↗</span></span></div><div class="v2-post-caption"><strong>${escapeHtml(title)}</strong><span>@${escapeHtml(post.handle)}${likes}</span></div></a>`;
   }).join('');
 }

@@ -16,6 +16,28 @@ Run `npm test`, `npx wrangler d1 migrations apply sentient-proposal-comments --r
 
 D1 is the persistent source of truth. Site rebuilds and Worker deployments do not recreate or clear its rows. Cloudflare administrators can review/export notes with `npx wrangler d1 execute sentient-proposal-comments --remote --command "SELECT * FROM comments"`. Take a database export before any manual cleanup.
 
+## Private website inquiries
+
+`POST /inquiries` accepts JSON (or URL-encoded form fields) containing a stable UUID `id`, `name`, `company`, `email`, `description`, `budget`, `stage`, and `service` (`campaign`, `launch`, or `growth`). Launch requires a real `launchDate` in `YYYY-MM-DD`; Growth requires `frequency` (`Weekly`, `Monthly`, `Quarterly`, or `Still planning`). Budgets and company stages match the site form. Keep the UUID unchanged for retries of the same brief; a changed brief with an existing UUID returns `409`. An optional `Idempotency-Key` header must equal `id`.
+
+The JavaScript flow uses JSON receipts and supplies its stable draft UUID. A native URL-encoded form may omit `id`; the server generates a fresh UUID per submission and returns an escaped, readable HTML receipt/error with a link back to the primary site. No static build UUID is shared between visitors.
+
+Migration `0006_inquiries.sql` stores validated briefs in a private D1 `inquiries` table. There is no public read/list route for this personal data. Requests require a configured site origin, a bounded 16 KB body, and the `INQUIRY_RATE` binding (10 attempts per minute per IP). The receipt contains only `id`, `saved`, `notificationStatus`, and `message`; it never returns names, contact details, brief text, provider IDs, credentials, or destination configuration.
+
+The confirmed recipient is configured server-side as `INQUIRY_TO=contact@sentientagency.io`; callers cannot change the recipient or sender. A durable save without a configured notifier returns HTTP `202`, `saved: true`, and `notificationStatus: "not_configured"`. This is a saved inquiry, **not** an email-delivery claim. The current configuration intentionally contains no sender or email binding until a sender/destination can actually be enabled.
+
+To notify the team through Cloudflare, configure an onboarded sender domain, the fixed/verified recipient, `INQUIRY_FROM`, and `INQUIRY_DELIVERY_PROVIDER=cloudflare`, plus a restricted binding:
+
+```json
+{"send_email":[{"name":"INQUIRY_EMAIL","destination_address":"contact@sentientagency.io"}]}
+```
+
+The adapter calls the documented structured `INQUIRY_EMAIL.send()` API with plain-text content, the validated visitor email as `replyTo`, and the inquiry UUID as an `X-Inquiry-ID` tracking header. It does not override the provider's `Message-ID`. See [Cloudflare's send API](https://developers.cloudflare.com/email-service/api/send-emails/workers-api/) and [restricted bindings](https://developers.cloudflare.com/email-service/configuration/send-bindings/). A resolved provider response with its message ID is recorded as `accepted`; that confirms notification submission, not delivery to the recipient's inbox.
+
+Alternatively set `INQUIRY_DELIVERY_PROVIDER=resend`, a verified `INQUIRY_FROM`, and the server secret `RESEND_API_KEY`. This adapter uses the fixed Resend email API and a stable `Idempotency-Key: inquiry/<UUID>`. Resend documents a [24-hour idempotency window](https://resend.com/docs/dashboard/emails/idempotency-keys); this service uses a conservative 23-hour retry window after an ambiguous attempt. No provider is enabled merely by saving a brief.
+
+An atomic D1 claim prevents concurrent retries from sending twice. Cloudflare offers no documented provider idempotency key, so an interrupted/ambiguous send is retained as `uncertain` and is not blindly repeated. Pending sends are retained with `waitUntil`, and their actual eventual result updates D1. `failed` and `uncertain` receipts still state that the brief was saved and email notification is unavailable. Configuration and delivery gaps must be resolved before claiming the team was emailed.
+
 ## Public owned-account network
 
 `GET /network/accounts` reads public stored profiles from Cortex `/api/v1` using the existing server-only `SENTIENTDASH_API_KEY`. It accepts no query parameters or writes. The JSON contains `source: "cortex"`, a separate retrieval `fetchedAt`, `stale: false`, and `accounts` with canonical `handle`, public `name`, `relationship: "owned"`, `followerCount`, `followersAsOf`, local `avatar`, and Instagram `profileUrl`. Counts without a valid Cortex profile observation date remain unknown rather than acquiring the retrieval date.

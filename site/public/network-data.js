@@ -8,11 +8,6 @@ export function formatFollowers(account) {
     : '';
 }
 
-export function formatAudience(value) {
-  if (!Number.isSafeInteger(value) || value < 0) return '';
-  return value >= 1e6 ? `${Math.floor(value / 100000) / 10}M+` : `${Math.floor(value / 1000)}K+`;
-}
-
 export function installAvatarFallbacks() {
   document.addEventListener('error', event => {
     const image = event.target;

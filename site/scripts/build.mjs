@@ -8,6 +8,7 @@ export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function build() {
   const basePath = normalizeBasePath(process.env.BASE_PATH || '');
   const staticHosting = process.env.STATIC_HOSTING === '1';
+  const apiUrl = (process.env.COMMENTS_API_URL || JSON.parse(await readFile(resolve(root, 'public/comments-config.json'), 'utf8')).apiUrl).replace(/\/$/, '');
   const { pages: originalPages } = await import(`../src/pages.mjs?v=${Date.now()}`);
   const { createV2Pages } = await import('../src/v2-pages.mjs');
   const pages = createV2Pages(originalPages, { primary: true });
@@ -21,11 +22,11 @@ export async function build() {
   const renderHtml = html => {
     let rendered = html.replace(/\b(href|src|action)=(['"])(\/[^'"\s]*)\2/g, (_, attribute, quote, url) => `${attribute}=${quote}${localUrl(url)}${quote}`);
     // The hidden Universe can be restored with its existing data and behavior.
-    rendered = rendered.replace(/("avatar"\s*:\s*")(\/assets\/[^"\s]+)(")/g, (_, before, url, after) => `${before}${localUrl(url)}${after}`);
+    rendered = rendered.replace(/("(?:avatar|avatarFallback|image)"\s*:\s*")(\/assets\/[^"\s]+)(")/g, (_, before, url, after) => `${before}${localUrl(url)}${after}`);
     if (staticHosting) {
       rendered = rendered.replace('<body ', '<body data-hosting="static" ');
-      rendered = rendered.replace(/(<p class="preview-note">)[\s\S]*?(<\/p>)/g, '$1Contact requests are not enabled in this preview.$2');
-      rendered = rendered.replace(/<button([^>]*\bclass="[^"]*\bform-submit\b[^"]*"[^>]*)>[\s\S]*?<\/button>/g, '<button$1 disabled>Contact form coming soon</button>');
+      rendered = rendered.replace(/(<p class="preview-note">)[\s\S]*?(<\/p>)/g, '$1Share your plans. We’ll get back to you by email.$2');
+      rendered = rendered.replace(/<form\b[^>]*>/g, tag => /\bclass="[^"]*\binquiry-form\b/.test(tag) ? tag.replace(/action="[^"]*"/, `action="${escapeHtml(apiUrl)}/inquiries"`) : tag);
     }
     return rendered;
   };
@@ -72,7 +73,7 @@ export async function build() {
     };
     await rewriteAssets(resolve(root, 'dist'));
   }
-  await writeFile(resolve(root, 'dist/comments-config.json'), JSON.stringify({apiUrl: process.env.COMMENTS_API_URL || JSON.parse(await readFile(resolve(root, 'public/comments-config.json'), 'utf8')).apiUrl}));
+  await writeFile(resolve(root, 'dist/comments-config.json'), JSON.stringify({apiUrl}));
   // Include the runtime graph in asset URLs so returning reviewers receive
   // coordinated scripts and styles instead of older cached files.
   const runtimeHash = createHash('sha256');

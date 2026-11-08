@@ -1,3 +1,5 @@
+import { networkEndpoint } from './network-data.js';
+
 const menu = document.querySelector('.menu-toggle');
 const navigation = document.querySelector('#navigation');
 const phoneMenu = window.matchMedia('(max-width: 650px)');
@@ -39,13 +41,8 @@ document.addEventListener('keydown', e => {
   }
 });
 for (const form of document.querySelectorAll('.inquiry-form')) {
-  if (document.body.dataset.hosting === 'static') {
-    const submit = form.querySelector('button[type=submit]');
-    submit.disabled = true;
-    submit.textContent = 'Contact form coming soon';
-    form.addEventListener('submit', e => e.preventDefault());
-    continue;
-  }
+  const remote = document.body.dataset.hosting === 'static';
+  let attempt;
   form.addEventListener('submit', async e => {
     e.preventDefault();
     if (!form.reportValidity()) return;
@@ -53,19 +50,29 @@ for (const form of document.querySelectorAll('.inquiry-form')) {
     const status = form.querySelector('.form-status');
     const label = button.textContent;
     button.disabled = true;
-    button.textContent = 'Saving your brief…';
+    button.textContent = remote ? 'Sending your request…' : 'Saving your brief…';
     status.textContent = '';
     status.classList.remove('error');
     try {
-      const response = await fetch('/api/inquiries', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+      const fields = Object.fromEntries(new FormData(form));
+      const signature = JSON.stringify(fields);
+      if (!attempt || attempt.signature !== signature) attempt = { signature, id: crypto.randomUUID() };
+      const url = remote ? `${await networkEndpoint()}/inquiries` : '/api/inquiries';
+      const response = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(remote ? { ...fields, id: attempt.id } : fields), signal: AbortSignal.timeout(25000) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'We could not save your request.');
+      if (remote && result.saved !== true) throw new Error('We could not confirm receipt. Please try again.');
       status.textContent = result.message;
-      form.reset();
+      if (!remote || result.notificationStatus === 'accepted') {
+        form.reset();
+        attempt = null;
+      } else {
+        status.classList.add('error');
+      }
       status.focus();
     } catch (error) {
       status.classList.add('error');
-      status.textContent = error.message === 'Failed to fetch' ? 'Connection lost. We could not confirm whether your request was saved. Please try again.' : error.message;
+      status.textContent = error.message === 'Failed to fetch' || error.name === 'TimeoutError' ? 'Connection lost. We could not confirm receipt. Your details are still here; please try again.' : error.message;
     } finally { button.disabled = false; button.textContent = label; }
   });
 }
