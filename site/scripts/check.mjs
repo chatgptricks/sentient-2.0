@@ -57,7 +57,7 @@ for (const html of Object.values(createV2Pages(originalPages))) {
   assert.doesNotMatch(html, /View V1|v2-comparison/, 'Internal previews cannot reintroduce public V1 links');
 }
 for (const hidden of ['v1', 'backup', '.local']) await assert.rejects(stat(resolve(root, 'dist', hidden)), { code: 'ENOENT' });
-assert.match(routeHtml.get('/'), /src="\/Decks\/router\.js"/, 'Root keeps deck and Studio hash routing');
+assert.match(routeHtml.get('/'), /src="\/Decks\/router\.js\?v=[a-f0-9]{12}"/, 'Root uses the current deck and Studio hash router, bypassing older cached bundles');
 assert.doesNotMatch(routeHtml.get('/'), /src="\/app\.js"/, 'Root lets the hash router select the website runtime');
 let references = 0;
 for (const [route, html] of routeHtml) {
@@ -67,8 +67,9 @@ for (const [route, html] of routeHtml) {
   for (const [, url] of html.matchAll(/(?:src|href)="([^"\s]+)"/g)) {
     if (url.startsWith('#')) assert.ok(html.includes(`id="${url.slice(1)}"`), `${route}: missing anchor ${url}`);
     if (!url.startsWith('/') || url === '/api/inquiries') continue;
-    if (routes.includes(url.split('#')[0])) continue;
-    assert.ok((await stat(resolve(root, 'dist', `.${url}`))).isFile(), `Missing asset ${url}`);
+    const path = url.split(/[?#]/)[0];
+    if (routes.includes(path)) continue;
+    assert.ok((await stat(resolve(root, 'dist', `.${path}`))).isFile(), `Missing asset ${url}`);
     references++;
   }
 }

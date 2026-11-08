@@ -2,6 +2,7 @@ import { build as bundle } from 'esbuild';
 import { mkdir, cp, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { normalizeBasePath, escapeHtml } from '../src/social-meta.mjs';
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function build() {
@@ -72,6 +73,12 @@ export async function build() {
     await rewriteAssets(resolve(root, 'dist'));
   }
   await writeFile(resolve(root, 'dist/comments-config.json'), JSON.stringify({apiUrl: process.env.COMMENTS_API_URL || JSON.parse(await readFile(resolve(root, 'public/comments-config.json'), 'utf8')).apiUrl}));
+  // Returning reviewers must receive the current mode router even while a
+  // previous router.js response is still fresh in the browser's cache.
+  const routerVersion = createHash('sha256').update(await readFile(resolve(root, 'dist/Decks/router.js'))).digest('hex').slice(0, 12);
+  const homePath = resolve(root, 'dist/index.html');
+  const homeHtml = await readFile(homePath, 'utf8');
+  await writeFile(homePath, homeHtml.replace(/(src="[^"]*\/Decks\/router\.js)"/, `$1?v=${routerVersion}"`));
   await writeFile(resolve(root, 'dist/.nojekyll'), '');
   return Object.keys(allPages);
 }
