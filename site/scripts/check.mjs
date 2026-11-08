@@ -8,6 +8,7 @@ import { build, root } from './build.mjs';
 import { universeAccounts } from '../src/universe-data.mjs';
 import { features } from '../src/site-config.mjs';
 import { pages as originalPages } from '../src/pages.mjs';
+import { createV2Pages } from '../src/v2-pages.mjs';
 const staleRoute = resolve(root, 'dist/__stale-route-check__/index.html');
 await mkdir(resolve(root, 'dist/__stale-route-check__'), { recursive: true });
 await writeFile(staleRoute, 'retired route fixture');
@@ -27,7 +28,11 @@ assert.equal(selectedWork(routeHtml.get('/')), originalWork, 'The promoted site 
 for (const route of routes) {
   const version = routeHtml.get(route);
   assert.match(version, /data-version="v2"/);
-  assert.doesNotMatch(version, /View V1|v2-comparison| · V2<\/title>|src="\/comments\.js"/, `${route}: no public version comparison or V1 notes`);
+  assert.doesNotMatch(version, /View V1|v2-comparison| · V2<\/title>/, `${route}: no public version comparison`);
+  if (route !== '/') {
+    assert.match(version, /href="\/comments\.css"/, `${route}: review styles are loaded`);
+    assert.match(version, /src="\/comments\.js"/, `${route}: shared review notes are enabled`);
+  }
   const canonical = version.match(/<link rel="canonical" href="([^"]+)"/)[1];
   assert.equal(canonical, originalPages[route].match(/<link rel="canonical" href="([^"]+)"/)[1], `${route}: primary canonical URL`);
   assert.match(version, new RegExp(`property="og:url" content="${canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
@@ -47,6 +52,9 @@ for (const route of routes) {
     runInNewContext(script, {location: {search: '?from=shared', hash, replace: value => { destination = value; }}});
     assert.equal(destination, `${route}?from=shared${hash}`, `${alias}: old links retain query and hash`);
   }
+}
+for (const html of Object.values(createV2Pages(originalPages))) {
+  assert.doesNotMatch(html, /View V1|v2-comparison/, 'Internal previews cannot reintroduce public V1 links');
 }
 for (const hidden of ['v1', 'backup', '.local']) await assert.rejects(stat(resolve(root, 'dist', hidden)), { code: 'ENOENT' });
 assert.match(routeHtml.get('/'), /src="\/Decks\/router\.js"/, 'Root keeps deck and Studio hash routing');

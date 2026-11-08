@@ -32,7 +32,7 @@ Run `build` after editing and reload the browser. The server builds at startup; 
 
 The revised site is now published directly at `/` and the four primary service/About/Universe routes. The public header has no version selector. Previously shared `/v2/` URLs redirect to the matching primary route and preserve their query parameters and hash, including presentation and Studio links.
 
-`src/v2-pages.mjs` composes the current site from the preserved baseline in `src/pages.mjs`, with additive `public/v2.css` and isolated About, campaign, and carousel modules. The Home hash router selects the current website runtime or the presentation/Studio runtime. Current website pages do not load the old proposal feedback pins.
+`src/v2-pages.mjs` composes the current site from the preserved baseline in `src/pages.mjs`, with additive `public/v2.css` and isolated About, campaign, and carousel modules. The Home hash router selects the current website runtime or the presentation/Studio runtime. All five website pages load the shared review toolbar, note pins, and existing comments through `public/comments.js` and `public/comments.css`. Right-click a spot or use Add note to leave feedback; Notes opens the list for the current page. Comments remain separate from the presentation and Studio runtime, and no review controls link to V1.
 
 V1 is retained as source under the Git tag `backup/v1-2026-11-08`. A verified 129-file static snapshot is also stored locally at `site/.local/backups/v1-before-promotion-2026-11-08.tar.gz`, with its adjacent SHA-256 manifest. The local archive is excluded from Git and the published build; there is no public V1 or backup route. Clean builds remove stale generated pages before creating the deployment.
 

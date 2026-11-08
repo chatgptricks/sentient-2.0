@@ -54,9 +54,9 @@ function pageStyles(page) {
   if (['launch','growth'].includes(page)) files.push('service-fields.css');
   if (page === 'about') files.push('about-story.css');
   if (page === 'universe') files.push('universe-polish.css');
-  files.push('refinement.css','mobile-experience.css','motion.css','v2.css');
+  files.push('refinement.css','mobile-experience.css','motion.css','v2.css','comments.css');
   if (page === 'about') files.push('v2-about.css');
-  return `<link rel="preload" href="/assets/lovelo-black.woff2" as="font" type="font/woff2" crossorigin>${files.map(file => `<link rel="stylesheet" href="/${file}">`).join('')}<script type="module" src="/app.js"></script><script type="module" src="/mobile.js"></script><script type="module" src="/js/motion.js"></script><script type="module" src="/v2-interactions.js"></script>`;
+  return `<link rel="preload" href="/assets/lovelo-black.woff2" as="font" type="font/woff2" crossorigin>${files.map(file => `<link rel="stylesheet" href="/${file}">`).join('')}<script type="module" src="/comments.js"></script><script type="module" src="/app.js"></script><script type="module" src="/mobile.js"></script><script type="module" src="/js/motion.js"></script><script type="module" src="/v2-interactions.js"></script>`;
 }
 
 export function createV2Pages(originalPages, { primary = false } = {}) {
@@ -67,7 +67,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
     const protectedWork = page === 'home' ? original.match(/<section\b(?=[^>]*\bid="work")[^>]*>[\s\S]*?<\/section>/)?.[0] : null;
     const workMarker = '<!-- preserve-original-selected-work -->';
     let html = protectedWork ? original.replace(protectedWork, workMarker) : original;
-    // V2 has its own document and navigation. V1 and its notes remain untouched.
+    // Keep the original document as the internal baseline for shared revisions.
     html = html.replace(/<span class="header-note">[\s\S]*?<\/span>/, '');
     html = html.replace(/<span class="section-index">[^<]*<\/span>/g, '');
     html = html.replace(/>0\d \/ ([^<]+)</g, '>$1<');
@@ -115,8 +115,6 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       const versionCanonical = `${originalCanonical.slice(0, -routeSuffix.length)}${v2Route(route).replace(/\/$/, '')}/`;
       html = html.replace(`rel="canonical" href="${originalCanonical}"`, `rel="canonical" href="${versionCanonical}"`);
       html = html.replace(`property="og:url" content="${originalCanonical}"`, `property="og:url" content="${versionCanonical}"`);
-      const comparison = `<aside class="v2-comparison" aria-label="Website version"><span>V2 <span>· Updated proposal</span></span><a href="${route}">View V1 ${arrow}</a></aside>`;
-      html = html.replace('<button class="menu-toggle"', `${comparison}<button class="menu-toggle"`);
     }
     // The primary Home keeps the hash router for presentations and Studio.
     // Its website branch loads the current styles/scripts using data-version.
