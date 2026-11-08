@@ -62,7 +62,8 @@ test('inquiry route enforces origin, POST, preflight, rate limit and bounded inp
 });
 
 test('unconfigured notification still persists privately and reports saved without pretending it sent email',async context => {
-  const {env,database}=storage(context);
+  let sends=0;
+  const {env,database}=storage(context,{INQUIRY_DELIVERY_PROVIDER:'cloudflare',INQUIRY_EMAIL:{send:async()=>{sends++;return {messageId:'must-not-send-without-enabled-sender'};}}});
   const lead=draft();
   const first=await worker.fetch(request(lead),env);
   assert.equal(first.status,202);
@@ -74,6 +75,7 @@ test('unconfigured notification still persists privately and reports saved witho
   assert.equal(database.prepare('SELECT COUNT(*) AS total FROM inquiries').get().total,1);
   const row=database.prepare('SELECT * FROM inquiries WHERE id=?').get(lead.id);
   assert.equal(row.delivery_status,'saved');
+  assert.equal(sends,0,'A prepared binding without INQUIRY_FROM never attempts notification');
   assert.equal(JSON.parse(row.payload_json).email,lead.email);
   assert.equal((await worker.fetch(request(undefined,{method:'GET'}),env)).status,405);
   assert.equal((await worker.fetch(new Request(`https://api.example/inquiries/${lead.id}`,{headers:{Origin:'https://chatgptricks.github.io'}}),env)).status,404);

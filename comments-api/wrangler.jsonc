@@ -2,6 +2,12 @@
   "name": "sentient-proposal-comments",
   "main": "worker.mjs",
   "compatibility_date": "2026-10-05",
+  "send_email": [
+    {
+      "name": "INQUIRY_EMAIL",
+      "destination_address": "contact@sentientagency.io"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
@@ -11,6 +17,9 @@
     }
   ],
   "vars": {
+    "INQUIRY_DELIVERY_PROVIDER": "cloudflare",
+    // Set INQUIRY_FROM to website@forms.sentientdash.app only after the
+    // production destination contact@sentientagency.io is verified.
     "INQUIRY_TO": "contact@sentientagency.io",
     "ALLOWED_ORIGINS": "https://chatgptricks.github.io,http://localhost:4322,http://127.0.0.1:4322,http://localhost:14323,http://127.0.0.1:14323"
   },
