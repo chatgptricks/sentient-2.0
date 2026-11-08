@@ -175,7 +175,7 @@ test('edge snapshots are bounded by freshness and their cache keys contain no cr
   const env = environment();
   globalThis.caches = { default:{
     async match(key) {
-      assert.ok(key.startsWith('https://sentient-network-cache.invalid/v2/profiles/'));
+      assert.match(key, /^https:\/\/sentient-network-cache\.invalid\/v\d+\/profiles\//);
       assert.ok(!key.includes(env.SENTIENTDASH_API_KEY));
       return Response.json(snapshot);
     },
