@@ -28,15 +28,17 @@ Run `build` after editing and reload the browser. The server builds at startup; 
 - `/about`: founders and network relationships.
 - `/universe`: interactive account network, search, filters, and directory. Availability is controlled by `features.universe` in `src/site-config.mjs`.
 
-## V2 comparison
+## Current site and internal V1 backup
 
-The review proposal is available at `/v2/`, with the same five pages beneath that prefix. Its header links back to the corresponding original page. The original URLs, content, styles, presentation decks, and feedback notes remain unchanged.
+The revised site is now published directly at `/` and the four primary service/About/Universe routes. The public header has no version selector. Previously shared `/v2/` URLs redirect to the matching primary route and preserve their query parameters and hash, including presentation and Studio links.
 
-`src/v2-pages.mjs` generates the separate proposal from the original documents, with additive `public/v2.css` and isolated About, campaign, and carousel modules. V2 uses its own page navigation; the original feedback pins remain on V1 so their anchors are not reassigned to revised content. Checks verify byte-for-byte preservation of the original HTML and that V2 page links stay in V2. GitHub Pages builds publish both versions together.
+`src/v2-pages.mjs` composes the current site from the preserved baseline in `src/pages.mjs`, with additive `public/v2.css` and isolated About, campaign, and carousel modules. The Home hash router selects the current website runtime or the presentation/Studio runtime. Current website pages do not load the old proposal feedback pins.
 
-Shared V2 contact copy and service CTAs use “Free strategy call”. Service galleries retain their original layouts while showing the same verified campaign sources as Home. The complete Home Selected work section is protected from shared transformations and must remain identical to V1, including its metrics, numbering, interactions, and mobile controls.
+V1 is retained as source under the Git tag `backup/v1-2026-11-08`. A verified 129-file static snapshot is also stored locally at `site/.local/backups/v1-before-promotion-2026-11-08.tar.gz`, with its adjacent SHA-256 manifest. The local archive is excluded from Git and the published build; there is no public V1 or backup route. Clean builds remove stale generated pages before creating the deployment.
 
-Static HTML is rendered by `src/pages.mjs`. GSAP powers motion; Three.js renders the Home symbol, Launch crowd, and account universe. Growth uses Canvas 2D for a shaded pin surface with the Sentient logo raised within it. esbuild bundles browser code. Fonts and visual assets are local. Lovelo Black is Sentient's primary display font; Space Grotesk is used for body text and controls. All typography is sans-serif. The map has a directory fallback when WebGL is unavailable, and the motion switch honors reduced-motion preferences.
+Shared contact copy and service CTAs use “Free strategy call”. Service galleries retain their original layouts while showing the same verified campaign sources as Home. The complete Home Selected work section is protected from shared transformations and remains identical to the V1 source, including metrics, numbering, interactions, and mobile controls.
+
+GSAP powers motion; Three.js renders the Home symbol, Launch crowd, and account universe. Growth uses Canvas 2D for a shaded pin surface with the Sentient logo raised above the background pins. esbuild bundles browser code. Fonts and visual assets are local. Lovelo Black is the primary display font; Space Grotesk is used for body text and controls. The map has a directory fallback when WebGL is unavailable, and the motion switch honors reduced-motion preferences.
 
 `src/motion.mjs` coordinates each page's opening sequence, About portraits and biographies, a gently opening campaign fan, and progressive highlights on the existing launch/growth steps. Scroll and hover share one composed transform for featured campaign images; pointer interactions reuse GSAP tweens. Responsive effects are reverted when breakpoints or pointer capabilities change. Phone cards reveal only when they enter their native swipe rail. `public/motion.css` contains the process highlights and keeps the motion switch clear of the proposal review toolbar.
 

@@ -59,7 +59,7 @@ function pageStyles(page) {
   return `<link rel="preload" href="/assets/lovelo-black.woff2" as="font" type="font/woff2" crossorigin>${files.map(file => `<link rel="stylesheet" href="/${file}">`).join('')}<script type="module" src="/app.js"></script><script type="module" src="/mobile.js"></script><script type="module" src="/js/motion.js"></script><script type="module" src="/v2-interactions.js"></script>`;
 }
 
-export function createV2Pages(originalPages) {
+export function createV2Pages(originalPages, { primary = false } = {}) {
   return Object.fromEntries(Object.entries(originalPages).map(([route, original]) => {
     const page = original.match(/<body data-page="([^"]+)"/)[1];
     // Selected work has no requested edits. Protect its full markup even when
@@ -102,25 +102,28 @@ export function createV2Pages(originalPages) {
     html = reviseV2Services(html, page);
     if (page === 'about') html = reviseV2About(html);
     html = simplifyLabels(html);
-    // Keep every page-to-page journey inside V2, including Universe's call link.
+    // Preview links stay under V2; the primary site keeps canonical routes.
     html = html.replace(/\bhref="(\/[^"\s]*)"/g, (match, url) => {
       const [path, suffix = ''] = url.match(/^([^?#]*)(.*)$/).slice(1);
-      return routes.includes(path) ? `href="${v2Route(path)}${suffix}"` : match;
+      return !primary && routes.includes(path) ? `href="${v2Route(path)}${suffix}"` : match;
     });
     html = html.replace(/<body data-page="([^"]+)"/, '<body data-version="v2" data-page="$1"');
-    html = html.replace(/<title>([\s\S]*?)<\/title>/, '<title>$1 · V2</title>');
-    const originalCanonical = html.match(/<link rel="canonical" href="([^"]+)"/)[1];
-    const routeSuffix = route === '/' ? '/' : `${route}/`;
-    const versionCanonical = `${originalCanonical.slice(0, -routeSuffix.length)}${v2Route(route).replace(/\/$/, '')}/`;
-    html = html.replace(`rel="canonical" href="${originalCanonical}"`, `rel="canonical" href="${versionCanonical}"`);
-    html = html.replace(`property="og:url" content="${originalCanonical}"`, `property="og:url" content="${versionCanonical}"`);
-    // Remove the Home deck bootstrap and all inherited runtime styles/scripts.
-    // The original Home keeps its presentation router; V2 loads the website directly.
-    html = html.replace(/<link rel="icon"[\s\S]*?<\/head>/, `<link rel="icon" href="/favicon.svg" type="image/svg+xml">${pageStyles(page)}${page === 'universe' ? '<script type="module" src="/js/universe.js"></script>' : ''}</head>`);
-    const originalHref = route;
-    const comparison = `<aside class="v2-comparison" aria-label="Website version"><span>V2 <span>· Updated proposal</span></span><a href="${originalHref}">View V1 ${arrow}</a></aside>`;
-    html = html.replace('<button class="menu-toggle"', `${comparison}<button class="menu-toggle"`);
+    if (!primary) {
+      html = html.replace(/<title>([\s\S]*?)<\/title>/, '<title>$1 · V2</title>');
+      const originalCanonical = html.match(/<link rel="canonical" href="([^"]+)"/)[1];
+      const routeSuffix = route === '/' ? '/' : `${route}/`;
+      const versionCanonical = `${originalCanonical.slice(0, -routeSuffix.length)}${v2Route(route).replace(/\/$/, '')}/`;
+      html = html.replace(`rel="canonical" href="${originalCanonical}"`, `rel="canonical" href="${versionCanonical}"`);
+      html = html.replace(`property="og:url" content="${originalCanonical}"`, `property="og:url" content="${versionCanonical}"`);
+      const comparison = `<aside class="v2-comparison" aria-label="Website version"><span>V2 <span>· Updated proposal</span></span><a href="${route}">View V1 ${arrow}</a></aside>`;
+      html = html.replace('<button class="menu-toggle"', `${comparison}<button class="menu-toggle"`);
+    }
+    // The primary Home keeps the hash router for presentations and Studio.
+    // Its website branch loads the current styles/scripts using data-version.
+    if (!(primary && page === 'home')) {
+      html = html.replace(/<link rel="icon"[\s\S]*?<\/head>/, `<link rel="icon" href="/favicon.svg" type="image/svg+xml">${pageStyles(page)}${page === 'universe' ? '<script type="module" src="/js/universe.js"></script>' : ''}</head>`);
+    }
     if (protectedWork) html = html.replace(workMarker, protectedWork);
-    return [v2Route(route), html];
+    return [primary ? route : v2Route(route), html];
   }));
 }

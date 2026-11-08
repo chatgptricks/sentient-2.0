@@ -1,37 +1,56 @@
-import { readFile, stat, mkdtemp, rm } from 'node:fs/promises';
+import { readFile, stat, mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { runInNewContext } from 'node:vm';
 import { build, root } from './build.mjs';
 import { universeAccounts } from '../src/universe-data.mjs';
 import { features } from '../src/site-config.mjs';
 import { pages as originalPages } from '../src/pages.mjs';
-const routes = await build();
+const staleRoute = resolve(root, 'dist/__stale-route-check__/index.html');
+await mkdir(resolve(root, 'dist/__stale-route-check__'), { recursive: true });
+await writeFile(staleRoute, 'retired route fixture');
+const builtRoutes = await build();
+await assert.rejects(stat(staleRoute), { code: 'ENOENT' }, 'Clean builds must not publish stale routes');
+const routes = Object.keys(originalPages);
+const aliases = routes.map(route => route === '/' ? '/v2' : `/v2${route}`);
+assert.deepEqual(new Set(builtRoutes), new Set([...routes, ...aliases]), 'Only current pages and V2 redirects are published');
 assert.equal(routes.includes('/universe'), features.universe, 'Universe route follows its feature flag');
 if (!features.universe) await assert.rejects(stat(resolve(root, 'dist/universe')), { code: 'ENOENT' });
 const routeHtml = new Map();
 for (const route of routes) routeHtml.set(route, await readFile(resolve(root, 'dist', route === '/' ? 'index.html' : `${route.slice(1)}/index.html`), 'utf8'));
 const selectedWork = html => html.match(/<section\b(?=[^>]*\bid="work")[^>]*>[\s\S]*?<\/section>/)?.[0];
-const originalWork = selectedWork(routeHtml.get('/'));
+const originalWork = selectedWork(originalPages['/']);
 assert.ok(originalWork, 'V1 Selected work exists');
-assert.equal(selectedWork(routeHtml.get('/v2/')), originalWork, 'V2 must preserve the complete uncommented Selected work section');
-for (const [route, original] of Object.entries(originalPages)) {
-  assert.equal(routeHtml.get(route), original, `${route}: V1 HTML must remain byte-for-byte unchanged`);
-  const versionRoute = route === '/' ? '/v2/' : `/v2${route}`;
-  const version = routeHtml.get(versionRoute);
-  assert.ok(version, `${route}: corresponding V2 route exists`);
+assert.equal(selectedWork(routeHtml.get('/')), originalWork, 'The promoted site preserves the complete original Selected work section');
+for (const route of routes) {
+  const version = routeHtml.get(route);
   assert.match(version, /data-version="v2"/);
-  assert.doesNotMatch(version, /src="\/comments\.js"/, 'V2 must not share V1 note anchors');
+  assert.doesNotMatch(version, /View V1|v2-comparison| · V2<\/title>|src="\/comments\.js"/, `${route}: no public version comparison or V1 notes`);
+  const canonical = version.match(/<link rel="canonical" href="([^"]+)"/)[1];
+  assert.equal(canonical, originalPages[route].match(/<link rel="canonical" href="([^"]+)"/)[1], `${route}: primary canonical URL`);
+  assert.match(version, new RegExp(`property="og:url" content="${canonical.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
   const editableContent = version.replace(selectedWork(version) || '', '');
-  assert.doesNotMatch(editableContent, /Get a (?:campaign|launch|distribution) plan/, `${versionRoute}: contact CTAs use the shared call offer`);
-  assert.doesNotMatch(editableContent, /<span[^>]*>0\d \/ [A-Z]|class="(?:section-index|step-number)"/, `${versionRoute}: no decorative section numbering outside protected Selected work`);
-  const navigation = version.replace(/<aside class="v2-comparison"[\s\S]*?<\/aside>/, '');
-  for (const [, href] of navigation.matchAll(/href="(\/[^"\s]*)"/g)) {
-    const path = href.split(/[?#]/)[0].replace(/\/$/, '') || '/';
-    assert.ok(!Object.hasOwn(originalPages, path), `${versionRoute}: website navigation must stay inside V2 (${href})`);
+  assert.doesNotMatch(editableContent, /Get a (?:campaign|launch|distribution) plan/, `${route}: contact CTAs use the shared call offer`);
+  assert.doesNotMatch(editableContent, /<span[^>]*>0\d \/ [A-Z]|class="(?:section-index|step-number)"/, `${route}: no decorative section numbering outside protected Selected work`);
+  for (const [, href] of version.matchAll(/href="(\/[^"\s]*)"/g)) {
+    assert.doesNotMatch(href, /^\/(?:v1|v2|backup)(?:[/?#]|$)/, `${route}: website navigation uses primary routes`);
+  }
+  const alias = route === '/' ? '/v2' : `/v2${route}`;
+  const redirect = await readFile(resolve(root, `dist${alias}/index.html`), 'utf8');
+  assert.match(redirect, /data-legacy-redirect="true"/);
+  assert.ok(redirect.includes(`rel="canonical" href="${canonical}"`));
+  const script = redirect.match(/<script>([\s\S]*?)<\/script>/)[1];
+  for (const hash of ['#contact', '#/campaign-deck/2', '#/studio']) {
+    let destination;
+    runInNewContext(script, {location: {search: '?from=shared', hash, replace: value => { destination = value; }}});
+    assert.equal(destination, `${route}?from=shared${hash}`, `${alias}: old links retain query and hash`);
   }
 }
+for (const hidden of ['v1', 'backup', '.local']) await assert.rejects(stat(resolve(root, 'dist', hidden)), { code: 'ENOENT' });
+assert.match(routeHtml.get('/'), /src="\/Decks\/router\.js"/, 'Root keeps deck and Studio hash routing');
+assert.doesNotMatch(routeHtml.get('/'), /src="\/app\.js"/, 'Root lets the hash router select the website runtime');
 let references = 0;
 for (const [route, html] of routeHtml) {
   if (!features.universe) assert.doesNotMatch(html, /href="\/universe(?:["/#?])/, `${route}: hidden Universe has no entry points`);
@@ -47,9 +66,7 @@ for (const [route, html] of routeHtml) {
 }
 const growthText = routeHtml.get('/growth-campaigns').split('<div class="growth-content">')[1].split('<section class="contact-wrap')[0].replace(/<[^>]*>/g, ' ').trim().split(/\s+/);
 assert.ok(growthText.length < 150, `Growth body is ${growthText.length} words`);
-const v2GrowthText = routeHtml.get('/v2/growth-campaigns').split('<div class="growth-content">')[1].split('<section class="contact-wrap')[0].replace(/<[^>]*>/g, ' ').trim().split(/\s+/);
-assert.ok(v2GrowthText.length < 150, `V2 Growth body is ${v2GrowthText.length} words`);
-for (const route of ['/v2/viral-launch-campaigns', '/v2/growth-campaigns']) {
+for (const route of ['/viral-launch-campaigns', '/growth-campaigns']) {
   assert.match(routeHtml.get(route), /@artificialntellligence/, `${route}: service campaign examples include another verified owned account`);
 }
 assert.equal(universeAccounts.length,31);
@@ -74,7 +91,8 @@ try {
     server.stdout.on('data', b=> {if(b.toString().includes('Sentient local preview')) {clearTimeout(timer);ok();}});
     server.on('exit', code=> {clearTimeout(timer);fail(new Error(`Server exit ${code}: ${output}`));});
   });
-  for (const route of routes) assert.equal((await fetch(origin+route)).status, 200);
+  for (const route of builtRoutes) assert.equal((await fetch(origin+route)).status, 200);
+  for (const route of ['/v1/', '/backup/', '/.local/backups/']) assert.equal((await fetch(origin+route)).status, 404);
   if (!features.universe) {
     for (const route of ['/universe', '/universe/', '/universe/index.html']) assert.equal((await fetch(origin+route)).status, 404);
   }
