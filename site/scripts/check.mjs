@@ -75,9 +75,11 @@ for (const [route, html] of routeHtml) {
 }
 const growthText = routeHtml.get('/growth-campaigns').split('<div class="growth-content">')[1].split('<section class="contact-wrap')[0].replace(/<[^>]*>/g, ' ').trim().split(/\s+/);
 assert.ok(growthText.length < 150, `Growth body is ${growthText.length} words`);
-for (const route of ['/viral-launch-campaigns', '/growth-campaigns']) {
-  assert.match(routeHtml.get(route), /@artificialntellligence/, `${route}: service campaign examples include another verified owned account`);
+assert.match(routeHtml.get('/growth-campaigns'), /@artificialntellligence/, '/growth-campaigns: campaign examples include another verified owned account');
+for (const source of ['x.com/kjdhaliwal/status/2018731342113247533', 'x.com/DecartAI/status/2077801728213156044', 'x.com/alexdanilowicz/status/2110030443466940671']) {
+  assert.ok(routeHtml.get('/viral-launch-campaigns').includes(`https://${source}`), `/viral-launch-campaigns: launch case links to its source post (${source})`);
 }
+assert.doesNotMatch(routeHtml.get('/viral-launch-campaigns').split('id="launch-work"')[1].split('</section>')[0], /sign-ups/, 'Anonymous sign-up results never sit beside named launch cases');
 assert.equal(universeAccounts.length,31);
 assert.equal(new Set(universeAccounts.map(a=>a.handle)).size,31,'Unique Instagram worlds');
 assert.equal(universeAccounts.filter(a=>a.relationship==='owned').length,26);

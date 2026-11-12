@@ -70,3 +70,15 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 @media(max-width:650px){body[data-version=v2] .hero-body{padding-top:clamp(90px,14svh,120px)}body[data-version=v2] .hero-foot{display:none}}
 
 @media(max-width:650px){.v2-account-count b{font-size:42px}.v2-owned-accounts>a{row-gap:14px}.v2-owned-accounts strong{font-size:10px}}
+
+/* Service page rebuild: three launch cases and the launch packages. */
+@media(min-width:760px){body[data-version=v2] .gallery-grid.launch-cases{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}}
+body[data-version=v2] .launch-cases .case-image{background:#fff}
+body[data-version=v2] .launch-cases .case-image img{object-fit:contain;object-position:center;padding:48px 10px 6px}
+body[data-version=v2] .package-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+body[data-version=v2] .package-grid li{padding-top:34px}
+body[data-version=v2] .package-figure{display:block;margin:6px 0 14px;font-family:var(--display);font-size:clamp(52px,5vw,78px);line-height:1;color:var(--acid);font-weight:400}
+body[data-version=v2] .package-figure small{font-family:var(--font);font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-left:4px}
+body[data-version=v2] .package-grid b{color:var(--text);font-weight:600}
+body[data-version=v2] .launch-packages .evidence-note{margin-top:28px}
+@media(max-width:760px){body[data-version=v2] .package-grid li{padding-left:0}body[data-version=v2] .package-figure{font-size:52px}}

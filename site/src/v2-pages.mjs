@@ -89,17 +89,6 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       html = replaceSection(html, 'client-proof', clientCarousel());
       html = replaceSection(html, 'campaign-wall', receipts());
     }
-    if (page === 'launch') {
-      html = html.replace('A product launch. A funding round. A big announcement. Turn your next milestone into a story that travels.', 'A launch, funding round, or announcement. One post from your founder, coordinated distribution through our owned accounts and creators, and a campaign built for demos, press, and inbound.');
-      html = html.replace('Your next milestone.<br>A story that travels.', 'One founder post.<br>A coordinated campaign wave.');
-      html = html.replace('Shape a founder post and supporting creative for your launch.', 'We script and structure the post. Your founder publishes it after you approve every word.');
-    }
-    if (page === 'growth') {
-      html = html.replace('Your ongoing distribution partner. We bring product drops to our owned audiences and creator partners, then track what turns attention into action.', 'Your ongoing distribution partner. Publish through owned pages and partner creators, find what drives clicks and conversions, then amplify the winners with paid ads.');
-      html = html.replace('Your product. Our audience.<br>Build momentum with every campaign.', 'Publish. Learn. Scale.<br>Owned media, creators, and paid amplification.');
-      html = html.replace('Find the creative that drives engagement, clicks, and conversions.', 'Find what drives clicks and conversions, then amplify the winners with paid ads.');
-      html = html.replace(/(<div class="growth-steps">[\s\S]*?<\/section>)/, block => block.replace(/<span>0\d<\/span>/g, ''));
-    }
     html = reviseV2Services(html, page);
     if (page === 'about') html = reviseV2About(html);
     if (page === 'universe') {
