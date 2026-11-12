@@ -1,6 +1,7 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { setupServicePreviews } from './preview-motion.mjs';
+import { setupServicePageMotion } from './service-pages-motion.mjs';
 
 gsap.registerPlugin(ScrollTrigger);
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -47,6 +48,7 @@ function reveal(element, extra = {}) {
 }
 
 function setupResponsiveMotion({ desktop, phone, fine }, listenMedia, cleanup) {
+  setupServicePageMotion(gsap, { phone });
   gsap.utils.toArray('[data-reveal], .section-heading h2, .story-founder-bio, .network-types article, .faq-items, .feature-case-info').forEach(element => {
     if (phone && element.closest('[data-mobile-carousel]')) return;
     reveal(element);

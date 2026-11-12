@@ -6,18 +6,16 @@ import { servicePreview } from './service-previews.mjs';
 import { escapeHtml } from './social-meta.mjs';
 import { fallbackCampaignPosts } from './network-post-fallback.mjs';
 import { reviseV2About } from './v2-about.mjs';
-import { reviseV2Services } from './v2-services.mjs';
+import { clientCarousel } from './client-carousel.mjs';
 
 const routes = ['/', '/viral-launch-campaigns', '/growth-campaigns', '/about', '/universe'];
 const v2Route = route => route === '/' ? '/v2/' : `/v2${route}`;
 const arrow = '<span aria-hidden="true">↗</span>';
-const brands = [['OpenAI','openai'],['Meta','meta'],['Adobe','adobe'],['Higgsfield','higgsfield'],['InVideo','invideo'],['Freepik','freepik'],['Polymarket','polymarket'],['Wegic','wegic'],['Stake','stake'],['ChatGPT','chatgpt']];
 
 const network = () => `<section class="v2-owned" id="owned-media" aria-labelledby="v2-owned-title" data-network-source="fallback"><div class="shell"><div class="v2-owned-heading"><h2 id="v2-owned-title"><span>25M+</span> followers.<br><em>Our audience. Your advantage.</em></h2><div><p>We built the communities.<br>Now let’s get them talking about you.</p><a class="text-link" href="/universe">Explore our accounts ${arrow}</a></div></div><div class="v2-owned-accounts">${renderAccountCards(fallbackAccounts.slice(0, 10))}</div><p class="v2-snapshot">Selected owned accounts · latest saved follower figures.</p></div><script type="application/json" id="network-fallback-data">${JSON.stringify(fallbackAccounts).replace(/</g, '\\u003c')}</script></section>`;
 
 const serviceCards = () => `<section class="services v2-services" id="services"><div class="services-heading shell"><span class="eyebrow">TWO WAYS TO GROW</span><h2 data-reveal>How we turn attention<br><em class="type-accent">into growth.</em></h2><p>Two ways to grow. One focus:<br>turning attention into customers.</p></div><div class="offer-grid shell" id="mobile-offers" data-mobile-carousel tabindex="0" aria-label="Campaign services"><a class="offer launch-offer" href="/viral-launch-campaigns"><div class="offer-top"><span class="eyebrow">LAUNCHES · RAISES · ANNOUNCEMENTS</span><span class="offer-arrow" aria-hidden="true">↗</span></div><h3>Viral launch<br><em class="type-accent">campaigns.</em></h3><div class="offer-art" aria-hidden="true">${servicePreview('launch')}</div><div class="offer-bottom"><p>One post from your founder. A coordinated wave across owned accounts and creators. Built to turn your next milestone into demos, press, and inbound.</p><span class="offer-link">Explore viral launches ${arrow}</span></div></a><a class="offer growth-offer" href="/growth-campaigns"><div class="offer-top"><span class="eyebrow">ONGOING DISTRIBUTION · CONVERSION</span><span class="offer-arrow" aria-hidden="true">↗</span></div><h3>Growth<br><em class="type-accent">campaigns.</em></h3><div class="offer-art growth-art" aria-hidden="true">${servicePreview('growth')}</div><div class="offer-bottom"><p>Publish through our owned pages and partner creators. Analyse what drives clicks and conversions. Put paid spend behind the winners to test, optimise, and scale what works.</p><span class="offer-link">Explore growth campaigns ${arrow}</span></div></a></div><div class="mobile-rail-controls" data-carousel-controls="mobile-offers"><span>Swipe to explore</span><div><button type="button" data-carousel-prev aria-label="Previous service">←</button><output data-carousel-status aria-live="polite">1 of 2</output><button type="button" data-carousel-next aria-label="Next service">→</button></div></div></section>`;
 
-const clientCarousel = () => `<section class="client-proof v2-client-carousel" aria-labelledby="v2-clients-title"><div class="client-proof-heading shell"><span class="eyebrow" id="v2-clients-title">IN GOOD COMPANY.</span><p>Ambitious brands. Shared ambition.</p><div class="v2-client-controls"><button type="button" data-client-prev aria-label="Previous client logos">←</button><button type="button" data-client-next aria-label="Next client logos">→</button></div></div><div class="v2-client-viewport" tabindex="0" role="region" aria-label="Client logos. Drag, swipe, or use the arrow keys."><ul class="v2-client-track">${brands.map(([name,slug]) => `<li class="v2-client-logo"><img src="/assets/clients/client-${slug}.png" alt="${name}" width="180" height="60" draggable="false" loading="lazy"></li>`).join('')}</ul></div><div class="v2-client-caption shell"><span>Drag or swipe to explore</span><output data-client-status aria-live="polite" aria-atomic="true">Clients 1–5 of 10</output></div></section>`;
 
 const receipts = () => `<section class="v2-receipts shell" id="campaign-wall" data-network-source="fallback" aria-labelledby="v2-receipts-title"><div class="v2-section-heading"><div><h2 id="v2-receipts-title">The <em class="type-accent">receipts.</em></h2></div><p>Campaigns across<br>our owned accounts.</p></div><div class="v2-post-grid">${renderCampaignCards(selectCampaignPosts(fallbackCampaignPosts, 5, () => .5))}</div><script type="application/json" id="campaign-fallback-data">${JSON.stringify(fallbackCampaignPosts).replace(/</g, '\\u003c')}</script></section>`;
 
@@ -52,7 +50,7 @@ function simplifyLabels(html) {
 
 function pageStyles(page) {
   const files = ['styles.css','art-direction.css','brand-proof.css'];
-  if (['launch','growth'].includes(page)) files.push('service-fields.css');
+  if (['launch','growth'].includes(page)) files.push('service-fields.css', 'service-pages.css');
   if (page === 'about') files.push('about-story.css');
   if (page === 'universe') files.push('universe-polish.css');
   files.push('refinement.css','mobile-experience.css','motion.css','v2.css','comments.css');
@@ -89,7 +87,6 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       html = replaceSection(html, 'client-proof', clientCarousel());
       html = replaceSection(html, 'campaign-wall', receipts());
     }
-    html = reviseV2Services(html, page);
     if (page === 'about') html = reviseV2About(html);
     if (page === 'universe') {
       html = replaceSection(html, 'universe-app', renderUniverse(fallbackAccounts, { source: 'pending' }));
