@@ -219,3 +219,8 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 }
 /* No dark drop shadow spilling outside the case box, only the lime glow. */
 [data-page=home] .feature-case-art > .lg-card, [data-page=home] .feature-case-art:hover > .lg-card { box-shadow: 0 0 0 1px #0b0c09, 0 0 34px #d0ff0038 !important; }
+/* Keep the case background inside the box; only the card breaks out. */
+@media (min-width: 1101px) {
+  [data-page=home] .feature-case { grid-template-rows: minmax(0, 1fr); }
+  [data-page=home] .feature-case-art, [data-page=home] .feature-case-info { min-height: 0; height: 100%; }
+}
