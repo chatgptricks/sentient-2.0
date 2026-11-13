@@ -103,3 +103,7 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .footer-socials a:hover { background: var(--acid); color: #0b0c09; border-color: var(--acid); }
 .footer-socials svg { width: 18px; height: 18px; fill: currentColor; }
 @media (max-width: 650px) { .footer-bottom > span:first-child { width: auto; } .footer-bottom { flex-wrap: wrap; } }
+
+/* Home: logo strip centred between the service cards and the receipts (Sergio, 2026-11-13). */
+[data-page=home] .v2-services { padding-bottom: clamp(56px, 5.6vw, 84px); }
+[data-page=home] .sx-trusted + .v2-receipts { padding-top: clamp(40px, 4.4vw, 66px); }
