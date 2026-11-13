@@ -4,11 +4,8 @@
 // 50,000+ sign-ups (Lotus AI, Louis's feedback) and 150M+ Higgsfield views (team
 // feedback doc). Founder names, roles and bios from about-content.mjs
 // (sentientagency.io/what-we-do, verified 2026-10-04).
-import { trustedMarquee } from './client-carousel.mjs';
-import { renderAccountCards } from './network-markup.mjs';
 import { fallbackAccounts } from './network-fallback.mjs';
 import { universeAccounts } from './universe-data.mjs';
-import { creatorStrip } from './service-pages.mjs';
 
 const avatar = handle => universeAccounts.find(item => item.handle === handle)?.avatar;
 // Hero mosaic: real avatars from our own pages and the creators we launch with.
@@ -22,12 +19,6 @@ const heroMosaic = () => `<div class="ab-mosaic" aria-hidden="true">${mosaic.map
   ? `<span class="ab-mosaic-stat"><strong>${a}</strong><small>${b}</small></span>`
   : `<span class="ab-mosaic-face${b ? ' is-lit' : ''}"><img src="${a}" alt="" width="96" height="96" loading="lazy"></span>`).join('')}</div>`;
 
-const services = [
-  { href: '/viral-launch-campaigns', eyebrow: 'VIRAL LAUNCH CAMPAIGNS', title: 'Strategic tech launches.', text: 'Your launch video, amplified across X and LinkedIn by the creators your customers already follow.', stat: ['50,000+', 'sign-ups from one launch'], media: '/assets/v2/launch/wall/kj-media.jpg', cta: 'See viral launches' },
-  { href: '/growth-campaigns', eyebrow: 'GROWTH CAMPAIGNS', title: 'ROI and CPM driven campaigns.', text: 'We publish your story across our pages, find the posts that perform and put ad spend behind them.', stat: ['150M+', 'views for Higgsfield'], media: '/assets/v2/growth/posts/DeZ7YfHJsoC.jpg', cta: 'See growth campaigns' },
-];
-const serviceCard = item => `<a class="ab-service" href="${item.href}"><span class="ab-service-media"><img src="${item.media}" alt="" width="720" height="900" loading="lazy"></span><span class="ab-service-copy"><span class="eyebrow">${item.eyebrow}</span><strong class="ab-service-title">${item.title}</strong><span class="ab-service-text">${item.text}</span><span class="ab-service-stat"><b>${item.stat[0]}</b>${item.stat[1]}</span><span class="ab-service-cta">${item.cta} <span aria-hidden="true">→</span></span></span></a>`;
-
 const founders = [
   { id: 'ivan', name: 'Ivan', role: 'Co-founder · AI specialist', portrait: '/assets/founders/ivan-cutout.webp', href: 'https://www.linkedin.com/in/ivanelgrande/',
     bio: 'Ivan founded @chatgptricks, built digital communities, and developed and sold an AI newsletter business. At Sentient, he works with Louis on the strategies and growth systems behind client campaigns.',
@@ -38,13 +29,29 @@ const founders = [
 ];
 const founderCard = f => `<article class="ab-founder" aria-labelledby="ab-founder-${f.id}"><figure class="ab-founder-portrait"><img src="${f.portrait}" alt="${f.name}, Sentient co-founder" width="640" height="640" loading="lazy"></figure><div class="ab-founder-copy"><span class="eyebrow">${f.role}</span><h3 id="ab-founder-${f.id}">${f.name}</h3><p>${f.bio}</p><figure class="ab-moment"><img src="${f.moment[0]}" alt="" width="510" height="510" loading="lazy"><figcaption>${f.moment[1]}</figcaption></figure><a class="ab-founder-link" href="${f.href}" target="_blank" rel="noopener noreferrer">Connect on LinkedIn <span aria-hidden="true">↗</span></a></div></article>`;
 
+// Where it started: the founders grew their own pages before Sentient
+// (bios from sentientagency.io/what-we-do). @chatgptricks followers from the
+// network snapshot (network-fallback.mjs, 2026-11-07).
+const origin = () => {
+  const page = fallbackAccounts.find(item => item.handle === 'chatgptricks');
+  const followers = `${(page.followerCount / 1e6).toFixed(1)}M`;
+  return `<div class="ab-origin"><div class="ab-origin-copy"><span class="eyebrow">WHERE IT STARTED</span><h2 id="about-origin-title">We grew our own <em>pages first.</em></h2><p>Sentient grew out of audiences its founders built themselves. That’s still the core of what we do: the pages we run are the pages your story goes out on.</p></div><ol class="ab-origin-steps"><li><span class="ab-origin-face"><img src="${page.avatar}" alt="" width="64" height="64" loading="lazy"></span><span><b>Ivan founds @chatgptricks</b><small>Today it has ${followers} followers and is one of our own pages.</small></span></li><li><span class="ab-origin-mark" aria-hidden="true">IG</span><span><b>Louis builds and sells Instagram brands</b><small>And helps build a Web3 marketing agency.</small></span></li><li><span class="ab-origin-mark" aria-hidden="true">AI</span><span><b>Ivan builds and sells an AI newsletter business</b><small>And builds digital communities.</small></span></li><li class="is-now"><span class="ab-origin-mark" aria-hidden="true">S</span><span><b>Sentient</b><small>Our own pages and the creators we work with, for the companies building what’s next.</small></span></li></ol></div>`;
+};
+
+// How we work: principles taken from the two decks (account selection, creator
+// copy, guarantees agreed before launch, one campaign lead).
+const principles = [
+  ['Audience first', 'We go through our database of thousands of accounts and pick the pages and creators your customers already follow.'],
+  ['A reason to care', 'We write or guide every post around the part of your product that matters most to that audience.'],
+  ['Guarantees up front', 'Views or CPM are agreed before anything goes live, and we report against them.'],
+  ['One team, start to finish', 'You work with one campaign lead. We coordinate every account, from planning to the final report.'],
+];
+
 export function renderAboutPage(contactSection, invitation = '') {
-  const accounts = [...fallbackAccounts].sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)).slice(0, 5);
   return `<section class="ab-hero"><div class="ab-hero-inner shell"><div class="ab-hero-copy"><span class="eyebrow">ABOUT SENTIENT</span><h1>Not just an agency.<br><em>A media company.</em></h1><p>We run our own pages, followed by 30M+ people, and work with the creators tech audiences already trust. So your launch reaches the right people from day one.</p><dl class="ab-figures"><div><dt>30M+</dt><dd>followers on our own pages</dd></div><div><dt>1B+</dt><dd>monthly impressions</dd></div><div><dt>750+</dt><dd>brands</dd></div></dl></div>${heroMosaic()}</div></section>`
-    + trustedMarquee()
-    + `<section class="sx-section shell" id="about-services" aria-labelledby="about-services-title"><div class="section-heading"><div><span class="eyebrow">WHAT WE DO</span><h2 id="about-services-title">Two ways <em>to grow.</em></h2></div></div><div class="ab-services">${services.map(serviceCard).join('')}</div></section>`
     + `<section class="sx-section shell" id="about-founders" aria-labelledby="about-founders-title"><div class="section-heading"><div><span class="eyebrow">THE PEOPLE</span><h2 id="about-founders-title">The people <em>behind it.</em></h2></div></div><div class="ab-founders">${founders.map(founderCard).join('')}</div></section>`
-    + `<section class="sx-section sx-section--panel" id="about-network" aria-labelledby="about-network-title"><div class="shell"><div class="section-heading"><div><span class="eyebrow">HOW THE NETWORK WORKS</span><h2 id="about-network-title">Connected by culture.<br><em>Built for distribution.</em></h2></div></div><div class="ab-network"><div class="ab-network-head"><span class="eyebrow">01 · OUR PAGES</span><h3>Our own communities.</h3><p>Pages operated by Sentient, each with its own editorial voice, followed by people who care about AI, tech and business.</p></div><div class="v2-owned-accounts gx-accounts gx-accounts--top">${renderAccountCards(accounts)}</div></div><div class="ab-network ab-network--creators"><div class="ab-network-head"><span class="eyebrow">02 · CREATOR PARTNERS</span><h3>The voices on X and LinkedIn.</h3><p>Independent creators we bring in when they fit your launch. These are the biggest who have posted in our campaigns.</p></div>${creatorStrip()}</div></div></section>`
+    + `<section class="sx-section shell" id="about-origin" aria-labelledby="about-origin-title">${origin()}</section>`
+    + `<section class="sx-section shell" id="about-principles" aria-labelledby="about-principles-title"><div class="section-heading"><div><span class="eyebrow">HOW WE WORK</span><h2 id="about-principles-title">Four things <em>we don’t skip.</em></h2></div></div><ol class="ab-principles">${principles.map(([title, text], index) => `<li><span class="ab-principle-num">0${index + 1}</span><h3>${title}</h3><p>${text}</p></li>`).join('')}</ol></section>`
     + invitation
     + contactSection;
 }
