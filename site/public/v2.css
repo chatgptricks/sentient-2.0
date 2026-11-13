@@ -107,3 +107,46 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 /* Home: logo strip centred between the service cards and the receipts (Sergio, 2026-11-13). */
 [data-page=home] .v2-services { padding-bottom: clamp(56px, 5.6vw, 84px); }
 [data-page=home] .sx-trusted + .v2-receipts { padding-top: clamp(40px, 4.4vw, 66px); }
+
+/* Home Selected work: smaller, balanced cases side by side (Sergio, 2026-11-13). Markup untouched. */
+@media (min-width: 1101px) {
+  [data-page=home] .featured-cases { grid-template-columns: 1fr 1fr; gap: 18px; }
+  [data-page=home] .feature-case { min-height: 0; height: 460px; grid-template-columns: 1fr 1fr; }
+  [data-page=home] .feature-case-info { padding: 30px 28px; }
+  [data-page=home] .feature-case h3 { font-size: clamp(30px, 2.6vw, 42px); margin-top: 22px; }
+  [data-page=home] .feature-metric { display: block; margin-top: 22px; }
+  [data-page=home] .feature-metric strong { font-size: clamp(56px, 5vw, 80px); }
+  [data-page=home] .feature-metric > span { display: block; margin-top: 8px; font-size: 11px; }
+  [data-page=home] .feature-case-info > p { margin-top: 14px; font-size: 11px; }
+  [data-page=home] .feature-case-info > .circle-link { padding-top: 20px; }
+  [data-page=home] .feature-case-art > img { height: 74%; width: 78%; }
+  [data-page=home] .feature-word { font-size: clamp(60px, 7vw, 110px); }
+}
+
+/* Call card contact on Home too (same as the other pages). */
+/* Contact on the service pages: the call as the main action. */
+.contact-wrap--service .preview-note { display: none; }
+.call-card { margin-top: 26px; padding: 22px; border-radius: 18px; background: #0b0c09; color: #f2f5ea; max-width: 440px; box-shadow: 0 24px 60px #3a4a0040; }
+.call-card-head { display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid #dbe8c724; }
+.call-card-faces { display: flex; flex: none; }
+.call-card-faces img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: #1c2219; box-shadow: 0 0 0 3px #0b0c09; }
+.call-card-faces img + img { margin-left: -12px; }
+.call-card-head p { margin: 0; display: grid; gap: 2px; }
+.call-card-head b { font-size: 15px; font-weight: 600; }
+.call-card-head p span { font-size: 13px; color: #a9b69e; }
+.call-card ul { list-style: none; margin: 16px 0 18px; padding: 0; display: grid; gap: 10px; }
+.call-card li { position: relative; padding-left: 26px; font-size: 14px; line-height: 1.45; color: #dfe7d4; }
+.call-card li::before { content: '✓'; position: absolute; left: 0; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--acid); color: #0b0c09; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.call-card-button { width: 100%; justify-content: center; }
+.call-card-button span::after { content: ' ↗'; }
+.call-card-alt { margin: 16px 0 0; font-size: 14px; color: #2a3510; }
+.call-card-alt span { font-weight: 600; }
+.call-trust { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 30px; padding-top: 18px; border-top: 1px solid #0b0c0926; max-width: 440px; }
+.call-trust span { width: 100%; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #2a3510; }
+.call-trust img { height: 17px; width: auto; filter: brightness(0); opacity: .75; }
+.sx-marquee a, .sx-marquee img { -webkit-user-drag: none; user-select: none; }
+/* "Book a call." on one line on desktop (Sergio, 2026-11-13). */
+@media (min-width: 761px) {
+  .contact-wrap--service .contact-copy h2 { font-size: clamp(60px, 5.4vw, 104px) !important; line-height: .95; white-space: nowrap; }
+  .contact-wrap--service .contact-copy h2 br { display: none; }
+}

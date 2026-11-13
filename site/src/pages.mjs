@@ -52,7 +52,7 @@ const launch = renderLaunchPage(contact);
 const growth = renderGrowthPage(contact);
 const about = renderAboutPage(contact('campaign', true), networkInvitation());
 export const pages = {
- '/': layout('We make tech companies go viral','home',`${hero}${services()}${ownedRail()}${clientStrip()}${campaignWall}${work()}${contact()}`),
+ '/': layout('We make tech companies go viral','home',`${hero}${services()}${ownedRail()}${clientStrip()}${campaignWall}${work()}${contact('campaign', true)}`),
  '/viral-launch-campaigns': layout('Viral Launch Campaigns','launch',launch,'Launch amplification on X and LinkedIn. Creators and media accounts share your founder’s launch post in coordinated waves, with a guaranteed minimum of views.'),
  '/growth-campaigns': layout('Growth Campaigns','growth',growth,'Instagram campaigns across a 30M+ follower network at a guaranteed CPM, with ad spend behind the posts that perform best.'),
  ...(features.universe ? { '/universe': layout('Explore our universe','universe',renderUniverse(universeAccounts),'Explore all 31 Sentient owned and partner Instagram accounts in an interactive 3D universe.') } : {}),
