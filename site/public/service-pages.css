@@ -794,3 +794,6 @@
 .ab-founder .ab-moment figcaption .eyebrow { font: 600 10px var(--font); letter-spacing: .14em; color: var(--acid); }
 .ab-founder-link { margin-top: 8px; }
 @media (max-width: 760px) { .ab-founder .ab-moment { grid-template-columns: 1fr; } }
+/* Creators strip: less air above and below (Sergio, 2026-11-13). */
+#launch-creators { padding-block: clamp(44px, 4.6vw, 72px); }
+#launch-creators .section-heading { margin-bottom: clamp(20px, 2.4vw, 32px); }
