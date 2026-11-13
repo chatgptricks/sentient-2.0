@@ -6,7 +6,7 @@ import { servicePreview } from './service-previews.mjs';
 import { escapeHtml } from './social-meta.mjs';
 import { fallbackCampaignPosts } from './network-post-fallback.mjs';
 import { reviseV2About } from './v2-about.mjs';
-import { clientCarousel } from './client-carousel.mjs';
+import { trustedMarquee } from './client-carousel.mjs';
 
 const routes = ['/', '/viral-launch-campaigns', '/growth-campaigns', '/about', '/universe'];
 const v2Route = route => route === '/' ? '/v2/' : `/v2${route}`;
@@ -84,7 +84,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, `<p><strong class="v2-inline-number">30M+</strong> followers across our network.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>`);
       html = html.replace(/<aside class="owned-proof shell"[\s\S]*?<\/aside>/, '');
       html = replaceSection(html, 'services', `${network()}${serviceCards()}`);
-      html = replaceSection(html, 'client-proof', clientCarousel());
+      html = replaceSection(html, 'client-proof', trustedMarquee());
       html = replaceSection(html, 'campaign-wall', receipts());
     }
     if (page === 'about') html = reviseV2About(html);

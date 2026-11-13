@@ -128,3 +128,59 @@ for (const rail of document.querySelectorAll('[data-rail]')) {
   new ResizeObserver(update).observe(rail);
   update();
 }
+
+// "Trusted by" logo marquee: moves on its own and can be dragged or flicked
+// (same behavior as the sergioprompts.com brand strip). Reduced motion stops
+// the auto scroll but keeps dragging.
+for (const marquee of document.querySelectorAll('[data-marquee]')) {
+  const track = marquee.querySelector('.sx-marquee-track');
+  if (!track) continue;
+  const originals = [...track.children];
+  for (const item of originals) {
+    const copy = item.cloneNode(true);
+    copy.setAttribute('aria-hidden', 'true');
+    copy.querySelector('img')?.setAttribute('alt', '');
+    track.append(copy);
+  }
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const speed = reduce ? 0 : 36;
+  let x = 0, half = 0, last = performance.now(), dragging = false, startX = 0, startPos = 0, velocity = 0, lastMove = 0, lastX = 0, visible = true;
+  const measure = () => { half = track.scrollWidth / 2; };
+  measure();
+  addEventListener('resize', measure);
+  addEventListener('load', measure);
+  for (const img of track.querySelectorAll('img')) img.addEventListener('load', measure, { once: true });
+  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }).observe(marquee);
+  const wrap = () => { if (!half) return; while (x <= -half) x += half; while (x > 0) x -= half; };
+  const tick = now => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!dragging) {
+      if (Math.abs(velocity) > 5) { x += velocity * dt; velocity *= Math.pow(0.04, dt); }
+      else { velocity = 0; x -= speed * dt; }
+    }
+    if (visible) { wrap(); track.style.transform = `translate3d(${x}px,0,0)`; }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  marquee.addEventListener('pointerdown', event => {
+    dragging = true; velocity = 0; startX = event.clientX; startPos = x; lastX = event.clientX; lastMove = performance.now();
+    marquee.classList.add('is-dragging');
+    try { marquee.setPointerCapture(event.pointerId); } catch {}
+  });
+  marquee.addEventListener('pointermove', event => {
+    if (!dragging) return;
+    x = startPos + (event.clientX - startX);
+    const now = performance.now(), dt = (now - lastMove) / 1000;
+    if (dt > 0) velocity = (event.clientX - lastX) / dt;
+    lastX = event.clientX; lastMove = now;
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    marquee.classList.remove('is-dragging');
+    if (performance.now() - lastMove > 120) velocity = 0;
+    velocity = Math.max(-2500, Math.min(2500, velocity));
+  };
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) marquee.addEventListener(type, end);
+}
