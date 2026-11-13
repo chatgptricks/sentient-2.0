@@ -16,10 +16,8 @@ const presenceGallery = `
       </div>
     </section>`;
 
+// The About page is rebuilt in about-page.mjs (2026-11-13); its founders and
+// moments are part of that markup now, so the V2 pass leaves it as is.
 export function reviseV2About(html) {
-  return html
-    .replace('class="about-story"', 'class="about-story v2-about-story"')
-    .replace('src="/assets/ivan.png"', 'src="/assets/founders/ivan-cutout.webp"')
-    .replace('src="/assets/louis.png"', 'src="/assets/founders/louis-cutout.webp"')
-    .replace(/(<section class="story-founders shell"[\s\S]*?<\/section>)(\s*<\/div>)/, `$1${presenceGallery}$2`);
+  return html;
 }

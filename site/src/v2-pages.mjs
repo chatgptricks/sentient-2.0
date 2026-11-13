@@ -51,7 +51,7 @@ function simplifyLabels(html) {
 function pageStyles(page) {
   const files = ['styles.css','art-direction.css','brand-proof.css'];
   if (['launch','growth'].includes(page)) files.push('service-fields.css', 'service-pages.css');
-  if (page === 'about') files.push('about-story.css');
+  if (page === 'about') files.push('about-story.css', 'service-pages.css');
   if (page === 'universe') files.push('universe-polish.css');
   files.push('refinement.css','mobile-experience.css','motion.css','v2.css','comments.css');
   if (page === 'about') files.push('v2-about.css');

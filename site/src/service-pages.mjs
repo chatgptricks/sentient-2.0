@@ -113,7 +113,7 @@ const topVoices = () => [
   voice('Tom Rei', 'tomreiai', [['X', 31068]]),
 ];
 const voiceCard = voice => `<li><a class="lx-creator" href="${e(voice.url)}" target="_blank" rel="noopener noreferrer" draggable="false">${voice.avatar ? `<img src="${e(voice.avatar)}" alt="" width="64" height="64" loading="lazy" draggable="false">` : `<span class="lx-creator-initials" aria-hidden="true">${voice.initials}</span>`}<span class="lx-creator-id"><strong>${e(voice.name)}</strong><small>${e(voice.handle)}</small></span><span class="lx-creator-reach">${voice.reach.map(([platform, followers]) => `<span><small>${platform}</small><b>${compact(followers)}</b></span>`).join('')}</span></a></li>`;
-const creatorStrip = () => `<div class="sx-marquee lx-voices" data-marquee aria-label="The 20 biggest creators from our X and LinkedIn launches"><ul class="sx-marquee-track">${topVoices().map(voiceCard).join('')}</ul></div>`;
+export const creatorStrip = () => `<div class="sx-marquee lx-voices" data-marquee aria-label="The 20 biggest creators from our X and LinkedIn launches"><ul class="sx-marquee-track">${topVoices().map(voiceCard).join('')}</ul></div>`;
 
 // How it works, drawn like the Growth pipeline. Everything is from the Magic
 // Patterns launch (Oct 2026): the creators who posted, Alex's post and two of
