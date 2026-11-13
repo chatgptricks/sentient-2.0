@@ -6,16 +6,13 @@
 // (sentientagency.io/what-we-do, verified 2026-10-04).
 import { fallbackAccounts } from './network-fallback.mjs';
 
-// Hero mosaic: only Sentient's own pages (relationship "owned"), biggest first,
-// with the 30M+ figure in the middle.
-const ownedPages = () => fallbackAccounts.filter(item => item.relationship === 'owned' && item.avatar).sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)).slice(0, 14);
-const mosaic = () => {
-  const faces = ownedPages().map((item, index) => ['img', item.avatar, [0, 3, 8, 12].includes(index)]);
-  return [...faces.slice(0, 5), ['stat', '30M+', 'followers on our own pages'], ...faces.slice(5)];
+// Hero: Sentient's own pages (relationship "owned") orbiting the 30M+ sphere.
+const ownedPages = () => fallbackAccounts.filter(item => item.relationship === 'owned' && item.avatar).sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)).slice(0, 16);
+const ring = (items, cls, lit) => `<div class="ab-orbit-ring ${cls}">${items.map((item, index) => `<span class="ab-orbit-arm" style="--a:${Math.round(index * 360 / items.length)}deg"><span class="ab-orbit-face${lit.includes(index) ? ' is-lit' : ''}"><span class="ab-orbit-spin"><img src="${item.avatar}" alt="" width="96" height="96" loading="lazy"></span></span></span>`).join('')}</div>`;
+const heroMosaic = () => {
+  const pages = ownedPages();
+  return `<div class="ab-orbit" aria-hidden="true"><span class="ab-orbit-glow"></span>${ring(pages.slice(10), 'ab-orbit-ring--inner', [1])}${ring(pages.slice(0, 10), 'ab-orbit-ring--outer', [0, 4, 7])}<div class="ab-orbit-core"><strong>30M+</strong><small>followers on our own pages</small></div></div>`;
 };
-const heroMosaic = () => `<div class="ab-mosaic" aria-hidden="true">${mosaic().map(([kind, a, b]) => kind === 'stat'
-  ? `<span class="ab-mosaic-stat"><strong>${a}</strong><small>${b}</small></span>`
-  : `<span class="ab-mosaic-face${b ? ' is-lit' : ''}"><img src="${a}" alt="" width="96" height="96" loading="lazy"></span>`).join('')}</div>`;
 
 const founders = [
   { id: 'ivan', name: 'Ivan', role: 'Co-founder · AI specialist', portrait: '/assets/founders/ivan-cutout.webp', href: 'https://www.linkedin.com/in/ivanelgrande/',
