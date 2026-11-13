@@ -209,3 +209,11 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .feature-case-art > .lg-card { width: min(62%, 270px); }
 [data-page=home] .feature-case-art .feature-art-caption { display: none; }
 .lg-badge { white-space: nowrap; font-size: 8px; padding: 4px 8px; flex: none; } .lg-card-top span { min-width: 0; } .lg-card-top b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Legendary cards break out of the case box (Sergio, 2026-11-13). */
+@media (min-width: 1101px) {
+  [data-page=home] .feature-case, [data-page=home] .feature-case-art { overflow: visible; }
+  [data-page=home] .feature-case-art { border-radius: 0 16px 16px 0; }
+  [data-page=home] .feature-word { display: none; }
+  [data-page=home] .feature-case-art > .lg-card { width: min(82%, 320px); z-index: 5; }
+  [data-page=home] .featured-cases { padding-block: 34px; }
+}
