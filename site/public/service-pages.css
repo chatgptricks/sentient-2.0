@@ -629,3 +629,38 @@
 .lx-voices .lx-creator img, .lx-voices .lx-creator-initials { width: 64px; height: 64px; pointer-events: none; }
 .lx-voices .lx-creator:hover { transform: none; }
 @media (max-width: 760px) { .lx-voices .lx-creator { width: 270px; grid-template-columns: auto minmax(0, 1fr); justify-items: stretch; } .lx-voices .lx-creator img, .lx-voices .lx-creator-initials { grid-row: span 2; width: 52px; height: 52px; } }
+/* Growth proof: the section title lives inside the Artisan card. */
+.gx-case-title { margin: 8px 0 26px; font-size: clamp(56px, 6vw, 96px); line-height: .9; }
+.gx-case-title em { font-style: normal; color: var(--acid); }
+.gx-case-eyebrow { display: block; }
+#growth-results { padding-top: clamp(48px, 5vw, 80px); }
+/* "More from our pages": auto-scrolling strip of post cards. */
+.gx-wall-marquee { padding-block: 4px 12px; }
+.gx-wall-marquee .sx-marquee-track { align-items: stretch; }
+.gx-wall-marquee .sx-marquee-track li { padding-inline: 8px; display: flex; }
+.gx-wall-marquee .gx-ig { width: 300px; user-select: none; }
+.gx-wall-marquee .gx-ig img { pointer-events: none; }
+.gx-wall-marquee .gx-ig:hover { transform: none; }
+@media (max-width: 760px) { .gx-wall-marquee .gx-ig { width: 240px; } }
+
+/* Contact on the service pages: the call as the main action. */
+.contact-wrap--service .preview-note { display: none; }
+.call-card { margin-top: 26px; padding: 22px; border-radius: 18px; background: #0b0c09; color: #f2f5ea; max-width: 440px; box-shadow: 0 24px 60px #3a4a0040; }
+.call-card-head { display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid #dbe8c724; }
+.call-card-faces { display: flex; flex: none; }
+.call-card-faces img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: #1c2219; box-shadow: 0 0 0 3px #0b0c09; }
+.call-card-faces img + img { margin-left: -12px; }
+.call-card-head p { margin: 0; display: grid; gap: 2px; }
+.call-card-head b { font-size: 15px; font-weight: 600; }
+.call-card-head p span { font-size: 13px; color: #a9b69e; }
+.call-card ul { list-style: none; margin: 16px 0 18px; padding: 0; display: grid; gap: 10px; }
+.call-card li { position: relative; padding-left: 26px; font-size: 14px; line-height: 1.45; color: #dfe7d4; }
+.call-card li::before { content: '✓'; position: absolute; left: 0; top: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--acid); color: #0b0c09; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.call-card-button { width: 100%; justify-content: center; }
+.call-card-button span::after { content: ' ↗'; }
+.call-card-alt { margin: 16px 0 0; font-size: 14px; color: #2a3510; }
+.call-card-alt span { font-weight: 600; }
+.call-trust { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 30px; padding-top: 18px; border-top: 1px solid #0b0c0926; max-width: 440px; }
+.call-trust span { width: 100%; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #2a3510; }
+.call-trust img { height: 17px; width: auto; filter: brightness(0); opacity: .75; }
+.sx-marquee a, .sx-marquee img { -webkit-user-drag: none; user-select: none; }
