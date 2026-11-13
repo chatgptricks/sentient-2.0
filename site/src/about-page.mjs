@@ -5,17 +5,15 @@
 // feedback doc). Founder names, roles and bios from about-content.mjs
 // (sentientagency.io/what-we-do, verified 2026-10-04).
 import { fallbackAccounts } from './network-fallback.mjs';
-import { universeAccounts } from './universe-data.mjs';
 
-const avatar = handle => universeAccounts.find(item => item.handle === handle)?.avatar;
-// Hero mosaic: real avatars from our own pages and the creators we launch with.
-const mosaic = [
-  ['img', avatar('chatgptricks'), true], ['img', '/assets/v2/launch/avatars/NoContextHumans.jpg'], ['img', avatar('artificialntellligence')], ['img', '/assets/v2/launch/avatars/hasantoxr.jpg', true],
-  ['img', avatar('traselveloreal')], ['stat', '30M+', 'followers on our own pages'], ['img', avatar('ai.excel')],
-  ['img', '/assets/v2/launch/avatars/heyalexmoore.jpg'], ['img', avatar('sergioprompts'), true], ['img', avatar('planet.ai_')], ['img', '/assets/v2/launch/avatars/heyadam_ai.jpg'],
-  ['img', avatar('chatgptips')], ['img', '/assets/v2/launch/avatars/Shruti_0810.jpg', true], ['img', avatar('em3rging')], ['img', '/assets/v2/launch/avatars/jaysmith_ai.jpg'],
-];
-const heroMosaic = () => `<div class="ab-mosaic" aria-hidden="true">${mosaic.map(([kind, a, b]) => kind === 'stat'
+// Hero mosaic: only Sentient's own pages (relationship "owned"), biggest first,
+// with the 30M+ figure in the middle.
+const ownedPages = () => fallbackAccounts.filter(item => item.relationship === 'owned' && item.avatar).sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)).slice(0, 14);
+const mosaic = () => {
+  const faces = ownedPages().map((item, index) => ['img', item.avatar, [0, 3, 8, 12].includes(index)]);
+  return [...faces.slice(0, 5), ['stat', '30M+', 'followers on our own pages'], ...faces.slice(5)];
+};
+const heroMosaic = () => `<div class="ab-mosaic" aria-hidden="true">${mosaic().map(([kind, a, b]) => kind === 'stat'
   ? `<span class="ab-mosaic-stat"><strong>${a}</strong><small>${b}</small></span>`
   : `<span class="ab-mosaic-face${b ? ' is-lit' : ''}"><img src="${a}" alt="" width="96" height="96" loading="lazy"></span>`).join('')}</div>`;
 
