@@ -128,7 +128,7 @@ function setupResponsiveMotion({ desktop, phone, fine }, listenMedia, cleanup) {
   }
 
   gsap.utils.toArray('.feature-case-art').forEach((element, index) => {
-    const image = element.querySelector('img');
+    const image = element.querySelector('.lg-card') || element.querySelector('img');
     if (!image || (!desktop && !fine)) return;
     const original = image.style.transform;
     const angle = (index % 2 ? 1 : -1) * (phone ? 3 : 7);

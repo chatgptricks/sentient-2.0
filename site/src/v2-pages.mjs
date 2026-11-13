@@ -20,6 +20,16 @@ const serviceCards = () => `<section class="services v2-services" id="services">
 const receipts = () => `<section class="v2-receipts shell" id="campaign-wall" data-network-source="fallback" aria-labelledby="v2-receipts-title"><div class="v2-section-heading"><div><h2 id="v2-receipts-title">The <em class="type-accent">receipts.</em></h2></div><p>Campaigns across<br>our owned accounts.</p></div><div class="v2-post-grid">${renderCampaignCards(selectCampaignPosts(fallbackCampaignPosts, 5, () => .5))}</div><script type="application/json" id="campaign-fallback-data">${JSON.stringify(fallbackCampaignPosts).replace(/</g, '\\u003c')}</script></section>`;
 
 
+// Selected work (Sergio, 2026-11-13): the cases stay as they were, but the post
+// becomes a premium "legendary" post card and "Behind the number" goes. The
+// impressions come from that removed note (historical @chatgptricks export).
+const workImpressions = { 'DXcsyzygKkg': '330,043', 'DOyiTPLAPCv': '605,574' };
+function legendaryWork(section) {
+  return section
+    .replace(/<details class="case-evidence">[\s\S]*?<\/details>/g, '')
+    .replace(/<img src="\/assets\/(DXcsyzygKkg|DOyiTPLAPCv)\.jpg"([^>]*)>/g, (match, code, attrs) => `<span class="lg-card"><span class="lg-card-top"><img src="/assets/universe/avatar-chatgptricks.jpg" alt="" width="34" height="34" loading="lazy"><span><b>chatgptricks</b><small>Instagram</small></span><i class="lg-badge">✦ Top post</i></span><span class="lg-card-media"><img src="/assets/${code}.jpg"${attrs}></span><span class="lg-card-foot"><b>${workImpressions[code]}</b> impressions</span><span class="lg-card-shine" aria-hidden="true"></span></span>`);
+}
+
 function replaceSection(html, className, replacement) {
   const pattern = new RegExp(`<section class="${className}[^\"]*"[\\s\\S]*?<\\/section>`);
   if (!pattern.test(html)) throw new Error(`V2 source section missing: ${className}`);
@@ -113,7 +123,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       html = html.replace(/<link rel="icon"[\s\S]*?<\/head>/, `<link rel="icon" href="/favicon.svg" type="image/svg+xml">${pageStyles(page)}${page === 'universe' ? '<script type="module" src="/js/universe.js"></script>' : ''}</head>`);
     }
     html = html.replace('</head>', '<link rel="sentient-api" href="/comments-config.json"></head>');
-    if (protectedWork) html = html.replace(workMarker, protectedWork);
+    if (protectedWork) html = html.replace(workMarker, legendaryWork(protectedWork));
     return [primary ? route : v2Route(route), html];
   }));
 }

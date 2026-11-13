@@ -24,7 +24,9 @@ for (const route of routes) routeHtml.set(route, await readFile(resolve(root, 'd
 const selectedWork = html => html.match(/<section\b(?=[^>]*\bid="work")[^>]*>[\s\S]*?<\/section>/)?.[0];
 const originalWork = selectedWork(originalPages['/']);
 assert.ok(originalWork, 'V1 Selected work exists');
-assert.equal(selectedWork(routeHtml.get('/')), originalWork, 'The promoted site preserves the complete original Selected work section');
+// Selected work keeps its cases; since 2026-11-13 (Sergio) the posts are shown as premium cards without "Behind the number".
+const promotedWork = selectedWork(routeHtml.get('/'));
+assert.ok(promotedWork && /Higgsfield/.test(promotedWork) && /InVideo/.test(promotedWork) && /class="lg-card"/.test(promotedWork) && !/Behind the number/.test(promotedWork), 'Home keeps Selected work with premium post cards');
 for (const route of routes) {
   const version = routeHtml.get(route);
   assert.match(version, /data-version="v2"/);
