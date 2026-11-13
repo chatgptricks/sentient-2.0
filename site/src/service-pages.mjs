@@ -107,7 +107,7 @@ export function renderLaunchPage(contact) {
 // SOURCES: decks/standard-campaigns/posts.py RESULTS (team feedback doc).
 const growthResults = [
   { brand: 'Higgsfield', big: '150M+', label: 'views', shots: [['DeZ7YfHJsoC', 'ingenia.ai'], ['DdZz14knWs5', 'chatgptricks']] },
-  { brand: 'OpenAI', big: '15M+', label: 'views through partnerships', logo: '/assets/clients/client-openai.png' },
+  { brand: 'OpenAI', big: '15M+', label: 'views through partnerships', shots: [['DNlYktOp8R3', 'chatgptricks'], ['DJ_sxdnAa40', 'chatgptricks']] },
   { brand: 'Abacus', big: '50M+', label: 'views', shots: [['DVh2jCkgHFC', 'chatgptricks'], ['DG3NY12vVW8', 'chatgptricks']] },
 ];
 const resultColumn = item => `<article class="gx-result"><h3>${e(item.brand)}</h3><p class="sx-figure"><strong>${e(item.big)}</strong><span>${e(item.label)}</span></p><div class="gx-result-shots">${item.shots ? item.shots.map(([code, handle]) => `<a href="https://www.instagram.com/p/${code}/" target="_blank" rel="noopener noreferrer" aria-label="Open the ${e(item.brand)} post by @${handle}"><img src="/assets/v2/growth/posts/${code}.jpg" alt="${e(item.brand)} campaign post on @${handle}" width="720" height="900" loading="lazy"><span>@${e(handle)}</span></a>`).join('') : `<div class="gx-result-logo"><img src="${e(item.logo)}" alt="${e(item.brand)}" width="180" height="60" loading="lazy"><span>Partnership campaigns across our network</span></div>`}</div></article>`;
