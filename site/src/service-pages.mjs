@@ -122,7 +122,7 @@ export function renderLaunchPage(contact) {
   + `<section class="sx-section shell" id="launch-wall" aria-labelledby="launch-wall-title">${heading('THE POSTS', 'Real launches.', 'Real views.', '', 'launch-wall-title')}${launchWall()}</section>`
   + `<section class="sx-section shell" id="launch-testimonials" aria-labelledby="launch-testimonials-title">${heading('TESTIMONIALS', 'What founders', 'say after launch.', '', 'launch-testimonials-title')}${launchTestimonials()}</section>`
   + `<section class="sx-section shell" id="launch-how" aria-labelledby="launch-how-title">${heading('HOW IT WORKS', 'Three steps.', 'Launch day.', '', 'launch-how-title')}${launchFlow()}</section>`
-  + `<section class="sx-section shell" id="launch-creators" aria-labelledby="launch-creators-title">${heading('CREATORS', 'Creators we', 'launch with.', '', 'launch-creators-title')}<div class="lx-creators lx-creators--premium">${creators.map(creatorCard).join('')}</div></section>`
+  + `<section class="sx-section shell" id="launch-creators" aria-labelledby="launch-creators-title"><div class="section-heading"><div><span class="eyebrow">CREATORS</span><h2 id="launch-creators-title">Creators we <em>launch with.</em></h2></div></div><div class="lx-creators lx-creators--premium">${creators.map(creatorCard).join('')}</div></section>`
   + `<section class="sx-section shell" id="launch-guarantee" aria-labelledby="launch-guarantee-title">${heading('OUR GUARANTEE', 'Every launch comes', 'with guaranteed views.', '', 'launch-guarantee-title')}${launchPackages()}<div class="lx-tiers-cta"><p>Pricing depends on your launch. Book a call and we’ll scope it.</p>${bookCall()}</div></section>`
   + `${contact('launch')}`;
 }
