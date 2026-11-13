@@ -118,7 +118,7 @@ const launchPackages = () => `<div class="lx-packs">${packages.map((pack, index)
 export function renderLaunchPage(contact) {
   return `<section class="service-landing service-landing--launch sx-hero"><div class="service-landing-inner shell"><div class="service-landing-copy"><span class="eyebrow">VIRAL LAUNCH CAMPAIGNS</span><h1 class="route-title"><span class="title-line"><span>STRATEGIC</span></span> <span class="title-line"><span>TECH</span></span> <span class="title-line"><span><em>LAUNCHES.</em></span></span></h1><p class="service-desktop-description">Your launch video, amplified across X and LinkedIn by the creators your customers already follow. One launch drove 50,000+ sign-ups.</p><p class="service-mobile-description">Amplified across X and LinkedIn.<br>One launch drove 50,000+ sign-ups.</p>${heroActions('Get the launch deck')}</div>${serviceVisual('launch')}</div></section>`
   + trustedMarquee()
-  + `<section class="sx-section shell lx-proof-section" id="launch-results" aria-labelledby="launch-results-title"><div class="section-heading lx-proof-heading"><div><span class="eyebrow lx-live"><i aria-hidden="true"></i>PROOF · 2026 LAUNCHES</span><h2 id="launch-results-title">Recent<br><em>launches.</em></h2></div></div>${launchProof()}</section>`
+  + `<section class="sx-section shell lx-proof-section" id="launch-results" aria-labelledby="launch-results-title"><div class="section-heading lx-proof-heading"><div><span class="eyebrow">PROOF · 2026 LAUNCHES</span><h2 id="launch-results-title">Recent <em>launches.</em></h2></div></div>${launchProof()}</section>`
   + `<section class="sx-section shell" id="launch-wall" aria-labelledby="launch-wall-title">${heading('THE POSTS', 'Real launches.', 'Real views.', '', 'launch-wall-title')}${launchWall()}</section>`
   + `<section class="sx-section shell" id="launch-testimonials" aria-labelledby="launch-testimonials-title">${heading('TESTIMONIALS', 'What founders', 'say after launch.', '', 'launch-testimonials-title')}${launchTestimonials()}</section>`
   + `<section class="sx-section shell" id="launch-how" aria-labelledby="launch-how-title">${heading('HOW IT WORKS', 'Three steps.', 'Launch day.', '', 'launch-how-title')}${launchFlow()}</section>`
@@ -134,6 +134,9 @@ export function renderLaunchPage(contact) {
 // Post metrics read from SentientDash (public likes and comments, 2026-11-13);
 // captions are the opening of each post's own caption.
 const igPosts = {
+  DWl7nJhjZgh: ['ingenia.ai', 832416, 9204, 'Apr 1, 2026', '🤯 IA recrea una pelea de UFC en medio del océano.'],
+  DMI1FPEvsps: ['chatgptricks', 2028, 95, 'Jul 15, 2025', 'Surprise!'],
+  DJWvGUITmGI: ['chatgptricks', 10696, 4719, 'May 7, 2025', 'Meet the God Tier AI Agent that does it all.'],
   DeZ7YfHJsoC: ['ingenia.ai', 557430, 7239, 'Oct 12, 2026', 'The Ballon d’Or Heist 🏆 Who’s taking it home this time? Made with @higgsfield.ai Seedance 2.5'],
   DdZz14knWs5: ['chatgptricks', 18792, 250, 'Sep 17, 2026', 'Higgsfield just handed builders the keys 🤯 @higgsfield.ai says it has opened access to the tech behind its AI platform.'],
   DNlYktOp8R3: ['chatgptricks', 13112, 653, 'Aug 20, 2025', 'Peep these GPT-5 🥚s.'],
@@ -162,9 +165,9 @@ const igCard = (code, image, cls = '') => {
 // SOURCES: decks/standard-campaigns/posts.py RESULTS (team feedback doc) and
 // web-briefs/growth-campaigns.md section 4 (OpenAI posts sent by Sergio 2026-11-12).
 const growthResults = [
-  { brand: 'Higgsfield', logo: 'higgsfield', big: '150M+', label: 'views', shots: ['DeZ7YfHJsoC', 'DdZz14knWs5'] },
-  { brand: 'OpenAI', logo: 'openai', big: '15M+', label: 'views through partnerships', shots: ['DNlYktOp8R3', 'DJ_sxdnAa40'] },
-  { brand: 'Abacus', logo: 'abacus', big: '50M+', label: 'views', shots: ['DVh2jCkgHFC', 'DG3NY12vVW8'] },
+  { brand: 'Higgsfield', logo: 'higgsfield', big: '150M+', label: 'views', shots: ['DWl7nJhjZgh', 'DeZ7YfHJsoC', 'DdZz14knWs5'] },
+  { brand: 'OpenAI', logo: 'openai', big: '15M+', label: 'views through partnerships', shots: ['DJ_sxdnAa40', 'DNlYktOp8R3', 'DMI1FPEvsps'] },
+  { brand: 'Abacus', logo: 'abacus', big: '50M+', label: 'views', shots: ['DJWvGUITmGI', 'DG3NY12vVW8', 'DVh2jCkgHFC'] },
 ];
 const resultColumn = item => `<article class="gx-result"><div class="gx-result-brand"><img src="/assets/clients/trusted/${item.logo}.png" alt="${e(item.brand)}" height="40" loading="lazy"><p class="sx-figure"><strong>${e(item.big)}</strong><span>${e(item.label)}</span></p></div><div class="gx-result-posts">${item.shots.map(code => igCard(code, `/assets/v2/growth/posts/${code}.jpg`)).join('')}</div></article>`;
 
@@ -177,7 +180,7 @@ const growthWall = () => `<div class="gx-wall-head"><h3 class="gx-wall-title">Mo
 }).join('')}</div>`;
 
 // The approach visual: our real account pool with the three example picks lit.
-const poolHandles = ['trends', 'chatgptricks', 'tecnologia', 'theaipage', 'artificialntellligence', 'chatgptips', 'planet.ai_', 'mindset.therapy', 'sergioprompts'];
+const poolHandles = ['trends', 'chatgptricks', 'tecnologia', 'theaipage', 'artificialntellligence', 'chatgptips', 'planet.ai_', 'mindset.therapy', 'sergioprompts', 'ai.excel', 'traselveloreal', 'artificialmente.ia', 'programming__india', 'em3rging', 'ainterestingupdate'];
 const picks = new Set(['chatgptricks', 'artificialntellligence', 'mindset.therapy']);
 const pool = () => poolHandles.map(handle => {
   const account = universeAccounts.find(item => item.handle === handle);
@@ -196,6 +199,6 @@ export function renderGrowthPage(contact) {
   + `<div class="gx-results">${growthResults.map(resultColumn).join('')}</div>`
   + `<div class="gx-wall">${growthWall()}</div></section>`
   + `<section class="sx-section shell" id="growth-approach" aria-labelledby="growth-approach-title">${heading('OUR APPROACH', 'Pick. Publish.', 'Scale the winners.', '', 'growth-approach-title')}<div class="gx-pipeline"><div class="gx-stage gx-stage--pool"><span class="sx-step-dot">1</span><h3>We pick the accounts that fit</h3><ul class="gx-pool" aria-label="Accounts in our network, with three example picks">${pool()}</ul></div><div class="gx-stage gx-stage--fan"><span class="sx-step-dot">2</span><h3>They publish your story</h3><div class="gx-fan">${fan.map(([code, handle], index) => `<img class="${index === 1 ? 'is-winner' : ''}" src="/assets/v2/growth/posts/${code}.jpg" alt="Example post on @${handle}" width="720" height="900" loading="lazy">`).join('')}</div></div><div class="gx-stage gx-stage--ads"><span class="sx-step-dot">3</span><h3>We scale the winner with ads</h3><ul class="gx-ads">${fan.map(([code], index) => `<li class="${index === 1 ? 'is-winner' : ''}"><img src="/assets/v2/growth/posts/${code}.jpg" alt="" width="48" height="60" loading="lazy"><span class="gx-ads-bar"><i style="--w:${[34, 100, 48][index]}%"></i></span>${index === 1 ? '<b>+ Ads</b>' : ''}</li>`).join('')}</ul></div></div></section>`
-  + `<section class="sx-section shell" id="growth-cpm" aria-labelledby="growth-cpm-title"><div class="gx-deal"><span class="eyebrow">CPM BENCHMARK</span><h2 id="growth-cpm-title">A CPM agreed<br><em>before launch.</em></h2><div class="gx-deal-row"><div class="gx-deal-card"><span class="gx-deal-step">01</span><strong>Your investment</strong><p>The budget for the campaign.</p></div><span class="gx-deal-op" aria-hidden="true">+</span><div class="gx-deal-card"><span class="gx-deal-step">02</span><strong>Minimum impressions</strong><p>Guaranteed across our pages.</p></div><span class="gx-deal-op" aria-hidden="true">=</span><div class="gx-deal-card gx-deal-card--cpm"><span class="gx-deal-seal">Agreed before launch</span><strong class="gx-deal-cpm">CPM</strong><p>Fixed up front. You know what your budget buys.</p></div></div>${bookCall()}</div></section>`
+  + `<section class="sx-section shell" id="growth-cpm" aria-labelledby="growth-cpm-title"><div class="gx-deal"><span class="gx-deal-sticker">CPM benchmark</span><h2 id="growth-cpm-title">A CPM agreed<br><em>before launch.</em></h2><div class="gx-deal-row"><div class="gx-deal-card"><span class="gx-deal-step">01</span><strong>Your investment</strong><p>The budget for the campaign.</p></div><span class="gx-deal-op" aria-hidden="true">+</span><div class="gx-deal-card"><span class="gx-deal-step">02</span><strong>Minimum impressions</strong><p>Guaranteed across our pages.</p></div><span class="gx-deal-op" aria-hidden="true">=</span><div class="gx-deal-card gx-deal-card--cpm"><span class="gx-deal-seal">Agreed before launch</span><strong class="gx-deal-cpm">CPM</strong><p>Fixed up front. You know what your budget buys.</p></div></div>${bookCall()}</div></section>`
   + `</div>${contact('growth')}`;
 }

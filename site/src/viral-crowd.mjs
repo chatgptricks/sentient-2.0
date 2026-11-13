@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import sentientSymbol from '../public/assets/sentient-symbol.svg';
 import { CROWD_COLUMNS, CROWD_ROWS, CROWD_SPACING_X, CROWD_SPACING_Z, crowdPosition, createContagionModel } from './viral-crowd-model.mjs';
 
 export function createViralCrowd(host, paused = false) {
@@ -43,6 +44,21 @@ export function createViralCrowd(host, paused = false) {
   const projectedPick = new THREE.Vector3();
   const levelValues = new Float32Array(count);
   const levels = new THREE.InstancedBufferAttribute(levelValues, 1).setUsage(THREE.DynamicDrawUsage);
+  // Figures that sit on the Sentient symbol (in screen space, right of the copy)
+  // light up brighter than the rest, so the lit crowd draws the logo.
+  const logoValues = new Float32Array(count);
+  const logoFlags = new THREE.InstancedBufferAttribute(logoValues, 1).setUsage(THREE.DynamicDrawUsage);
+  const logoMask = (() => {
+    try {
+      const d = sentientSymbol.match(/ d="([^"]+)"/)[1];
+      const [, , w, h] = sentientSymbol.match(/viewBox="([^"]+)"/)[1].trim().split(/[\s,]+/).map(Number);
+      const size = 160, c = document.createElement('canvas'); c.width = c.height = size;
+      const ctx = c.getContext('2d'); const k = size / Math.max(w, h);
+      ctx.translate((size - w * k) / 2, (size - h * k) / 2); ctx.scale(k, k); ctx.fill(new Path2D(d), 'evenodd');
+      const alpha = ctx.getImageData(0, 0, size, size).data;
+      return (u, v) => u >= 0 && u < 1 && v >= 0 && v < 1 && alpha[(Math.floor(v * size) * size + Math.floor(u * size)) * 4 + 3] > 127;
+    } catch { return () => false; }
+  })();
   const shadeValues = Float32Array.from({ length: count }, (_, i) => 0.91 + ((i * 137 + 71) % 101) / 101 * 0.16);
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let disposed = false, failed = false, contextLost = false, suspended = false;
@@ -60,13 +76,13 @@ export function createViralCrowd(host, paused = false) {
   material.onBeforeCompile = shader => {
     shader.uniforms.uCrowdDormant = { value: new THREE.Color(0x304438) };
     shader.uniforms.uCrowdActive = { value: new THREE.Color(0xa4df36) };
-    shader.vertexShader = 'attribute float aActivation; attribute float aVariation; varying float vActivation; varying float vVariation;\n' + shader.vertexShader;
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvActivation = aActivation; vVariation = aVariation;');
-    shader.fragmentShader = 'uniform vec3 uCrowdDormant; uniform vec3 uCrowdActive; varying float vActivation; varying float vVariation;\n' + shader.fragmentShader;
-    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(uCrowdDormant, uCrowdActive, vActivation) * vVariation;');
-    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(0.045, 0.10, 0.008) * pow(vActivation, 1.5);');
+    shader.vertexShader = 'attribute float aActivation; attribute float aVariation; attribute float aLogo; varying float vActivation; varying float vVariation; varying float vLogo;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvActivation = aActivation; vVariation = aVariation; vLogo = aLogo;');
+    shader.fragmentShader = 'uniform vec3 uCrowdDormant; uniform vec3 uCrowdActive; varying float vActivation; varying float vVariation; varying float vLogo;\n' + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(uCrowdDormant, mix(uCrowdActive * 0.62, vec3(0.86, 1.0, 0.42), vLogo), vActivation) * vVariation;');
+    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += mix(vec3(0.02, 0.05, 0.004), vec3(0.22, 0.32, 0.03), vLogo) * pow(vActivation, 1.5);');
   };
-  material.customProgramCacheKey = () => 'sentient-clay-crowd-dense-v2';
+  material.customProgramCacheKey = () => 'sentient-clay-crowd-dense-v3-logo';
 
   const render = () => {
     if (!canRender()) return;
@@ -155,7 +171,22 @@ export function createViralCrowd(host, paused = false) {
     camera.left = -viewHeight * aspect / 2; camera.right = -camera.left;
     camera.top = viewHeight / 2; camera.bottom = -camera.top;
     camera.updateProjectionMatrix(); camera.updateMatrixWorld(); scene.updateMatrixWorld(true);
+    updateLogo(rect);
     dirty = true; schedule();
+  };
+  // Place the symbol where the hero leaves room: right of the copy on desktop,
+  // below it on phones (the copy sits on top there).
+  const logoPoint = new THREE.Vector3();
+  const updateLogo = rect => {
+    const size = mobile ? Math.min(rect.width * 0.62, rect.height * 0.3) : Math.min(rect.height * 0.62, rect.width * 0.34);
+    const cx = mobile ? rect.width * 0.5 : rect.width * 0.76, cy = mobile ? rect.height * 0.8 : rect.height * 0.47;
+    for (let i = 0; i < count; i++) {
+      const point = crowdPosition(i);
+      logoPoint.set(point.x, 0.35 * figureSize, point.z).project(camera);
+      const x = (logoPoint.x * 0.5 + 0.5) * rect.width, y = (0.5 - logoPoint.y * 0.5) * rect.height;
+      logoValues[i] = logoMask((x - cx) / size + 0.5, (y - cy) / size + 0.5) ? 1 : 0;
+    }
+    logoFlags.needsUpdate = true;
   };
   const pick = event => {
     if (!canRender() || event.target?.closest?.('button, a, input, select, textarea, [role=button]')) return -1;
@@ -244,6 +275,7 @@ export function createViralCrowd(host, paused = false) {
     figureGeometry.scale(0.58, 0.58, 0.58);
     figureGeometry.setAttribute('aActivation', levels);
     figureGeometry.setAttribute('aVariation', new THREE.InstancedBufferAttribute(shadeValues, 1));
+    figureGeometry.setAttribute('aLogo', logoFlags);
     figureGeometry.computeBoundingBox(); figureGeometry.computeBoundingSphere();
     const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
     const vertex = new THREE.Vector3();

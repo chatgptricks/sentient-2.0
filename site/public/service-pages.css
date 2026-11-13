@@ -477,11 +477,7 @@
   .service-landing.sx-hero .sx-hero-actions .text-link { font-size: 14px; }
 }
 
-/* 2. "Recent launches." with a live dot and the month on each tab. */
-.lx-live { display: inline-flex; align-items: center; gap: 10px; color: var(--acid) !important; }
-.lx-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 0 0 #d0ff0080; animation: lx-live 2s ease-out infinite; }
-@keyframes lx-live { 70% { box-shadow: 0 0 0 9px #d0ff0000; } 100% { box-shadow: 0 0 0 0 #d0ff0000; } }
-@media (prefers-reduced-motion: reduce) { .lx-live i { animation: none; } }
+/* 2. "Recent launches." on one line, month on each tab. */
 .lx-tab-date { justify-self: start; font-style: normal; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; border: 1px solid #dbe8c733; color: #a9b69e; }
 #lx-tab-lotus:checked ~ .lx-tabs label[for="lx-tab-lotus"] .lx-tab-date, #lx-tab-decart:checked ~ .lx-tabs label[for="lx-tab-decart"] .lx-tab-date, #lx-tab-magic:checked ~ .lx-tabs label[for="lx-tab-magic"] .lx-tab-date { background: var(--acid); border-color: var(--acid); color: #0b0c09; }
 
@@ -542,7 +538,7 @@
 .gx-result-brand { display: grid; gap: 22px; align-content: center; }
 .gx-result-brand img { display: block; height: clamp(36px, 3.4vw, 54px); width: auto; max-width: 280px; object-fit: contain; object-position: left center; }
 .gx-result-brand .sx-figure strong { font-size: clamp(64px, 6.4vw, 104px); }
-.gx-result-posts { grid-column: 2; display: grid; grid-template-columns: repeat(2, minmax(0, 270px)); gap: 18px; justify-content: start; }
+.gx-result-posts { grid-column: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 270px)); gap: 18px; justify-content: start; }
 .gx-ig { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid #262626; color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; transition: border-color .2s ease, transform .3s ease; min-width: 0; }
 .gx-ig:hover { border-color: #d0ff0080; transform: translateY(-3px); }
 .gx-ig-top { display: flex; align-items: center; gap: 9px; padding: 10px 12px; }
@@ -599,7 +595,7 @@
   .lx-pack { display: flex; align-items: stretch; }
   .lx-pack-views strong { font-size: 64px; }
   .gx-result { grid-template-columns: 1fr; gap: 20px; }
-  .gx-result-posts { grid-column: 1; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gx-result-posts { grid-column: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; scrollbar-width: none; margin-inline: -20px; padding-inline: 20px; } .gx-result-posts .gx-ig { flex: 0 0 62%; scroll-snap-align: start; }
   .gx-ig-actions svg { width: 18px; height: 18px; }
   .gx-ig-actions { gap: 10px; }
   .gx-ig-top b, .gx-ig-likes, .gx-ig-caption { font-size: 11.5px; }
@@ -611,3 +607,12 @@
 }
 .lx-flow-founder-media { height: auto; aspect-ratio: 2.3 / 1; object-position: 50% 30%; }
 .lx-flow-posts { max-width: 380px; }
+/* Growth pool: 15 accounts, 5 per row (Sergio, 2026-11-13). */
+.gx-stage--pool .gx-pool { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1100px) { .gx-stage--pool .gx-pool { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .gx-stage--pool .gx-pool { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+/* CPM benchmark as a sticker stamped on the title (Sergio, 2026-11-13). */
+.gx-deal-sticker { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 2px; padding: 10px 20px; border-radius: 999px; background: var(--acid); color: #0b0c09; font: 600 13px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; transform: translateX(-38%) rotate(-7deg); box-shadow: 0 0 0 4px #0b0c09, 0 0 0 5px #d0ff0080, 0 14px 30px #0008; }
+.gx-deal-sticker::before { content: '★'; font-size: 12px; }
+.gx-deal h2 { margin-top: 0; }
+@media (max-width: 760px) { .gx-deal-sticker { font-size: 11px; padding: 8px 16px; margin-bottom: 4px; transform: rotate(-6deg); } }
