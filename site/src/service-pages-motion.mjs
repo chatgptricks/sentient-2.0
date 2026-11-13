@@ -1,29 +1,14 @@
 // Scroll motion for the service landing pages. Everything renders in its final
 // state without JavaScript or with motion paused; these tweens only animate
 // from an earlier state when motion is on, inside the shared gsap.matchMedia.
-export function setupServicePageMotion(gsap, { phone = false } = {}) {
+export function setupServicePageMotion(gsap) {
   const once = (trigger, start = 'top 80%') => ({ trigger, start, once: true });
 
-  // Launch: bars rise in the order the quote posts landed.
-  const chart = document.querySelector('.lx-wave-chart');
-  if (chart) {
-    const bars = [...chart.querySelectorAll('.lx-wave-bar')];
-    const timeline = gsap.timeline({ scrollTrigger: once(chart, 'top 85%') });
-    bars.forEach(bar => {
-      const hours = Number(bar.dataset.hours) || 0;
-      timeline.from(bar, { scaleY: 0, duration: .5, ease: 'power3.out', clearProps: 'transform' }, Math.sqrt(hours / 24) * 1.8);
-    });
-    timeline.from(chart.querySelectorAll('.lx-wave-band'), { opacity: 0, duration: .6, stagger: .9, clearProps: 'opacity' }, 0);
-  }
-
-  gsap.utils.toArray(`${phone ? '' : '.lx-case, '}.lx-wave-steps > li, .lx-creator, .lx-creator-total, .lx-report figure, .gx-result, .gx-steps > div, .gx-phases > article, .sx-timeline > li`).forEach(element => {
+  gsap.utils.toArray('.lx-creator, .lx-quote, .sx-three > li, .lx-tier, .gx-result, .gx-wall-post').forEach(element => {
     const siblings = [...element.parentElement.children];
     gsap.from(element, { y: 22, opacity: .4, duration: .7, ease: 'power3.out', delay: (siblings.indexOf(element) % 4) * .07, clearProps: 'transform,opacity', scrollTrigger: once(element, 'top 90%') });
   });
 
-  gsap.utils.toArray('.lx-package').forEach((row, index) => {
-    gsap.from(row.querySelector('strong'), { xPercent: -6, opacity: .2, duration: .8, delay: index * .12, ease: 'power3.out', clearProps: 'transform,opacity', scrollTrigger: once(row, 'top 88%') });
-  });
   gsap.utils.toArray('.sx-orb').forEach(orb => gsap.from(orb, { scale: .86, opacity: .3, duration: 1, ease: 'elastic.out(1, .7)', clearProps: 'transform,opacity', scrollTrigger: once(orb) }));
 
   // Count-ups keep the final text in the markup for no-JS and paused states.

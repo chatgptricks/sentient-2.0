@@ -48,7 +48,7 @@ function reveal(element, extra = {}) {
 }
 
 function setupResponsiveMotion({ desktop, phone, fine }, listenMedia, cleanup) {
-  setupServicePageMotion(gsap, { phone });
+  setupServicePageMotion(gsap);
   gsap.utils.toArray('[data-reveal], .section-heading h2, .story-founder-bio, .network-types article, .faq-items, .feature-case-info').forEach(element => {
     if (phone && element.closest('[data-mobile-carousel]')) return;
     reveal(element);

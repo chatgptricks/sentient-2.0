@@ -102,3 +102,29 @@ for (const carousel of document.querySelectorAll('.v2-client-carousel')) {
   for (const item of items) resizeObserver.observe(item);
   updateStatus();
 }
+
+// Service pages: horizontal post rails with previous/next arrows.
+for (const rail of document.querySelectorAll('[data-rail]')) {
+  const controls = document.querySelectorAll(`[data-rail-for="${rail.id}"]`);
+  const step = direction => {
+    const card = rail.querySelector(':scope > *:not([hidden])');
+    const gap = parseFloat(getComputedStyle(rail).columnGap) || 0;
+    const width = card ? card.getBoundingClientRect().width + gap : rail.clientWidth * .8;
+    const perView = Math.max(1, Math.floor((rail.clientWidth + gap) / width));
+    rail.scrollBy({ left: direction * width * perView, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+  const update = () => {
+    const max = rail.scrollWidth - rail.clientWidth - 2;
+    for (const group of controls) {
+      group.querySelector('[data-rail-prev]').disabled = rail.scrollLeft <= 2;
+      group.querySelector('[data-rail-next]').disabled = rail.scrollLeft >= max;
+    }
+  };
+  for (const group of controls) {
+    group.querySelector('[data-rail-prev]').addEventListener('click', () => step(-1));
+    group.querySelector('[data-rail-next]').addEventListener('click', () => step(1));
+  }
+  rail.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+  new ResizeObserver(update).observe(rail);
+  update();
+}
