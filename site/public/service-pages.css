@@ -784,3 +784,13 @@
 @media (prefers-reduced-motion: reduce) { .ab-orbit-ring, .ab-orbit-spin { animation: none; } }
 @media (max-width: 1100px) { .ab-orbit { margin-inline: auto; max-width: 520px; } }
 @media (max-width: 760px) { .ab-orbit { max-width: 340px; } .ab-orbit-core small { font-size: 10px; } }
+/* Founders: the highlight moment sits under the portrait and bio, full width. */
+.ab-founder { grid-template-rows: auto auto; }
+.ab-founder-portrait { align-items: flex-end; }
+.ab-founder-copy { padding-bottom: 18px; }
+.ab-founder .ab-moment { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1fr); gap: clamp(16px, 2vw, 28px); align-items: center; margin: 0; padding: clamp(16px, 1.8vw, 22px); border-radius: 0; background: #0b0c09; border-top: 1px solid var(--surface-line); }
+.ab-founder .ab-moment img { width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: 12px; object-fit: cover; }
+.ab-founder .ab-moment figcaption { display: grid; gap: 10px; font: 400 clamp(20px, 1.8vw, 28px)/1.15 var(--display); text-transform: uppercase; color: #f2f5ea; }
+.ab-founder .ab-moment figcaption .eyebrow { font: 600 10px var(--font); letter-spacing: .14em; color: var(--acid); }
+.ab-founder-link { margin-top: 8px; }
+@media (max-width: 760px) { .ab-founder .ab-moment { grid-template-columns: 1fr; } }
