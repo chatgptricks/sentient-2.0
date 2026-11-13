@@ -664,3 +664,8 @@
 .call-trust span { width: 100%; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #2a3510; }
 .call-trust img { height: 17px; width: auto; filter: brightness(0); opacity: .75; }
 .sx-marquee a, .sx-marquee img { -webkit-user-drag: none; user-select: none; }
+/* "Book a call." on one line on desktop (Sergio, 2026-11-13). */
+@media (min-width: 761px) {
+  .contact-wrap--service .contact-copy h2 { font-size: clamp(60px, 5.4vw, 104px) !important; line-height: .95; white-space: nowrap; }
+  .contact-wrap--service .contact-copy h2 br { display: none; }
+}
