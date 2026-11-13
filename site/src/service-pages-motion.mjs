@@ -4,7 +4,7 @@
 export function setupServicePageMotion(gsap) {
   const once = (trigger, start = 'top 80%') => ({ trigger, start, once: true });
 
-  gsap.utils.toArray('.lx-creator, .lx-quote, .lx-pack, .gx-result, .gx-deal-card').forEach(element => {
+  gsap.utils.toArray('.lx-quote, .lx-pack, .gx-result, .gx-deal-card').forEach(element => {
     const siblings = [...element.parentElement.children];
     gsap.from(element, { y: 22, opacity: .4, duration: .7, ease: 'power3.out', delay: (siblings.indexOf(element) % 4) * .07, clearProps: 'transform,opacity', scrollTrigger: once(element, 'top 90%') });
   });

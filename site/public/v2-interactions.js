@@ -144,7 +144,7 @@ for (const marquee of document.querySelectorAll('[data-marquee]')) {
   }
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const speed = reduce ? 0 : 36;
-  let x = 0, half = 0, last = performance.now(), dragging = false, startX = 0, startPos = 0, velocity = 0, lastMove = 0, lastX = 0, visible = true;
+  let moved = false, pointerId = null, x = 0, half = 0, last = performance.now(), dragging = false, startX = 0, startPos = 0, velocity = 0, lastMove = 0, lastX = 0, visible = true;
   const measure = () => { half = track.scrollWidth / 2; };
   measure();
   addEventListener('resize', measure);
@@ -164,12 +164,13 @@ for (const marquee of document.querySelectorAll('[data-marquee]')) {
   };
   requestAnimationFrame(tick);
   marquee.addEventListener('pointerdown', event => {
-    dragging = true; velocity = 0; startX = event.clientX; startPos = x; lastX = event.clientX; lastMove = performance.now();
-    marquee.classList.add('is-dragging');
-    try { marquee.setPointerCapture(event.pointerId); } catch {}
+    dragging = true; moved = false; velocity = 0; startX = event.clientX; startPos = x; lastX = event.clientX; lastMove = performance.now(); pointerId = event.pointerId;
   });
   marquee.addEventListener('pointermove', event => {
     if (!dragging) return;
+    // Capture only once it is a real drag, so a plain click still opens a card's link.
+    if (!moved && Math.abs(event.clientX - startX) > 5) { moved = true; marquee.classList.add('is-dragging'); try { marquee.setPointerCapture(pointerId); } catch {} }
+    if (!moved) return;
     x = startPos + (event.clientX - startX);
     const now = performance.now(), dt = (now - lastMove) / 1000;
     if (dt > 0) velocity = (event.clientX - lastX) / dt;
@@ -183,4 +184,5 @@ for (const marquee of document.querySelectorAll('[data-marquee]')) {
     velocity = Math.max(-2500, Math.min(2500, velocity));
   };
   for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) marquee.addEventListener(type, end);
+  marquee.addEventListener('click', event => { if (moved) { event.preventDefault(); event.stopPropagation(); moved = false; } }, true);
 }

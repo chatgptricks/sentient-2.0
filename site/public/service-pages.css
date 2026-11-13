@@ -622,3 +622,10 @@
 .lx-flow-quote, .lx-flow-quote:nth-of-type(2), .lx-flow-quote:nth-of-type(3) { position: relative; margin: -16px 0 0; padding: 26px 14px 12px; border-radius: 0 0 14px 14px; box-shadow: 0 0 0 3px #0b0c09, 0 10px 24px #0b0c0940; }
 .lx-flow-quote:nth-of-type(2) { z-index: 2; background: #141812; }
 .lx-flow-quote:nth-of-type(3) { z-index: 1; background: #1c2219; }
+/* Creators: top 20 voices as an auto-scrolling strip (Sergio, 2026-11-13). */
+.lx-voices { margin-inline: calc(var(--gutter, 0px) * -1); padding-block: 6px 10px; }
+.lx-voices .sx-marquee-track li { padding-inline: 7px; }
+.lx-voices .lx-creator { width: 330px; padding: 18px; user-select: none; }
+.lx-voices .lx-creator img, .lx-voices .lx-creator-initials { width: 64px; height: 64px; pointer-events: none; }
+.lx-voices .lx-creator:hover { transform: none; }
+@media (max-width: 760px) { .lx-voices .lx-creator { width: 270px; grid-template-columns: auto minmax(0, 1fr); justify-items: stretch; } .lx-voices .lx-creator img, .lx-voices .lx-creator-initials { grid-row: span 2; width: 52px; height: 52px; } }

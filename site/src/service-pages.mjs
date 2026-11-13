@@ -83,21 +83,30 @@ const launchWall = () => `<div class="lx-wall"><input type="radio" name="lx-wall
 const testimonialSlots = ['Lotus AI', 'Decart', 'Magic Patterns'];
 const launchTestimonials = () => `<div class="lx-quotes">${testimonialSlots.map(company => `<figure class="lx-quote is-pending"><span class="lx-quote-mark" aria-hidden="true">“</span><span class="sx-skeleton-lines" aria-hidden="true"><i></i><i></i><i></i><i style="width:62%"></i></span><figcaption><span class="sx-skeleton-avatar" aria-hidden="true"></span><span><span class="sx-skeleton-line" aria-hidden="true"></span><small>Founder · ${e(company)}</small></span></figcaption><span class="lx-quote-pending">Quote pending</span></figure>`).join('')}</div>`;
 
-// SOURCES: brief.py creator_grid. X followers read 2026-11-11; LinkedIn from campaign sheets.
-// Louis, 2026-11-13: show only the biggest voices.
-const creators = [
-  ['Out of Context Human Race', 'NoContextHumans', 'https://x.com/NoContextHumans', [['X', '4.2M']], 'img'],
-  ['Hasan Toor', 'hasantoxr', 'https://x.com/hasantoxr', [['X', '436K'], ['LinkedIn', '200K']], 'img'],
-  ['Alamin Hossain', 'alaminpro', 'https://www.linkedin.com/in/alaminpro/', [['LinkedIn', '212K']], 'AH'],
-  ['Alex Moore', 'heyalexmoore', 'https://x.com/heyalexmoore', [['X', '187K']], 'img'],
+// Creators: the 20 biggest voices we launch with, as an auto-scrolling strip.
+// Creators from brief.py creator_grid (X followers read 2026-11-11, LinkedIn from
+// campaign sheets) plus Sentient's own pages (Instagram followers, universe-data.mjs).
+const compact = value => value >= 1e6 ? `${(value / 1e6).toFixed(1).replace(/\.0$/, '')}M` : `${Math.round(value / 1e3)}K`;
+const creatorVoices = [
+  { name: 'Out of Context Human Race', handle: '@NoContextHumans', url: 'https://x.com/NoContextHumans', avatar: '/assets/v2/launch/avatars/NoContextHumans.jpg', reach: [['X', 4200000]] },
+  { name: 'Hasan Toor', handle: '@hasantoxr', url: 'https://x.com/hasantoxr', avatar: '/assets/v2/launch/avatars/hasantoxr.jpg', reach: [['X', 436000], ['LinkedIn', 200000]] },
+  { name: 'Alamin Hossain', handle: 'LinkedIn', url: 'https://www.linkedin.com/in/alaminpro/', initials: 'AH', reach: [['LinkedIn', 212000]] },
+  { name: 'Alex Moore', handle: '@heyalexmoore', url: 'https://x.com/heyalexmoore', avatar: '/assets/v2/launch/avatars/heyalexmoore.jpg', reach: [['X', 187000]] },
 ];
-const creatorCard = ([name, handle, url, platforms, avatar]) => `<a class="lx-creator" href="${e(url)}" target="_blank" rel="noopener noreferrer">${avatar === 'img' ? `<img src="/assets/v2/launch/avatars/${e(handle)}.jpg" alt="" width="64" height="64" loading="lazy">` : `<span class="lx-creator-initials" aria-hidden="true">${avatar}</span>`}<span class="lx-creator-id"><strong>${e(name)}</strong><small>${avatar === 'img' ? `@${e(handle)}` : 'LinkedIn'}</small></span><span class="lx-creator-reach">${platforms.map(([platform, followers]) => `<span><small>${platform}</small><b>${followers}</b></span>`).join('')}</span></a>`;
+const ownPages = ['chatgptricks', 'traselveloreal', 'artificialntellligence', 'stoicreflections', 'ai.excel', 'estoicovivir', 'chatgptips', 'programming__india', 'planet.ai_', 'artificialmente.ia', 'em3rging', 'ainterestingupdate', 'sergioprompts', 'ai.tech.moments', 'ainterestingaf', 'tecnologia'];
+const topVoices = () => [...creatorVoices, ...ownPages.map(handle => {
+  const account = universeAccounts.find(item => item.handle === handle);
+  if (!account?.followerCount) throw new Error(`Creator strip account missing: ${handle}`);
+  return { name: account.name || handle, handle: `@${handle}`, url: `https://www.instagram.com/${handle}/`, avatar: account.avatar, reach: [['Instagram', account.followerCount]], own: true };
+})].sort((a, b) => Math.max(...b.reach.map(r => r[1])) - Math.max(...a.reach.map(r => r[1]))).slice(0, 20);
+const voiceCard = voice => `<li><a class="lx-creator" href="${e(voice.url)}" target="_blank" rel="noopener noreferrer" draggable="false">${voice.avatar ? `<img src="${e(voice.avatar)}" alt="" width="64" height="64" loading="lazy" draggable="false">` : `<span class="lx-creator-initials" aria-hidden="true">${voice.initials}</span>`}<span class="lx-creator-id"><strong>${e(voice.name)}</strong><small>${e(voice.handle)}${voice.own ? ' · Sentient' : ''}</small></span><span class="lx-creator-reach">${voice.reach.map(([platform, followers]) => `<span><small>${platform}</small><b>${compact(followers)}</b></span>`).join('')}</span></a></li>`;
+const creatorStrip = () => `<div class="sx-marquee lx-voices" data-marquee aria-label="The 20 biggest creators and Sentient pages we launch with"><ul class="sx-marquee-track">${topVoices().map(voiceCard).join('')}</ul></div>`;
 
 // How it works, drawn like the Growth pipeline. Everything is from the Magic
 // Patterns launch (Oct 2026): the creators who posted, Alex's post and two of
 // the 72 quote posts, and the views of each quote post over the first 24 hours
 // (launches/magic-patterns/launch.json via decks/launch-amplification/brief.py).
-const flowPool = ['NoContextHumans', 'hasantoxr', 'LearnWithBishal', 'heyadam_ai', 'Parul_Gautam7', 'heyalexmoore', 'alifcoder', 'atulkumarzz', 'iam_chonchol', 'jaysmith_ai'];
+const flowPool = ['NoContextHumans', 'hasantoxr', 'LearnWithBishal', 'heyadam_ai', 'Parul_Gautam7', 'heyalexmoore', 'alifcoder', 'atulkumarzz', 'iam_chonchol', 'jaysmith_ai', 'therjrajesh', 'nolancarterai', 'AvabrooksAI', 'sambrownai', 'aiwithnatalia'];
 const flowPicks = new Set(['NoContextHumans', 'hasantoxr', 'heyadam_ai', 'heyalexmoore']);
 const wave = [[0.41, 6354], [0.46, 912], [0.47, 1313], [0.48, 8456], [0.49, 896], [0.49, 9686], [0.5, 595], [0.51, 7243], [0.53, 8404], [0.53, 9450], [0.53, 7636], [0.54, 446], [0.55, 7304], [0.56, 7438], [0.56, 44895], [0.57, 7529], [0.58, 10435], [0.58, 7402], [0.59, 7263], [0.59, 7236], [0.62, 1918], [0.64, 7927], [0.67, 9208], [0.67, 38491], [0.7, 25785], [0.74, 11239], [0.77, 11841], [0.78, 10671], [0.78, 10305], [0.79, 9915], [0.83, 13258], [0.93, 19655], [0.94, 7872], [0.96, 8744], [0.99, 9171], [1.0, 13262], [1.12, 9370], [1.13, 19753], [1.25, 17670], [1.45, 22070], [1.94, 9093], [2.0, 8688], [2.0, 6392], [2.02, 7255], [2.05, 8463], [2.08, 8287], [2.09, 7763], [2.12, 8525], [2.15, 9385], [2.21, 13691], [2.22, 8316], [2.26, 7358], [2.29, 7317], [2.41, 8686], [2.56, 33315], [7.25, 12782], [11.75, 21768], [11.81, 22619], [11.93, 19792], [13.26, 17850], [13.28, 14196], [13.29, 22563], [13.45, 23706], [13.91, 27243], [14.18, 15748], [14.24, 17807], [14.48, 18637], [17.12, 33908], [19.37, 6002], [20.93, 388], [20.94, 1426], [23.78, 7906]];
 // Hours on a square-root axis so the first-hour waves stay readable.
@@ -122,7 +131,7 @@ export function renderLaunchPage(contact) {
   + `<section class="sx-section shell" id="launch-wall" aria-labelledby="launch-wall-title">${heading('THE POSTS', 'Real launches.', 'Real views.', '', 'launch-wall-title')}${launchWall()}</section>`
   + `<section class="sx-section shell" id="launch-testimonials" aria-labelledby="launch-testimonials-title">${heading('TESTIMONIALS', 'What founders', 'say after launch.', '', 'launch-testimonials-title')}${launchTestimonials()}</section>`
   + `<section class="sx-section shell" id="launch-how" aria-labelledby="launch-how-title">${heading('HOW IT WORKS', 'Three steps.', 'Launch day.', '', 'launch-how-title')}${launchFlow()}</section>`
-  + `<section class="sx-section shell" id="launch-creators" aria-labelledby="launch-creators-title"><div class="section-heading"><div><span class="eyebrow">CREATORS</span><h2 id="launch-creators-title">Creators we <em>launch with.</em></h2></div></div><div class="lx-creators lx-creators--premium">${creators.map(creatorCard).join('')}</div></section>`
+  + `<section class="sx-section shell" id="launch-creators" aria-labelledby="launch-creators-title"><div class="section-heading"><div><span class="eyebrow">CREATORS</span><h2 id="launch-creators-title">Creators we <em>launch with.</em></h2></div></div>${creatorStrip()}</section>`
   + `<section class="sx-section shell" id="launch-guarantee" aria-labelledby="launch-guarantee-title">${heading('OUR GUARANTEE', 'Every launch comes', 'with guaranteed views.', '', 'launch-guarantee-title')}${launchPackages()}<div class="lx-tiers-cta"><p>Pricing depends on your launch. Book a call and we’ll scope it.</p>${bookCall()}</div></section>`
   + `${contact('launch')}`;
 }
