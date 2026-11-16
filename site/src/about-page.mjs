@@ -1,6 +1,6 @@
 // About page, rebuilt after the service pages (Sergio, 2026-11-13). Same rules:
 // only sourced figures. 30M+ owned followers (site-wide figure, Louis 2026-11-13),
-// 750+ brands and 1B+ monthly impressions (Launch Amplification deck, slide 7),
+// 750+ brands (deck, slide 7), 1B+ partner followers (deck, "Who we are"),
 // 50,000+ sign-ups (Lotus AI, Louis's feedback) and 150M+ Higgsfield views (team
 // feedback doc). Founder names, roles and bios from about-content.mjs
 // (sentientagency.io/what-we-do, verified 2026-10-04).
@@ -43,7 +43,7 @@ const principles = [
 ];
 
 export function renderAboutPage(contactSection, invitation = '') {
-  return `<section class="ab-hero"><div class="ab-hero-inner shell"><div class="ab-hero-copy"><span class="eyebrow">ABOUT SENTIENT</span><h1>Not just an agency.<br><em>A media company.</em></h1><p>We run our own pages, followed by 30M+ people, and work with the creators tech audiences already trust. So your launch reaches the right people from day one.</p><dl class="ab-figures"><div><dt>30M+</dt><dd>followers on our own pages</dd></div><div><dt>1B+</dt><dd>monthly impressions</dd></div><div><dt>750+</dt><dd>brands</dd></div></dl></div>${heroMosaic()}</div></section>`
+  return `<section class="ab-hero"><div class="ab-hero-inner shell"><div class="ab-hero-copy"><span class="eyebrow">ABOUT SENTIENT</span><h1>Not just an agency.<br><em>A media company.</em></h1><p>We run our own pages, followed by 30M+ people, and work with the creators tech audiences already trust. So your launch reaches the right people from day one.</p><dl class="ab-figures"><div><dt>30M+</dt><dd>followers on our own pages</dd></div><div><dt>1B+</dt><dd>followers across partner accounts</dd></div><div><dt>750+</dt><dd>brands</dd></div></dl></div>${heroMosaic()}</div></section>`
     + `<section class="sx-section shell" id="about-founders" aria-labelledby="about-founders-title"><div class="section-heading"><div><span class="eyebrow">THE PEOPLE</span><h2 id="about-founders-title">The people <em>behind it.</em></h2></div></div><div class="ab-founders">${founders.map(founderCard).join('')}</div></section>`
     + `<section class="sx-section shell" id="about-origin" aria-labelledby="about-origin-title">${origin()}</section>`
     + `<section class="sx-section shell" id="about-principles" aria-labelledby="about-principles-title"><div class="section-heading"><div><span class="eyebrow">HOW WE WORK</span><h2 id="about-principles-title">Four things <em>we don’t skip.</em></h2></div></div><ol class="ab-principles">${principles.map(([title, text], index) => `<li><span class="ab-principle-num">0${index + 1}</span><h3>${title}</h3><p>${text}</p></li>`).join('')}</ol></section>`

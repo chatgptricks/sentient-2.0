@@ -9,7 +9,7 @@ export const clientLogoRow = (label = 'IN GOOD COMPANY') => `<section class="sx-
 
 // "Trusted by" marquee: the full logo wall from the Launch Amplification deck
 // (decks/assets/canva/logos.png, sliced into public/assets/clients/trusted/).
-// 750+ brands and 1B+ monthly impressions are the deck's own figures (slide 7).
+// 750+ brands is the deck's figure; 1B+ monthly impressions dropped (Louis, round 2, 2026-11-16).
 // It scrolls on its own and can be dragged (v2-interactions.js, [data-marquee]).
 const trusted = [
   ['OpenAI', 'openai'], ['Meta', 'meta'], ['Adobe', 'adobe'], ['Higgsfield', 'higgsfield'], ['invideo AI', 'invideo'], ['Freepik', 'freepik'],
@@ -21,4 +21,4 @@ const trusted = [
   ['Capitol AI', 'capitol-ai'], ['Cohesive', 'cohesive'], ['RivalFlow AI', 'rivalflow'], ['AdCreative.ai', 'adcreative'], ['Blaze', 'blaze'], ['Playbook', 'playbook'],
   ['Sonara', 'sonara'], ['NexTool', 'nextool'], ['Thoughtly', 'thoughtly'], ['Twice', 'twice'], ['wetracked.io', 'wetracked'], ['Client logo', 'waveform'],
 ];
-export const trustedMarquee = () => `<section class="sx-trusted" aria-label="Trusted by 750+ brands"><div class="sx-trusted-inner shell"><div class="sx-trusted-label"><p class="sx-trusted-title">Trusted by<br><em>750+ brands</em></p><p class="sx-trusted-reach"><strong>1B+</strong><span>monthly<br>impressions</span></p></div><div class="sx-marquee" data-marquee><ul class="sx-marquee-track">${trusted.map(([name, slug]) => `<li><img src="/assets/clients/trusted/${slug}.png" alt="${name}" height="30" loading="lazy" draggable="false"></li>`).join('')}</ul></div></div></section>`;
+export const trustedMarquee = () => `<section class="sx-trusted" aria-label="Trusted by 750+ brands"><div class="sx-trusted-inner shell"><div class="sx-trusted-label"><p class="sx-trusted-title">Trusted by<br><em>750+ brands</em></p></div><div class="sx-marquee" data-marquee><ul class="sx-marquee-track">${trusted.map(([name, slug]) => `<li><img src="/assets/clients/trusted/${slug}.png" alt="${name}" height="30" loading="lazy" draggable="false"></li>`).join('')}</ul></div></div></section>`;
