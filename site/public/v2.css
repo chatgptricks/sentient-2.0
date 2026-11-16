@@ -231,3 +231,21 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .v2-owned-marquee .v2-owned-accounts > li { flex: none; padding-inline: 7px; }
 .v2-owned-marquee .v2-owned-accounts > li > a { width: 260px; }
 .v2-owned-marquee .v2-owned-accounts > li > a:hover { transform: none; }
+
+/* Home network tabs: Instagram / X / LinkedIn (Sergio, 2026-11-16). */
+.v2-net-tabs { position: relative; }
+.v2-net-tabs > input { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.v2-net-switch { display: inline-flex; padding: 4px; margin-bottom: 18px; border-radius: 999px; border: 1px solid #d9efb326; }
+.v2-net-switch label { padding: 9px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #c8cfbd; cursor: pointer; }
+#v2-net-ig:checked ~ .v2-net-switch label[for="v2-net-ig"], #v2-net-x:checked ~ .v2-net-switch label[for="v2-net-x"], #v2-net-li:checked ~ .v2-net-switch label[for="v2-net-li"] { background: var(--acid); color: #0b0c09; }
+#v2-net-ig:focus-visible ~ .v2-net-switch label[for="v2-net-ig"], #v2-net-x:focus-visible ~ .v2-net-switch label[for="v2-net-x"], #v2-net-li:focus-visible ~ .v2-net-switch label[for="v2-net-li"] { outline: 2px solid var(--acid); outline-offset: 3px; }
+.v2-net-pane { display: none; }
+#v2-net-ig:checked ~ .v2-net-pane--ig, #v2-net-x:checked ~ .v2-net-pane--x, #v2-net-li:checked ~ .v2-net-pane--li { display: block; }
+.v2-account-initials { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #0b0c09; color: var(--acid); font: 900 17px var(--display); box-shadow: 0 0 0 2px #0b0c09, 0 0 0 3.5px #d0ff0066; }
+/* Thinner account cards: "followers" sits next to the number. */
+.v2-owned-accounts > a, .v2-owned-accounts > li > a { min-height: 0 !important; gap: 14px 12px !important; padding: 16px 18px !important; }
+.v2-owned-accounts a > .v2-account-count { display: flex !important; flex-direction: row !important; align-items: center; gap: 10px !important; }
+.v2-owned-marquee .v2-owned-accounts > li > a { width: 300px; }
+.v2-owned-marquee .v2-account-count b { font-size: clamp(40px, 3.2vw, 50px) !important; }
+.v2-owned-marquee .v2-account-count small { flex: none; }
+#owned-media:has(#v2-net-x:checked) .v2-snapshot, #owned-media:has(#v2-net-li:checked) .v2-snapshot { visibility: hidden; }

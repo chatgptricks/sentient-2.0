@@ -186,3 +186,6 @@ for (const marquee of document.querySelectorAll('[data-marquee]')) {
   for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) marquee.addEventListener(type, end);
   marquee.addEventListener('click', event => { if (moved) { event.preventDefault(); event.stopPropagation(); moved = false; } }, true);
 }
+
+// Network tabs on Home: re-measure the strip that just became visible.
+for (const input of document.querySelectorAll('input[name="v2-net"]')) input.addEventListener('change', () => window.dispatchEvent(new Event('resize')));
