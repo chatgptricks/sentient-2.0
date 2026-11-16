@@ -83,37 +83,23 @@ const launchWall = () => `<div class="lx-wall"><input type="radio" name="lx-wall
 const testimonialSlots = ['Lotus AI', 'Decart', 'Magic Patterns'];
 const launchTestimonials = () => `<div class="lx-quotes">${testimonialSlots.map(company => `<figure class="lx-quote is-pending"><span class="lx-quote-mark" aria-hidden="true">“</span><span class="sx-skeleton-lines" aria-hidden="true"><i></i><i></i><i></i><i style="width:62%"></i></span><figcaption><span class="sx-skeleton-avatar" aria-hidden="true"></span><span><span class="sx-skeleton-line" aria-hidden="true"></span><small>Founder · ${e(company)}</small></span></figcaption><span class="lx-quote-pending">Quote pending</span></figure>`).join('')}</div>`;
 
-// Creators: the 20 biggest X and LinkedIn creators who delivered in our launch
-// campaigns (deliverables marked delivered in ~/Sentient/launches/*/launch.json).
-// X followers read live via fxtwitter 2026-11-13 (brief.py values from 2026-11-11
-// where the live read failed); LinkedIn followers from the campaign sheets.
-const compact = value => value >= 1e6 ? `${(value / 1e6).toFixed(1).replace(/\.0$/, '')}M` : `${Math.round(value / 1e3)}K`;
+// Creators: the biggest names with US audiences, same list as the Launch
+// Amplification deck (Louis, round 2, 2026-11-16: "fewer, bigger names").
+// Source: our extended network sheet (19FL106cy79tkCnY4XYRJJq2QN0wDWCJiPz4V5J0AZDI,
+// tab X), AI/tech/finance only; X followers via fxtwitter, 2026-11-16.
 const A = '/assets/v2/launch/avatars/';
-const voice = (name, handle, reach, avatar = `${A}${handle}.jpg`) => ({ name, handle: `@${handle}`, url: `https://x.com/${handle}`, avatar, reach });
+const voice = (name, handle, followers) => ({ name, handle: `@${handle}`, url: `https://x.com/${handle}`, avatar: `${A}${handle}.jpg`, reach: [['X', followers]] });
 const topVoices = () => [
-  voice('Out of Context Human Race', 'NoContextHumans', [['X', 4240580]]),
-  voice('Hasan Toor', 'hasantoxr', [['X', 436361], ['LinkedIn', 200000]]),
-  { name: 'Alamin Hossain', handle: 'LinkedIn', url: 'https://www.linkedin.com/in/alaminpro/', initials: 'AH', reach: [['LinkedIn', 212000]] },
-  voice('Alex Moore', 'heyalexmoore', [['X', 186523]]),
-  voice('Jay', 'jaysmith_ai', [['X', 159192]]),
-  voice('Adam | AI Tools & News', 'heyadam_ai', [['X', 158302]]),
-  voice('Atul Kumar', 'atulkumarzz', [['X', 141011]]),
-  voice('Bishal Nandi', 'LearnWithBishal', [['X', 118935]]),
-  voice('Alif Hossain', 'alifcoder', [['X', 107668]]),
-  voice('Alamin', 'iam_chonchol', [['X', 105918]]),
-  voice('Shruti Codes', 'Shruti_0810', [['X', 105253]]),
-  voice('Parul Gautam', 'Parul_Gautam7', [['X', 85409]]),
-  voice('Gina Acosta', 'ginacostag_', [['X', 65594]]),
-  voice('Markandey Sharma', 'TechByMarkandey', [['X', 64592]]),
-  voice('Jafar Najafov', 'JafarNajafov', [['X', 61266]]),
-  voice('SCARLETT AI', 'Beast_85', [['X', 53729]]),
-  voice('Manish Kumar Shah', 'manishkumar_dev', [['X', 52903]]),
-  voice('Your Tech Girl', 'yourtechgirl24', [['X', 43197]]),
-  voice('Rajesh Kumar', 'therjrajesh', [['X', 41669]]),
-  voice('Tom Rei', 'tomreiai', [['X', 31068]]),
+  voice('Unusual Whales', 'unusual_whales', '5.4M'),
+  voice('Dr. Parik Patel', 'ParikPatelCFA', '2M'),
+  voice('litquidity', 'litcapital', '1.7M'),
+  voice('Santiago', 'svpino', '458K'),
+  voice('pika capital', 'pikacap', '434K'),
+  voice('Brett', 'BrettFromDJ', '171K'),
+  voice('el.cine', 'EHuanglu', '152K'),
 ];
-const voiceCard = voice => `<li><a class="lx-creator" href="${e(voice.url)}" target="_blank" rel="noopener noreferrer" draggable="false">${voice.avatar ? `<img src="${e(voice.avatar)}" alt="" width="64" height="64" loading="lazy" draggable="false">` : `<span class="lx-creator-initials" aria-hidden="true">${voice.initials}</span>`}<span class="lx-creator-id"><strong>${e(voice.name)}</strong><small>${e(voice.handle)}</small></span><span class="lx-creator-reach">${voice.reach.map(([platform, followers]) => `<span><small>${platform}</small><b>${compact(followers)}</b></span>`).join('')}</span></a></li>`;
-export const creatorStrip = () => `<div class="sx-marquee lx-voices" data-marquee aria-label="The 20 biggest creators from our X and LinkedIn launches"><ul class="sx-marquee-track">${topVoices().map(voiceCard).join('')}</ul></div>`;
+const voiceCard = voice => `<li><a class="lx-creator" href="${e(voice.url)}" target="_blank" rel="noopener noreferrer" draggable="false">${voice.avatar ? `<img src="${e(voice.avatar)}" alt="" width="64" height="64" loading="lazy" draggable="false">` : `<span class="lx-creator-initials" aria-hidden="true">${voice.initials}</span>`}<span class="lx-creator-id"><strong>${e(voice.name)}</strong><small>${e(voice.handle)}</small></span><span class="lx-creator-reach">${voice.reach.map(([platform, followers]) => `<span><small>${platform}</small><b>${followers}</b></span>`).join('')}</span></a></li>`;
+export const creatorStrip = () => `<div class="sx-marquee lx-voices" data-marquee aria-label="Creators we launch with"><ul class="sx-marquee-track">${topVoices().map(voiceCard).join('')}</ul></div>`;
 
 // How it works, drawn like the Growth pipeline. Everything is from the Magic
 // Patterns launch (Oct 2026): the creators who posted, Alex's post and two of
