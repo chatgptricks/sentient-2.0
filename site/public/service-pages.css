@@ -807,3 +807,15 @@
 @media (max-width: 760px) { .gx-pipeline > .gx-stage + .gx-stage::before { display: none; } }
 .gx-pipeline > .gx-stage + .gx-stage::before { top: 58%; }
 .lx-flow > .gx-stage + .gx-stage::before { display: none; }
+/* Real testimonials (sentientagency.io, 2026-11-16). */
+.lx-quotes--real { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lx-quotes--real .lx-quote { border-style: solid; border-color: var(--surface-line); background: linear-gradient(180deg, #172014, #0d140e); gap: 18px; }
+.lx-quotes--real .lx-quote-mark { color: var(--acid); }
+.lx-quotes--real blockquote { margin: 0; font-size: clamp(16px, 1.3vw, 19px); line-height: 1.55; color: #e4ebda; }
+.lx-quotes--real figcaption { gap: 14px; padding-top: 18px; border-top: 1px solid var(--surface-line); }
+.lx-quote-photo { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 2px #0b0c09, 0 0 0 3.5px #d0ff0066; }
+.lx-quotes--real figcaption > span { display: grid; gap: 3px; min-width: 0; }
+.lx-quotes--real figcaption b { font-size: 15px; font-weight: 600; color: #f2f5ea; }
+.lx-quotes--real figcaption small { font-size: 12px; color: #a9b69e; line-height: 1.35; }
+.lx-quote-logo { width: 40px; height: 40px; object-fit: contain; margin-left: auto; flex: none; opacity: .85; }
+@media (max-width: 760px) { .lx-quotes--real { grid-template-columns: 1fr; } }
