@@ -1,6 +1,12 @@
 import { loadNetworkAccounts, loadNetworkPosts, selectCampaignPosts, installAvatarFallbacks } from '../public/network-data.js';
 import { renderAccountCards, renderCampaignCards } from './network-markup.mjs';
 
+// Owned pages render into the auto-scrolling strip, twice so the loop stays seamless.
+const ownedStrip = accounts => {
+  const items = accounts.filter(account => !account.relationship || account.relationship === 'owned').map(account => `<li>${renderAccountCards([account])}</li>`).join('');
+  return items + items.replace(/<li>/g, '<li aria-hidden="true">');
+};
+
 const section = document.getElementById('owned-media');
 const fallbackData = document.getElementById('network-fallback-data');
 if (section && fallbackData) {
@@ -9,15 +15,16 @@ if (section && fallbackData) {
   const showAccounts = result => {
     section.dataset.networkSource = result.source;
     section.dataset.networkStale = String(Boolean(result.stale));
-    const selected = result.accounts.slice(0, 10);
-    section.querySelector('.v2-owned-accounts').innerHTML = renderAccountCards(selected);
+    section.querySelector('.v2-owned-accounts').innerHTML = ownedStrip(result.accounts);
+    window.dispatchEvent(new Event('resize'));
     section.querySelector('.v2-snapshot').textContent = result.stale || result.source === 'fallback'
-      ? 'Selected owned accounts · latest saved follower figures.'
-      : 'Selected owned accounts · latest available follower figures.';
+      ? 'All our own pages · latest saved follower figures.'
+      : 'All our own pages · latest available follower figures.';
   };
   const accounts = async () => showAccounts(await loadNetworkAccounts(fallback, { onSaved:showAccounts }));
   const campaigns = async () => {
     const wall = document.getElementById('campaign-wall');
+    if (!wall) return;
     const fallback = JSON.parse(document.getElementById('campaign-fallback-data').textContent);
     const byCode = new Map(fallback.map(post => [post.shortcode, post]));
     const seed = Math.floor(Math.random() * 2147483646) + 1;

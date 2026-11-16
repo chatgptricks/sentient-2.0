@@ -12,7 +12,9 @@ const routes = ['/', '/viral-launch-campaigns', '/growth-campaigns', '/about', '
 const v2Route = route => route === '/' ? '/v2/' : `/v2${route}`;
 const arrow = '<span aria-hidden="true">↗</span>';
 
-const network = () => `<section class="v2-owned" id="owned-media" aria-labelledby="v2-owned-title" data-network-source="fallback"><div class="shell"><div class="v2-owned-heading"><h2 id="v2-owned-title"><span>30M+</span> followers.<br><em>Our audience. Your advantage.</em></h2><div><p>We built the communities.<br>Now let’s get them talking about you.</p><a class="text-link" href="/universe">Explore our accounts ${arrow}</a></div></div><div class="v2-owned-accounts">${renderAccountCards(fallbackAccounts.slice(0, 10))}</div><p class="v2-snapshot">Selected owned accounts · latest saved follower figures.</p></div><script type="application/json" id="network-fallback-data">${JSON.stringify(fallbackAccounts).replace(/</g, '\\u003c')}</script></section>`;
+// All of Sentient's own pages as an auto-scrolling strip (Sergio, 2026-11-16).
+export const ownedCards = accounts => accounts.filter(account => !account.relationship || account.relationship === 'owned').map(account => `<li>${renderAccountCards([account])}</li>`).join('');
+const network = () => `<section class="v2-owned" id="owned-media" aria-labelledby="v2-owned-title" data-network-source="fallback"><div class="shell"><div class="v2-owned-heading"><h2 id="v2-owned-title"><span>30M+</span> followers.<br><em>Our audience. Your advantage.</em></h2><div><p>We built the communities.<br>Now let’s get them talking about you.</p><a class="text-link" href="/universe">Explore our accounts ${arrow}</a></div></div><div class="sx-marquee v2-owned-marquee" data-marquee aria-label="Sentient’s own pages"><ul class="sx-marquee-track v2-owned-accounts">${ownedCards(fallbackAccounts)}</ul></div><p class="v2-snapshot">All our own pages · latest saved follower figures.</p></div><script type="application/json" id="network-fallback-data">${JSON.stringify(fallbackAccounts).replace(/</g, '\\u003c')}</script></section>`;
 
 const serviceCards = () => `<section class="services v2-services" id="services"><div class="services-heading shell"><span class="eyebrow">TWO WAYS TO GROW</span><h2 data-reveal>How we turn attention<br><em class="type-accent">into growth.</em></h2><p>Two ways to grow. One focus:<br>turning attention into customers.</p></div><div class="offer-grid shell" id="mobile-offers" data-mobile-carousel tabindex="0" aria-label="Campaign services"><a class="offer launch-offer" href="/viral-launch-campaigns"><div class="offer-top"><span class="eyebrow">LAUNCHES · RAISES · ANNOUNCEMENTS</span><span class="offer-arrow" aria-hidden="true">↗</span></div><h3>Viral launch<br><em class="type-accent">campaigns.</em></h3><div class="offer-art" aria-hidden="true">${servicePreview('launch')}</div><div class="offer-bottom"><p>One post from your founder. A coordinated wave across owned accounts and creators. Built to turn your next milestone into demos, press, and inbound.</p><span class="offer-link">Explore viral launches ${arrow}</span></div></a><a class="offer growth-offer" href="/growth-campaigns"><div class="offer-top"><span class="eyebrow">ONGOING DISTRIBUTION · CONVERSION</span><span class="offer-arrow" aria-hidden="true">↗</span></div><h3>Growth<br><em class="type-accent">campaigns.</em></h3><div class="offer-art growth-art" aria-hidden="true">${servicePreview('growth')}</div><div class="offer-bottom"><p>Publish through our owned pages and partner creators. Analyse what drives clicks and conversions. Put paid spend behind the winners to test, optimise, and scale what works.</p><span class="offer-link">Explore growth campaigns ${arrow}</span></div></a></div><div class="mobile-rail-controls" data-carousel-controls="mobile-offers"><span>Swipe to explore</span><div><button type="button" data-carousel-prev aria-label="Previous service">←</button><output data-carousel-status aria-live="polite">1 of 2</output><button type="button" data-carousel-next aria-label="Next service">→</button></div></div></section>`;
 
@@ -26,6 +28,7 @@ const receipts = () => `<section class="v2-receipts shell" id="campaign-wall" da
 const workImpressions = { 'DXcsyzygKkg': '330,043', 'DOyiTPLAPCv': '605,574' };
 function legendaryWork(section) {
   return section
+    .replace('<h2 data-reveal>Attention.<br><em class="type-accent">Earned.</em></h2>', '<h2 data-reveal>The <em class="type-accent">receipts.</em></h2>')
     .replace(/<details class="case-evidence">[\s\S]*?<\/details>/g, '')
     .replace(/<img src="\/assets\/(DXcsyzygKkg|DOyiTPLAPCv)\.jpg"([^>]*)>/g, (match, code, attrs) => `<span class="lg-card"><span class="lg-card-top"><img src="/assets/universe/avatar-chatgptricks.jpg" alt="" width="34" height="34" loading="lazy"><span><b>chatgptricks</b><small>Instagram</small></span><i class="lg-badge">✦ Top post</i></span><span class="lg-card-media"><img src="/assets/${code}.jpg"${attrs}></span><span class="lg-card-foot"><b>${workImpressions[code]}</b> impressions</span><span class="lg-card-shine" aria-hidden="true"></span></span>`);
 }
@@ -93,9 +96,10 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       html = html.replace('<span>01 / SENTIENT</span>', '<span>SENTIENT</span>');
       html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, `<p><strong class="v2-inline-number">30M+</strong> followers across our network.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>`);
       html = html.replace(/<aside class="owned-proof shell"[\s\S]*?<\/aside>/, '');
-      html = replaceSection(html, 'services', `${network()}${serviceCards()}`);
-      html = replaceSection(html, 'client-proof', trustedMarquee());
-      html = replaceSection(html, 'campaign-wall', receipts());
+      // Sergio, 2026-11-16: client logos above the pages, pages as a strip, no receipts wall.
+      html = replaceSection(html, 'services', `${trustedMarquee()}${network()}${serviceCards()}`);
+      html = replaceSection(html, 'client-proof', '');
+      html = replaceSection(html, 'campaign-wall', '');
     }
     if (page === 'about') html = reviseV2About(html);
     if (page === 'universe') {
