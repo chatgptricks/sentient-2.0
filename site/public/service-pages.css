@@ -799,19 +799,11 @@
 #launch-creators .section-heading { margin-bottom: clamp(20px, 2.4vw, 32px); }
 
 /* Deck round 2 (Louis, 2026-11-16) ---------------------------------------- */
-/* Viral launch: "How the wave works" in 4 steps. */
-.lx-wave { list-style: none; margin: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px); align-items: start; }
-.lx-wave .gx-stage { position: relative; display: flex; flex-direction: column; height: 100%; }
-.lx-wave h3 { margin: 14px 0 8px; }
-.lx-wave p { margin: 0 0 16px; font-size: 14px; line-height: 1.5; font-weight: 500; color: #1d2408; }
-.lx-wave-shot { display: block; margin-top: auto; aspect-ratio: 4 / 4.6; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 3px #0b0c09, 0 16px 34px #0b0c0940; transition: transform .3s ease; }
-.lx-wave-shot:hover { transform: translateY(-4px); }
-.lx-wave-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-.lx-wave-shot.is-video img { object-position: center; }
 /* Arrows between steps, so each flow reads left to right (Growth ends in ads). */
 .gx-pipeline > .gx-stage + .gx-stage::before { content: '→'; position: absolute; left: calc(-1 * clamp(16px, 2vw, 28px) / 2); top: 18px; transform: translateX(-50%); width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #0b0c09; color: var(--acid); font: 700 15px var(--font); z-index: 2; }
 .gx-pipeline > .gx-stage { position: relative; }
 #growth-approach .gx-pipeline > .gx-stage + .gx-stage::before { left: -10px; }
-@media (max-width: 1100px) { .lx-wave { grid-template-columns: 1fr 1fr; } .lx-wave .gx-stage:nth-child(3)::before, .gx-pipeline > .gx-stage--ads::before { display: none; } }
-@media (max-width: 760px) { .lx-wave { grid-template-columns: 1fr; } .gx-pipeline > .gx-stage + .gx-stage::before { display: none; } .lx-wave-shot { aspect-ratio: 4 / 3.4; } }
+@media (max-width: 1100px) { .gx-pipeline > .gx-stage--ads::before { display: none; } }
+@media (max-width: 760px) { .gx-pipeline > .gx-stage + .gx-stage::before { display: none; } }
 .gx-pipeline > .gx-stage + .gx-stage::before { top: 58%; }
+.lx-flow > .gx-stage + .gx-stage::before { display: none; }
