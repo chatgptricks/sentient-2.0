@@ -819,3 +819,16 @@
 .lx-quotes--real figcaption small { font-size: 12px; color: #a9b69e; line-height: 1.35; }
 .lx-quote-logo { width: 40px; height: 40px; object-fit: contain; margin-left: auto; flex: none; opacity: .85; }
 @media (max-width: 760px) { .lx-quotes--real { grid-template-columns: 1fr; } }
+/* Testimonials as an auto-scrolling strip (Sergio, 2026-11-16). */
+.lx-quotes-marquee { padding-block: 4px 10px; }
+.lx-quotes-marquee .sx-marquee-track { align-items: stretch; }
+.lx-quotes-marquee .sx-marquee-track > li { display: flex; padding-inline: 8px; }
+.lx-quote--real { width: 440px; border: 1px solid var(--surface-line); background: linear-gradient(180deg, #172014, #0d140e); gap: 16px; user-select: none; }
+.lx-quote--real .lx-quote-mark { color: var(--acid); }
+.lx-quote--real blockquote { margin: 0; font-size: 16px; line-height: 1.55; color: #e4ebda; }
+.lx-quote--real figcaption { display: flex; align-items: center; gap: 14px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--surface-line); }
+.lx-quote--real figcaption > span { display: grid; gap: 3px; min-width: 0; }
+.lx-quote--real figcaption b { font-size: 15px; font-weight: 600; color: #f2f5ea; }
+.lx-quote--real figcaption small { font-size: 12px; color: #a9b69e; line-height: 1.35; }
+.lx-quote--real img { pointer-events: none; }
+@media (max-width: 760px) { .lx-quote--real { width: 300px; padding: 20px; } .lx-quote--real blockquote { font-size: 14px; } }
