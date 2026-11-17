@@ -1,6 +1,10 @@
 // Notes left before this version are hidden from the widget, not deleted: they
 // stay in the database (Sergio, 2026-11-17). Clear NOTES_SINCE to show them again.
 const NOTES_SINCE='2026-11-17T00:40:00Z';
+// The official domain shows no review widget to visitors (Sergio, 2026-11-17).
+// Add ?review to the URL there to open it; previews always show it.
+const REVIEW_OFF=/(^|\.)sentientagency\.io$/.test(location.hostname)&&!new URLSearchParams(location.search).has('review');
+if(!REVIEW_OFF){
 const base = new URL('.', import.meta.url);
 const page = document.body.dataset.page;
 const ui = document.createElement('div');
@@ -147,3 +151,4 @@ try {
   if(!endpoint)throw new Error('No comments API configured.');
   await refresh();setInterval(refresh,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 } catch {$('.review-list-status').textContent='Shared comments are not connected yet.';}
+}

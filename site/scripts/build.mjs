@@ -4,6 +4,7 @@ import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { normalizeBasePath, escapeHtml } from '../src/social-meta.mjs';
+import { legacyRedirects } from '../src/legal-pages.mjs';
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function build() {
   const basePath = normalizeBasePath(process.env.BASE_PATH || '');
@@ -36,6 +37,12 @@ export async function build() {
     const alias = route === '/' ? '/v2' : `/v2${route}`;
     const target = localUrl(route);
     const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)[1];
+    allPages[alias] = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Sentient</title><link rel="canonical" href="${canonical}"><script>location.replace(${JSON.stringify(target)}+location.search+location.hash);</script><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"></head><body data-legacy-redirect="true"><p><a href="${escapeHtml(route)}">Continue to Sentient</a></p></body></html>`;
+  }
+  // Old WordPress URLs (sentientagency.io before 2026-11-17) forward to their new pages.
+  for (const [alias, route] of Object.entries(legacyRedirects)) {
+    const target = localUrl(route);
+    const canonical = pages[route].match(/<link rel="canonical" href="([^"]+)"/)[1];
     allPages[alias] = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Sentient</title><link rel="canonical" href="${canonical}"><script>location.replace(${JSON.stringify(target)}+location.search+location.hash);</script><meta http-equiv="refresh" content="0;url=${escapeHtml(target)}"></head><body data-legacy-redirect="true"><p><a href="${escapeHtml(route)}">Continue to Sentient</a></p></body></html>`;
   }
   // Only generated output is cleared. Backups and private local data live
@@ -93,6 +100,14 @@ export async function build() {
     await writeFile(path, html.replace(/\b(src|href)="([^"?]+\.(?:js|css))"/g, '$1="$2?v=' + version + '"'));
   }
   await writeFile(resolve(root, 'dist/.nojekyll'), '');
+  // On the official domain search engines may index the public pages (2026-11-17).
+  if (process.env.PUBLIC_INDEXING === '1') {
+    const origin = (process.env.PUBLIC_ORIGIN || '').replace(/\/$/, '');
+    const urls = Object.keys(pages).map(route => `${origin}${localUrl(route)}`);
+    await writeFile(resolve(root, 'dist/sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(url => `  <url><loc>${escapeHtml(url)}</loc></url>`).join('\n')}\n</urlset>\n`);
+    await writeFile(resolve(root, 'dist/robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${origin}${basePath}/sitemap.xml\n`);
+  }
+  if (process.env.CUSTOM_DOMAIN) await writeFile(resolve(root, 'dist/CNAME'), `${process.env.CUSTOM_DOMAIN}\n`);
   return Object.keys(allPages);
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) console.log(`Built: ${(await build()).join(', ')}`);
