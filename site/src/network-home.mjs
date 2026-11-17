@@ -17,7 +17,8 @@ if (section && fallbackData) {
     section.dataset.networkStale = String(Boolean(result.stale));
     section.querySelector('.v2-owned-accounts').innerHTML = ownedStrip(result.accounts);
     window.dispatchEvent(new Event('resize'));
-    section.querySelector('.v2-snapshot').textContent = result.stale || result.source === 'fallback'
+    const snapshot = section.querySelector('.v2-snapshot');
+    if (snapshot) snapshot.textContent = result.stale || result.source === 'fallback'
       ? 'All our own pages · latest saved follower figures.'
       : 'All our own pages · latest available follower figures.';
   };

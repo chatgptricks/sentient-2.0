@@ -424,3 +424,14 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .lx-quote--real .lx-quote-mark { font: 400 64px/.6 var(--display); height: 28px; }
 /* Accent words in lime, like the other titles (Sergio, 2026-11-16). */
 .v2-services .services-heading h2 em, .v2-services .services-heading h2 .type-accent, .v2-services .offer h3 em, .v2-services .offer h3 .type-accent { color: var(--acid) !important; -webkit-text-fill-color: var(--acid); background: none !important; }
+/* Home notes round (Sergio, 2026-11-16). */
+.v2-services .offer h3 { text-shadow: 0 0 2px #080d0b, 0 3px 16px #080d0bf2, 0 0 42px #080d0bd9 !important; }
+.mini-thumbs img { width: 26px; height: 34px; }
+.sx-testimonials { padding-block: clamp(40px, 4.4vw, 64px) !important; }
+.sx-testimonials .section-heading { margin-bottom: 22px !important; }
+.lx-quote--real { gap: 12px !important; padding: 22px 24px !important; }
+.lx-quote--real .lx-quote-mark { height: 20px !important; }
+.lx-quote--real figcaption { padding-top: 14px !important; }
+.lx-quote-logo { width: 64px !important; height: 64px !important; opacity: 1 !important; }
+[data-page=home] #work { padding-bottom: 40px !important; }
+[data-page=home] .sx-testimonials { border-top: 0 !important; padding-top: 30px !important; }

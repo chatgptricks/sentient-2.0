@@ -832,3 +832,4 @@
 .lx-quote--real figcaption small { font-size: 12px; color: #a9b69e; line-height: 1.35; }
 .lx-quote--real img { pointer-events: none; }
 @media (max-width: 760px) { .lx-quote--real { width: 300px; padding: 20px; } .lx-quote--real blockquote { font-size: 14px; } }
+.lx-quote-logo { width: 64px !important; height: 64px !important; opacity: 1 !important; } .lx-quote--real figcaption { padding-top: 14px !important; } .lx-quote--real { gap: 12px !important; }
