@@ -345,3 +345,24 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .offer-process .gx-fan img:nth-child(1) { left: 6% !important; }
 .offer-process .gx-fan img:nth-child(3) { right: 6% !important; }
 .offer-process .gx-fan img.is-winner { left: 35% !important; }
+/* Simplified process inside the Home service cards. */
+.mini-flow { list-style: none; margin: 0; padding: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border-radius: 14px; background: var(--acid); color: #0b0c09; }
+.mini-step { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mini-dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #0b0c09; color: var(--acid); font: 700 12px var(--font); }
+.mini-step b { font: 900 12px/1.15 var(--display); text-transform: uppercase; min-height: 28px; }
+.mini-stack { display: flex; }
+.mini-stack img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--acid); }
+.mini-stack img + img { margin-left: -9px; }
+.mini-post { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 10px; background: #0b0c09; color: #f2f5ea; font-size: 11px; line-height: 1.25; }
+.mini-post img { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+.mini-post em { font-style: normal; color: var(--acid); font-weight: 600; }
+.mini-figure { display: grid; padding: 6px 10px; border-radius: 10px; background: #0b0c09; }
+.mini-figure strong { font: 600 24px/1 var(--font); letter-spacing: -.05em; color: var(--acid); }
+.mini-figure small { font-size: 10px; color: #c8cfbd; }
+.mini-thumbs { display: flex; gap: 4px; }
+.mini-thumbs img { width: 30px; height: 38px; border-radius: 5px; object-fit: cover; border: 2px solid #0b0c09; opacity: .7; }
+.mini-thumbs img.is-win { opacity: 1; box-shadow: 0 0 0 2px #0b0c09, 0 0 0 4px var(--acid); }
+.mini-bars { display: grid; gap: 5px; padding: 8px; border-radius: 10px; background: #0b0c09; }
+.mini-bars i { display: block; height: 6px; width: var(--w); border-radius: 99px; background: #5d6553; }
+.mini-bars i.is-win { background: var(--acid); }
+@media (max-width: 650px) { .mini-flow { grid-template-columns: 1fr; } }
