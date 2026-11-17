@@ -120,7 +120,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       // Sergio, 2026-11-16: client logos above the pages, pages as a strip, no receipts wall.
       html = replaceSection(html, 'services', `${trustedMarquee()}${network()}${serviceCards()}`);
       html = replaceSection(html, 'client-proof', '');
-      html = replaceSection(html, 'campaign-wall', `<section class="sx-section shell sx-testimonials" id="testimonials" aria-labelledby="testimonials-title"><div class="section-heading"><div><span class="eyebrow">TESTIMONIALS</span><h2 id="testimonials-title">What our <em>clients say.</em></h2></div></div>${testimonialsStrip()}</section>`);
+      html = replaceSection(html, 'campaign-wall', '');
     }
     if (page === 'about') html = reviseV2About(html);
     if (page === 'universe') {
@@ -149,6 +149,8 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
     }
     html = html.replace('</head>', '<link rel="sentient-api" href="/comments-config.json"></head>');
     if (protectedWork) html = html.replace(workMarker, legendaryWork(protectedWork));
+    // Home testimonials sit under "The receipts" (Sergio, 2026-11-16).
+    if (page === 'home') html = html.replace('<section class="contact-wrap', () => `<section class="sx-section shell sx-testimonials" id="testimonials" aria-labelledby="testimonials-title"><div class="section-heading"><div><span class="eyebrow">TESTIMONIALS</span><h2 id="testimonials-title">What our <em>clients say.</em></h2></div></div>${testimonialsStrip()}</section>` + '<section class="contact-wrap');
     return [primary ? route : v2Route(route), html];
   }));
 }

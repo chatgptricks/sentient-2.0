@@ -422,3 +422,5 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .sx-testimonials .section-heading h2 em { font-style: normal; color: var(--acid); }
 .lx-quote--real { position: relative; margin: 0; display: flex; flex-direction: column; padding: 28px; border-radius: 18px; }
 .lx-quote--real .lx-quote-mark { font: 400 64px/.6 var(--display); height: 28px; }
+/* Accent words in lime, like the other titles (Sergio, 2026-11-16). */
+.v2-services .services-heading h2 em, .v2-services .services-heading h2 .type-accent, .v2-services .offer h3 em, .v2-services .offer h3 .type-accent { color: var(--acid) !important; -webkit-text-fill-color: var(--acid); background: none !important; }
