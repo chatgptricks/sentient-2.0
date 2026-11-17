@@ -116,6 +116,9 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       .replace(/(<button class="button form-submit" type="submit">)Free strategy call(<\/button>)/, '$1Request a free strategy call$2');
     if (page === 'home') {
       html = html.replace('<span>01 / SENTIENT</span>', '<span>SENTIENT</span>');
+      // Hero: both text links on one row above the call button (Sergio, 2026-11-16).
+      html = html.replace(/<div class="hero-actions"><a class="button ([^"]*)" href="#contact">([\s\S]*?)<\/a><a class="hero-proof" href="#work">([\s\S]*?)<\/a><\/div>/, (m, cls, cta, proof) => `<div class="hero-actions hero-actions--stacked"><div class="hero-links"><a class="hero-proof" href="#services">Find your next move <span aria-hidden="true">↓</span></a><a class="hero-proof" href="#work">${proof}</a></div><a class="button ${cls}" href="#contact">${cta}</a></div>`);
+      html = html.replace(/<a href="#services">FIND YOUR NEXT MOVE <span aria-hidden="true">↓<\/span><\/a>/, '');
       html = html.replace(/<p>An agency with its own audience\.[\s\S]*?<\/p>/, `<p><strong class="v2-inline-number">30M+</strong> followers across our network.<br><span>We’re not just an agency. We’re a media company, connecting your next launch to our own audiences.</span></p>`);
       html = html.replace(/<aside class="owned-proof shell"[\s\S]*?<\/aside>/, '');
       // Sergio, 2026-11-16: client logos above the pages, pages as a strip, no receipts wall.

@@ -436,3 +436,6 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 [data-page=home] #work { padding-bottom: 40px !important; }
 [data-page=home] .sx-testimonials { border-top: 0 !important; padding-top: 30px !important; }
 .lx-quote-logo { width: auto !important; height: auto !important; max-width: 120px; max-height: 48px; }
+/* Hero: two links above, call button below (Sergio, 2026-11-16). */
+.hero-actions--stacked { flex-direction: column; align-items: flex-start !important; gap: 22px !important; }
+.hero-actions--stacked .hero-links { display: flex; flex-wrap: wrap; gap: 14px 30px; }
