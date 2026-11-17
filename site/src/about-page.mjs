@@ -5,6 +5,7 @@
 // feedback doc). Founder names, roles and bios from about-content.mjs
 // (sentientagency.io/what-we-do, verified 2026-10-04).
 import { fallbackAccounts } from './network-fallback.mjs';
+import { testimonialsStrip } from './service-pages.mjs';
 
 // Hero: Sentient's own pages (relationship "owned") orbiting the 30M+ sphere.
 const ownedPages = () => fallbackAccounts.filter(item => item.relationship === 'owned' && item.avatar).sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)).slice(0, 16);
@@ -47,6 +48,7 @@ export function renderAboutPage(contactSection, invitation = '') {
     + `<section class="sx-section shell" id="about-founders" aria-labelledby="about-founders-title"><div class="section-heading"><div><span class="eyebrow">THE PEOPLE</span><h2 id="about-founders-title">The people <em>behind it.</em></h2></div></div><div class="ab-founders">${founders.map(founderCard).join('')}</div></section>`
     + `<section class="sx-section shell" id="about-origin" aria-labelledby="about-origin-title">${origin()}</section>`
     + `<section class="sx-section shell" id="about-principles" aria-labelledby="about-principles-title"><div class="section-heading"><div><span class="eyebrow">HOW WE WORK</span><h2 id="about-principles-title">Four things <em>we don’t skip.</em></h2></div></div><ol class="ab-principles">${principles.map(([title, text], index) => `<li><span class="ab-principle-num">0${index + 1}</span><h3>${title}</h3><p>${text}</p></li>`).join('')}</ol></section>`
+    + `<section class="sx-section shell sx-testimonials" id="testimonials" aria-labelledby="testimonials-title"><div class="section-heading"><div><span class="eyebrow">TESTIMONIALS</span><h2 id="testimonials-title">What our <em>clients say.</em></h2></div></div>${testimonialsStrip()}</section>`
     + invitation
     + contactSection;
 }

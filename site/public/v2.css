@@ -389,3 +389,36 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 }
 @media (min-width: 651px) { .v2-services .offer .offer-art { inset: 0 0 auto 0 !important; height: 420px !important; } .v2-services .offer h3 { margin-top: -18px !important; } }
 .v2-services .offer h3 { text-shadow: 0 2px 18px #080d0bcc, 0 0 2px #080d0b; }
+
+/* Testimonials on Home (copied from service-pages.css). */
+.lx-quotes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.lx-quote { position: relative; margin: 0; display: flex; flex-direction: column; gap: 22px; padding: 28px; border-radius: var(--card-radius, 18px); border: 1px dashed #dbe8c733; background: #0f130e; }
+.lx-quote-mark { font: 400 64px/0.6 var(--display); color: #3a4236; height: 28px; }
+.lx-quote figcaption { display: flex; align-items: center; gap: 12px; margin-top: auto; }
+.lx-quote figcaption small { color: #8f9888; font-size: 12px; }
+.lx-quotes--real { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lx-quotes--real .lx-quote { border-style: solid; border-color: var(--surface-line); background: linear-gradient(180deg, #172014, #0d140e); gap: 18px; }
+.lx-quotes--real .lx-quote-mark { color: var(--acid); }
+.lx-quotes--real blockquote { margin: 0; font-size: clamp(16px, 1.3vw, 19px); line-height: 1.55; color: #e4ebda; }
+.lx-quotes--real figcaption { gap: 14px; padding-top: 18px; border-top: 1px solid var(--surface-line); }
+.lx-quote-photo { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 2px #0b0c09, 0 0 0 3.5px #d0ff0066; }
+.lx-quotes--real figcaption > span { display: grid; gap: 3px; min-width: 0; }
+.lx-quotes--real figcaption b { font-size: 15px; font-weight: 600; color: #f2f5ea; }
+.lx-quotes--real figcaption small { font-size: 12px; color: #a9b69e; line-height: 1.35; }
+.lx-quote-logo { width: 40px; height: 40px; object-fit: contain; margin-left: auto; flex: none; opacity: .85; }
+.lx-quotes-marquee { padding-block: 4px 10px; }
+.lx-quotes-marquee .sx-marquee-track { align-items: stretch; }
+.lx-quotes-marquee .sx-marquee-track > li { display: flex; padding-inline: 8px; }
+.lx-quote--real { width: 440px; border: 1px solid var(--surface-line); background: linear-gradient(180deg, #172014, #0d140e); gap: 16px; user-select: none; }
+.lx-quote--real .lx-quote-mark { color: var(--acid); }
+.lx-quote--real blockquote { margin: 0; font-size: 16px; line-height: 1.55; color: #e4ebda; }
+.lx-quote--real figcaption { display: flex; align-items: center; gap: 14px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--surface-line); }
+.lx-quote--real figcaption > span { display: grid; gap: 3px; min-width: 0; }
+.lx-quote--real figcaption b { font-size: 15px; font-weight: 600; color: #f2f5ea; }
+.lx-quote--real figcaption small { font-size: 12px; color: #a9b69e; line-height: 1.35; }
+.lx-quote--real img { pointer-events: none; }
+.sx-testimonials { padding-block: clamp(64px, 7vw, 108px); border-top: 1px solid #c5e5af1a; }
+.sx-testimonials .section-heading { margin-bottom: clamp(26px, 3vw, 40px); }
+.sx-testimonials .section-heading h2 em { font-style: normal; color: var(--acid); }
+.lx-quote--real { position: relative; margin: 0; display: flex; flex-direction: column; padding: 28px; border-radius: 18px; }
+.lx-quote--real .lx-quote-mark { font: 400 64px/.6 var(--display); height: 28px; }

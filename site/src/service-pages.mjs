@@ -80,13 +80,14 @@ const launchWall = () => `<div class="lx-wall"><input type="radio" name="lx-wall
 
 // Client testimonials, copied word for word from sentientagency.io ("What Our
 // Clients Say", read 2026-11-16) with their photos and logos (Sergio, 2026-11-16).
+// Shown on Home and About (Sergio, 2026-11-16).
 const testimonials = [
   ['millie', 'Millie Marconi', 'Founder of TestFeed', 'I went from getting under 3k views per month to millions of monthly views.. this not only took my personal brand to the next level, but my business too :)) Thankyou!!!'],
   ['grateful', 'Mr Grateful / Domenic Ashburton', 'Social Media Influencer. Founder of Grateful Labs & Grateful Future', 'Sentient helped grow my page @Gratefulfuture to over 120k followers… Their social media expertise is next level I’m telling you.'],
   ['ben', 'Ben NewCombe', 'Founder of Infinite Creatives', 'Working with Sentient Agency has been a great experience! They’re reliable, creative, and a team I fully trust. Definitely a 10/10 partnership'],
   ['hasan', 'Hasan Toor', 'Social Media Influencer & Founder of The ProHuman AI', 'The Sentient team are absolute killers. They are not just some generic agency that puts out boring content – they are specialised and 100% know what they’re doing. I mean, how else did they grow 25 million followers? That is all the credentials you need. Thanks team'],
 ];
-const launchTestimonials = () => `<div class="sx-marquee lx-quotes-marquee" data-marquee aria-label="What our clients say"><ul class="sx-marquee-track">${testimonials.map(([id, name, role, quote]) => `<li><figure class="lx-quote lx-quote--real"><span class="lx-quote-mark" aria-hidden="true">“</span><blockquote>${e(quote)}</blockquote><figcaption><img class="lx-quote-photo" src="/assets/v2/testimonials/${id}.jpg" alt="" width="56" height="56" loading="lazy"><span><b>${e(name)}</b><small>${e(role)}</small></span><img class="lx-quote-logo" src="/assets/v2/testimonials/${id}-logo.png" alt="" width="48" height="48" loading="lazy"></figcaption></figure></li>`).join('')}</ul></div>`;
+export const testimonialsStrip = () => `<div class="sx-marquee lx-quotes-marquee" data-marquee aria-label="What our clients say"><ul class="sx-marquee-track">${testimonials.map(([id, name, role, quote]) => `<li><figure class="lx-quote lx-quote--real"><span class="lx-quote-mark" aria-hidden="true">“</span><blockquote>${e(quote)}</blockquote><figcaption><img class="lx-quote-photo" src="/assets/v2/testimonials/${id}.jpg" alt="" width="56" height="56" loading="lazy"><span><b>${e(name)}</b><small>${e(role)}</small></span><img class="lx-quote-logo" src="/assets/v2/testimonials/${id}-logo.png" alt="" width="48" height="48" loading="lazy"></figcaption></figure></li>`).join('')}</ul></div>`;
 
 // Creators: the biggest names with US audiences, same list as the Launch
 // Amplification deck (Louis, round 2, 2026-11-16: "fewer, bigger names").
@@ -133,7 +134,6 @@ export function renderLaunchPage(contact) {
   + trustedMarquee()
   + `<section class="sx-section shell lx-proof-section" id="launch-results" aria-labelledby="launch-results-title"><div class="section-heading lx-proof-heading"><div><span class="eyebrow">PROOF · 2026 LAUNCHES</span><h2 id="launch-results-title">Recent <em>launches.</em></h2></div></div>${launchProof()}</section>`
   + `<section class="sx-section shell" id="launch-wall" aria-labelledby="launch-wall-title">${heading('THE POSTS', 'Real launches.', 'Real views.', '', 'launch-wall-title')}${launchWall()}</section>`
-  + `<section class="sx-section shell" id="launch-testimonials" aria-labelledby="launch-testimonials-title"><div class="section-heading"><div><span class="eyebrow">TESTIMONIALS</span><h2 id="launch-testimonials-title">What our <em>clients say.</em></h2></div></div>${launchTestimonials()}</section>`
   + `<section class="sx-section shell" id="launch-how" aria-labelledby="launch-how-title">${heading('HOW IT WORKS', 'Three steps.', 'Launch day.', '', 'launch-how-title')}${launchFlow()}</section>`
   + `<section class="sx-section shell" id="launch-creators" aria-labelledby="launch-creators-title"><div class="section-heading"><div><span class="eyebrow">CREATORS</span><h2 id="launch-creators-title">Creators we <em>launch with.</em></h2></div></div>${creatorStrip()}</section>`
   + `<section class="sx-section shell" id="launch-guarantee" aria-labelledby="launch-guarantee-title">${heading('OUR GUARANTEE', 'Every launch comes', 'with guaranteed views.', '', 'launch-guarantee-title')}${launchPackages()}<div class="lx-tiers-cta"><p>Pricing depends on your launch. Book a call and we’ll scope it.</p>${bookCall()}</div></section>`

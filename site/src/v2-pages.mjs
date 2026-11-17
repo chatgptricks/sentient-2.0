@@ -7,6 +7,7 @@ import { escapeHtml } from './social-meta.mjs';
 import { fallbackCampaignPosts } from './network-post-fallback.mjs';
 import { reviseV2About } from './v2-about.mjs';
 import { trustedMarquee } from './client-carousel.mjs';
+import { testimonialsStrip } from './service-pages.mjs';
 
 const routes = ['/', '/viral-launch-campaigns', '/growth-campaigns', '/about', '/universe'];
 const v2Route = route => route === '/' ? '/v2/' : `/v2${route}`;
@@ -119,7 +120,7 @@ export function createV2Pages(originalPages, { primary = false } = {}) {
       // Sergio, 2026-11-16: client logos above the pages, pages as a strip, no receipts wall.
       html = replaceSection(html, 'services', `${trustedMarquee()}${network()}${serviceCards()}`);
       html = replaceSection(html, 'client-proof', '');
-      html = replaceSection(html, 'campaign-wall', '');
+      html = replaceSection(html, 'campaign-wall', `<section class="sx-section shell sx-testimonials" id="testimonials" aria-labelledby="testimonials-title"><div class="section-heading"><div><span class="eyebrow">TESTIMONIALS</span><h2 id="testimonials-title">What our <em>clients say.</em></h2></div></div>${testimonialsStrip()}</section>`);
     }
     if (page === 'about') html = reviseV2About(html);
     if (page === 'universe') {
