@@ -25,7 +25,8 @@ export function setupServicePageMotion(gsap) {
   // posts out and fills the winner's ad bar; Viral launch stacks the founder post
   // and quote posts, then grows the 24-hour chart.
   const add = (timeline, targets, vars, at) => { if (targets && (targets.length ?? 1)) timeline.from(targets, vars, at); };
-  for (const pipeline of document.querySelectorAll('.gx-pipeline')) {
+  // Pipelines inside the Home cards' closed panels stay static (no hidden start state).
+  for (const pipeline of [...document.querySelectorAll('.gx-pipeline')].filter(item => !item.closest('.offer-process'))) {
     const timeline = gsap.timeline({ scrollTrigger: once(pipeline, 'top 75%') });
     const q = selector => pipeline.querySelectorAll(selector);
     add(timeline, q('.gx-pool img'), { opacity: 1, filter: 'grayscale(0) contrast(1)', duration: .4, stagger: .02, clearProps: 'opacity,filter' }, 0);
