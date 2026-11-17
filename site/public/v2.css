@@ -439,3 +439,12 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 /* Hero: two links above, call button below (Sergio, 2026-11-16). */
 .hero-actions--stacked { flex-direction: column; align-items: flex-start !important; gap: 22px !important; }
 .hero-actions--stacked .hero-links { display: flex; flex-wrap: wrap; gap: 14px 30px; }
+/* Hero buttons: two dark frosted pills on top, the lime call button spanning both (Sergio, 2026-11-16). */
+.hero-actions--stacked { display: grid !important; grid-template-columns: 1fr; gap: 12px !important; width: min(100%, 460px); }
+.hero-actions--stacked .hero-links { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px !important; }
+.hero-actions--stacked .hero-links .hero-proof { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 22px !important; border: 1px solid #dbe8c733 !important; border-radius: 999px; background: #0b0e0a99; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #f2f5ea; font-size: 14px; font-weight: 600; text-decoration: none; transition: border-color .2s ease, background .2s ease; }
+.hero-actions--stacked .hero-links .hero-proof::after, .hero-actions--stacked .hero-links .hero-proof::before { display: none !important; }
+.hero-actions--stacked .hero-links .hero-proof:hover { border-color: var(--acid) !important; background: #12180fcc; }
+.hero-actions--stacked .hero-links .hero-proof span { color: var(--acid); }
+.hero-actions--stacked > .button { width: 100%; justify-content: space-between; min-height: 58px; }
+@media (max-width: 420px) { .hero-actions--stacked .hero-links { grid-template-columns: 1fr; } }
