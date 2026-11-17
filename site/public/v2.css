@@ -435,3 +435,4 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .lx-quote-logo { width: 64px !important; height: 64px !important; opacity: 1 !important; }
 [data-page=home] #work { padding-bottom: 40px !important; }
 [data-page=home] .sx-testimonials { border-top: 0 !important; padding-top: 30px !important; }
+.lx-quote-logo { width: auto !important; height: auto !important; max-width: 120px; max-height: 48px; }
