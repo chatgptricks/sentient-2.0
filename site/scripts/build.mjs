@@ -1,3 +1,4 @@
+import '../src/site-domain.mjs';
 import { build as bundle } from 'esbuild';
 import { mkdir, cp, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { resolve, dirname, extname } from 'node:path';
@@ -107,7 +108,6 @@ export async function build() {
     await writeFile(resolve(root, 'dist/sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(url => `  <url><loc>${escapeHtml(url)}</loc></url>`).join('\n')}\n</urlset>\n`);
     await writeFile(resolve(root, 'dist/robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${origin}${basePath}/sitemap.xml\n`);
   }
-  if (process.env.CUSTOM_DOMAIN) await writeFile(resolve(root, 'dist/CNAME'), `${process.env.CUSTOM_DOMAIN}\n`);
   return Object.keys(allPages);
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) console.log(`Built: ${(await build()).join(', ')}`);
