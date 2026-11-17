@@ -378,3 +378,14 @@ body[data-version=v2] .process-grid h3{margin-top:0}
 .offer-process summary b { width: 38px; height: 38px; font-size: 22px; }
 .offer-process summary:hover span { text-decoration: underline; text-underline-offset: 4px; }
 @media (min-width: 651px) { .v2-services .offer .offer-art { height: 330px !important; } .v2-services .offer .offer-bottom { margin-top: -190px; background: #0b0e0a8c; -webkit-backdrop-filter: blur(7px) saturate(1.15); backdrop-filter: blur(7px) saturate(1.15); } }
+/* Dots fill the whole card as a background; title at the very top (Sergio, 2026-11-16). */
+@media (min-width: 651px) {
+  .v2-services .offer { min-height: 600px !important; overflow: hidden; }
+  .v2-services .offer .offer-art { position: absolute !important; inset: 0; height: auto !important; margin: 0 !important; z-index: 0; pointer-events: none; opacity: .95; }
+  .v2-services .offer .offer-top { position: relative; z-index: 2; }
+  .v2-services .offer h3 { margin-top: -28px !important; max-width: 70%; }
+  .v2-services .offer .offer-bottom { margin-top: auto !important; }
+  .v2-services .offer .offer-process { position: relative; z-index: 2; border-top-color: transparent; }
+}
+@media (min-width: 651px) { .v2-services .offer .offer-art { inset: 0 0 auto 0 !important; height: 420px !important; } .v2-services .offer h3 { margin-top: -18px !important; } }
+.v2-services .offer h3 { text-shadow: 0 2px 18px #080d0bcc, 0 0 2px #080d0b; }
