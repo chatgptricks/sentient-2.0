@@ -1,3 +1,6 @@
+// Notes left before this version are hidden from the widget, not deleted: they
+// stay in the database (Sergio, 2026-11-17). Clear NOTES_SINCE to show them again.
+const NOTES_SINCE='2026-11-17T00:40:00Z';
 const base = new URL('.', import.meta.url);
 const page = document.body.dataset.page;
 const ui = document.createElement('div');
@@ -120,7 +123,7 @@ async function request(url,options={}) {
 async function refresh() {
   if(!endpoint || loading || document.hidden) return;
   loading=true;
-  try {const data=await request(`${endpoint}/comments?page=${encodeURIComponent(page)}`);notes=data.comments;render();}
+  try {const data=await request(`${endpoint}/comments?page=${encodeURIComponent(page)}`);notes=data.comments.filter(note=>!NOTES_SINCE||String(note.createdAt)>=NOTES_SINCE);render();}
   catch { $('.review-list-status').textContent='Unable to load shared notes. We’ll retry automatically.'; }
   finally {loading=false;}
 }
