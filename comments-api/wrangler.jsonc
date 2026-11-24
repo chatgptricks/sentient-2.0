@@ -18,8 +18,7 @@
   ],
   "vars": {
     "INQUIRY_DELIVERY_PROVIDER": "cloudflare",
-    // Set INQUIRY_FROM to website@forms.sentientdash.app only after the
-    // production destination contact@sentientagency.io is verified.
+    "INQUIRY_FROM": "website@forms.sentientdash.app",
     "INQUIRY_TO": "contact@sentientagency.io",
     "ALLOWED_ORIGINS": "https://sentientagency.io,https://www.sentientagency.io,https://chatgptricks.github.io,http://localhost:4322,http://127.0.0.1:4322,http://localhost:14323,http://127.0.0.1:14323"
   },
