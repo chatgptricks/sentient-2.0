@@ -8,7 +8,7 @@ The browser refreshes the current page's comments every 15 seconds while visible
 
 Run `npm ci` here, then `npx wrangler d1 migrations apply sentient-proposal-comments --local` and `npm run dev`. Run the site with `npm run dev` in `../site`. Localhost uses the local Worker/database to keep test notes out of the public proposal.
 
-The allowed browser origins are GitHub Pages plus `localhost` and `127.0.0.1` on ports `4322` and `14323`. The latter supports the presentation editing preview. Origin matching is exact; changing a preview port requires updating `ALLOWED_ORIGINS` and redeploying this Worker.
+The allowed browser origins are sentientagency.io (with and without www), GitHub Pages, plus `localhost` and `127.0.0.1` on ports `4322` and `14323`. The latter supports the presentation editing preview. Origin matching is exact; changing a preview port requires updating `ALLOWED_ORIGINS` and redeploying this Worker.
 
 ## Deploy
 
