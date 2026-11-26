@@ -2,6 +2,9 @@
   "name": "sentient-proposal-comments",
   "main": "worker.mjs",
   "compatibility_date": "2026-10-05",
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
   "send_email": [
     {
       "name": "INQUIRY_EMAIL",

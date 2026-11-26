@@ -40,6 +40,20 @@ Alternatively set `INQUIRY_DELIVERY_PROVIDER=resend`, a verified `INQUIRY_FROM`,
 
 An atomic D1 claim prevents concurrent retries from sending twice. Cloudflare offers no documented provider idempotency key, so an interrupted/ambiguous send is retained as `uncertain` and is not blindly repeated. Pending sends are retained with `waitUntil`, and their actual eventual result updates D1. `failed` and `uncertain` receipts still state that the brief was saved and email notification is unavailable. Configuration and delivery gaps must be resolved before claiming the team was emailed.
 
+### Pipedrive
+
+Migration `0008_inquiry_pipedrive.sql` queues each new saved inquiry for Sentient's Pipedrive workspace. The Worker runs every five minutes, reuses contacts by exact email where available, creates a lead in Leads Inbox, and attaches the full brief as a pinned note. The inquiry UUID is the lead's `origin_id` and appears in the note. Pipedrive owns and displays records according to the API user's workspace permissions. The public receipt still reports the email notification separately from the private CRM queue.
+
+Apply the production migration before deploying the Worker. Store an existing API token for `sentient.pipedrive.com` in the Worker's `PIPEDRIVE_API_TOKEN` secret. With no token, new inquiries stay in the private queue while email delivery proceeds. Once the secret is available, the scheduled Worker picks up those queued inquiries. The migration does not queue earlier records.
+
+```sh
+npx wrangler d1 migrations apply sentient-proposal-comments --remote
+npx wrangler deploy
+npx wrangler secret put PIPEDRIVE_API_TOKEN
+```
+
+The private `inquiry_pipedrive` table records the remote IDs, retry timing and sanitized error code. The Worker retries explicit rejections with backoff. After an unconfirmed write it looks for the person by email, the lead by reference, or the note by reference before continuing. If a match never appears, check the relevant record in Pipedrive before clearing `pending_write` to allow another write.
+
 ## Public owned-account network
 
 `GET /network/accounts` reads public stored profiles from Cortex `/api/v1` using the existing server-only `SENTIENTDASH_API_KEY`. It accepts no query parameters or writes. The JSON contains `source: "cortex"`, a separate retrieval `fetchedAt`, `stale: false`, and `accounts` with canonical `handle`, public `name`, `relationship: "owned"`, `followerCount`, `followersAsOf`, local `avatar`, and Instagram `profileUrl`. Counts without a valid Cortex profile observation date remain unknown rather than acquiring the retrieval date.

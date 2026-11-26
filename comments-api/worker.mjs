@@ -1,6 +1,7 @@
 import { getOwnedAccounts } from './network-accounts.mjs';
 import { handleNetworkAccountAvatar } from './network-avatar.mjs';
 import { handleInquiry } from './inquiries.mjs';
+import { syncPipedriveInquiries } from './inquiry-pipedrive.mjs';
 import { handleNetworkPosts, handleNetworkPostCover } from './network-posts.mjs';
 
 const pages = new Set(['home', 'launch', 'growth', 'about', 'universe']);
@@ -509,6 +510,10 @@ export function validateComment(data) {
   return { id, page, author, message, anchor };
 }
 export default {
+  async scheduled(_controller, env) {
+    await syncPipedriveInquiries(env);
+  },
+
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin');
     const allowed = (env.ALLOWED_ORIGINS || '').split(',');

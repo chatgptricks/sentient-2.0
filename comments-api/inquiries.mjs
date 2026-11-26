@@ -2,6 +2,7 @@ const budgets = new Set(['Under $20,000','$20,000–$50,000','$50,000–$100,000
 const stages = new Set(['Pre-launch','Early stage','Growth stage','Established']);
 const frequencies = new Set(['Weekly','Monthly','Quarterly','Still planning']);
 const fields = ['name','company','email','description','budget','stage','service','launchDate','frequency'];
+const serviceNames = {campaign:'Campaign',launch:'Viral launch',growth:'Growth'};
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const bodyLimit = 16000;
@@ -57,17 +58,19 @@ function deliveryConfig(env) {
   return null;
 }
 
-export function inquiryEmail(lead,config) {
-  const service = {campaign:'Campaign',launch:'Viral launch',growth:'Growth'}[lead.service];
-  const text = [
+export function inquiryText(lead) {
+  return [
     'A new Sentient website inquiry was received.',
     '',`Reference: ${lead.id}`,`Name: ${lead.name}`,`Company: ${lead.company}`,
-    `Email: ${lead.email}`,`Service: ${service}`,`Budget: ${lead.budget}`,`Stage: ${lead.stage}`,
+    `Email: ${lead.email}`,`Service: ${serviceNames[lead.service]}`,`Budget: ${lead.budget}`,`Stage: ${lead.stage}`,
     ...(lead.launchDate ? [`Planned launch: ${lead.launchDate}`] : []),
     ...(lead.frequency ? [`Launch frequency: ${lead.frequency}`] : []),
     '','Brief:',lead.description,
   ].join('\n');
-  return {from:config.from,to:config.to,subject:`Sentient website inquiry · ${service} · ${lead.company.slice(0,120)}`,text,replyTo:lead.email,headers:{'X-Inquiry-ID':lead.id}};
+}
+
+export function inquiryEmail(lead,config) {
+  return {from:config.from,to:config.to,subject:`Sentient website inquiry · ${serviceNames[lead.service]} · ${lead.company.slice(0,120)}`,text:inquiryText(lead),replyTo:lead.email,headers:{'X-Inquiry-ID':lead.id}};
 }
 
 async function sendNotification(lead,env,config) {

@@ -14,7 +14,9 @@ const request = (body,options={}) => new Request(`https://api.example/inquiries$
 
 function storage(context,extra={}) {
   const database = new DatabaseSync(':memory:');
-  database.exec(readFileSync(new URL('./migrations/0006_inquiries.sql',import.meta.url),'utf8'));
+  for (const migration of ['0006_inquiries.sql', '0008_inquiry_pipedrive.sql']) {
+    database.exec(readFileSync(new URL(`./migrations/${migration}`, import.meta.url), 'utf8'));
+  }
   context.after(() => database.close());
   return {
     database,
@@ -23,6 +25,7 @@ function storage(context,extra={}) {
       INQUIRY_RATE:{limit:async () => ({success:true})},
       DB:{prepare(sql) {const statement=database.prepare(sql);return {bind(...values) {return {
         async first() {return statement.get(...values) || null;},
+        async all() {return {results:statement.all(...values)};},
         async run() {const result=statement.run(...values);return {meta:{changes:Number(result.changes)}};},
       };}};}},
       ...extra,
@@ -225,4 +228,112 @@ test('a private storage failure never sends an email or reports successful recei
   assert.equal(response.status,503);
   assert.equal(sends,0);
   assert.match((await response.json()).error,/same request ID/);
+});
+
+function mockPipedrive(context, respond) {
+  const calls = [];
+  context.mock.method(globalThis, 'fetch', async (target, options) => {
+    const url = new URL(target);
+    assert.equal(url.origin, 'https://sentient.pipedrive.com');
+    assert.equal(options.headers['x-api-token'], 'test-crm-token');
+    assert.equal(options.redirect, 'error');
+    const call = {method:options.method, path:url.pathname, query:url.searchParams, body:options.body && JSON.parse(options.body)};
+    calls.push(call);
+    const data = await respond(call);
+    return data instanceof Response ? data : Response.json({success:true, data});
+  });
+  return calls;
+}
+
+test('website forms keep Gmail delivery and queue one Pipedrive lead with the full brief', async context => {
+  const mail = [];
+  const {env,database} = storage(context, {
+    INQUIRY_FROM:'website@sentientagency.io',
+    INQUIRY_EMAIL:{send:async message => {mail.push(message); return {messageId:'gmail-notification'};}},
+  });
+  const inquiry = {...draft(), service:'growth', frequency:'Monthly'};
+  const crmId = crypto.randomUUID();
+  const calls = mockPipedrive(context, ({method,path}) => {
+    if (path === '/api/v2/persons/search') return {items:[]};
+    if (method === 'POST' && path === '/api/v2/persons') return {id:42};
+    if (method === 'POST' && path === '/api/v1/leads') return {id:crmId};
+    if (method === 'POST' && path === '/api/v1/notes') return {id:84};
+    assert.fail(`Unexpected CRM call ${method} ${path}`);
+  });
+
+  const receipt = await worker.fetch(request(inquiry), env);
+  assert.equal(receipt.status, 201);
+  assert.equal((await receipt.json()).notificationStatus, 'accepted');
+  assert.equal((await worker.fetch(request(inquiry), env)).status, 200);
+  await worker.scheduled({}, env);
+  assert.equal(calls.length, 0);
+  assert.equal(mail.length, 1);
+  assert.equal(mail[0].to, 'contact@sentientagency.io');
+  assert.equal(database.prepare('SELECT COUNT(*) AS total FROM inquiry_pipedrive').get().total, 1);
+
+  env.PIPEDRIVE_API_TOKEN = 'test-crm-token';
+  await Promise.all([worker.scheduled({}, env), worker.scheduled({}, env)]);
+  await worker.scheduled({}, env);
+  assert.deepEqual(calls.map(call => [call.method, call.path]), [
+    ['GET', '/api/v2/persons/search'], ['POST', '/api/v2/persons'], ['POST', '/api/v1/leads'], ['POST', '/api/v1/notes'],
+  ]);
+  assert.deepEqual(Object.fromEntries(calls[0].query), {term:inquiry.email, fields:'email', exact_match:'true', limit:'1'});
+  assert.deepEqual(calls[1].body.emails, [{value:inquiry.email, primary:true, label:'work'}]);
+  assert.deepEqual(calls[2].body, {title:'Example Company · Website inquiry', person_id:42, origin_id:inquiry.id});
+  assert.equal(calls[3].body.lead_id, crmId);
+  assert.equal(calls[3].body.pinned_to_lead_flag, 1);
+  assert.ok(calls[3].body.content.includes(inquiry.id));
+  assert.match(calls[3].body.content, /Launch frequency: Monthly/);
+  assert.match(calls[3].body.content, /literal &lt;b&gt;please&lt;\/b&gt;/);
+  const sync = database.prepare('SELECT * FROM inquiry_pipedrive WHERE inquiry_id=?').get(inquiry.id);
+  assert.ok(sync.synced_at);
+  assert.equal(sync.attempt_count, 1);
+  assert.equal(sync.pending_write, null);
+});
+
+test('Pipedrive reconciles an interrupted lead write and retries a rejected note without duplicating records', async context => {
+  const {env,database} = storage(context, {PIPEDRIVE_API_TOKEN:'test-crm-token'});
+  const inquiry = {...draft(), service:'launch', launchDate:'2028-02-29'};
+  const crmId = crypto.randomUUID();
+  let leadVisible = false;
+  let noteAttempts = 0;
+  const calls = mockPipedrive(context, ({method,path,query,body}) => {
+    if (path === '/api/v2/persons/search') return {items:[{item:{id:42}}]};
+    if (method === 'POST' && path === '/api/v1/leads') throw new Error('Simulated interruption');
+    if (method === 'GET' && path === '/api/v1/leads') {
+      assert.equal(query.get('person_id'), '42');
+      return leadVisible ? [{id:crmId, origin_id:inquiry.id}] : [];
+    }
+    if (method === 'POST' && path === '/api/v1/notes') {
+      assert.equal(body.lead_id, crmId);
+      assert.match(body.content, /Planned launch: 2028-02-29/);
+      return ++noteAttempts === 1 ? new Response(null, {status:429}) : {id:84};
+    }
+    assert.fail(`Unexpected CRM call ${method} ${path}`);
+  });
+  const read = () => database.prepare('SELECT * FROM inquiry_pipedrive WHERE inquiry_id=?').get(inquiry.id);
+  const retry = async () => {
+    database.prepare('UPDATE inquiry_pipedrive SET next_attempt_at=? WHERE inquiry_id=?')
+      .run('2000-01-01T00:00:00.000Z', inquiry.id);
+    await worker.scheduled({}, env);
+  };
+
+  assert.equal((await worker.fetch(request(inquiry), env)).status, 202);
+  await worker.scheduled({}, env);
+  assert.equal(read().pending_write, 'lead');
+  assert.equal(read().last_error, 'REQUEST_UNCONFIRMED');
+  await worker.scheduled({}, env);
+  assert.equal(calls.length, 2, 'The scheduled retry waits for the persisted backoff');
+  await retry();
+  assert.equal(read().last_error, 'LEAD_UNCONFIRMED');
+  leadVisible = true;
+  await retry();
+  assert.equal(read().lead_id, crmId);
+  assert.equal(read().last_error, 'HTTP_429');
+  assert.equal(read().pending_write, null);
+  await retry();
+  assert.ok(read().synced_at);
+  assert.equal(read().last_error, null);
+  assert.equal(calls.filter(call => call.method === 'POST' && call.path === '/api/v1/leads').length, 1);
+  assert.equal(noteAttempts, 2);
 });
