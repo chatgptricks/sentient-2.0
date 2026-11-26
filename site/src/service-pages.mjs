@@ -13,7 +13,7 @@ import { fallbackCampaignPosts } from './network-post-fallback.mjs';
 const e = escapeHtml;
 const arrow = '<span aria-hidden="true">↗</span>';
 const heading = (eyebrow, title, accent, aside = '', id = '') => `<div class="section-heading"><div><span class="eyebrow">${eyebrow}</span><h2${id ? ` id="${id}"` : ''}>${title}<br><em>${accent}</em></h2></div>${aside ? `<p>${aside}</p>` : ''}</div>`;
-export const CALENDAR_URL = 'https://calendly.com/sentientagency';
+export const CALENDAR_URL = 'https://calendly.com/victor-sentientagency/30min';
 const bookCall = (extra = '') => `<a class="button${extra}" href="${CALENDAR_URL}" target="_blank" rel="noopener noreferrer"><span>Book a call</span></a>`;
 const heroActions = deckLabel => `<div class="sx-hero-actions">${bookCall()}<a class="text-link" href="#contact">${deckLabel} <span aria-hidden="true">→</span></a></div>`;
 

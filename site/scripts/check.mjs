@@ -85,7 +85,12 @@ for (const source of ['x.com/kjdhaliwal/status/2018731342113247533', 'x.com/Deca
 }
 // Louis's feedback, 2026-11-13: no pricing on the launch page, Book a call everywhere, one follower figure.
 assert.doesNotMatch(routeHtml.get('/viral-launch-campaigns').split('<main')[1].split('<section class="contact-wrap')[0], /\$\d+(,\d{3}|K\b)/, '/viral-launch-campaigns: no package prices on the page');
-for (const route of ['/viral-launch-campaigns', '/growth-campaigns']) assert.ok(routeHtml.get(route).includes('https://calendly.com/sentientagency'), `${route}: Book a call links to the calendar`);
+for (const [route, html] of routeHtml) {
+  if (route === '/universe') continue;
+  const calendars = [...html.matchAll(/href="(https:\/\/calendly\.com\/[^"]+)"/g)].map(([, url]) => url);
+  assert.ok(calendars.length, `${route}: has a booking link`);
+  assert.deepEqual([...new Set(calendars)], ['https://calendly.com/victor-sentientagency/30min'], `${route}: all booking links use Victor's calendar`);
+}
 for (const route of ['/', '/growth-campaigns']) assert.doesNotMatch(routeHtml.get(route), /25M\+<\/(span|strong)>/, `${route}: one follower figure (30M+) across the site`);
 assert.equal(universeAccounts.length,31);
 assert.equal(new Set(universeAccounts.map(a=>a.handle)).size,31,'Unique Instagram worlds');
