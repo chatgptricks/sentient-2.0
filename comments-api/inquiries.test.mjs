@@ -236,7 +236,7 @@ function mockPipedrive(context, respond) {
     const url = new URL(target);
     assert.equal(url.origin, 'https://sentient.pipedrive.com');
     assert.equal(options.headers['x-api-token'], 'test-crm-token');
-    assert.equal(options.redirect, 'error');
+    assert.equal(options.redirect, 'manual');
     const call = {method:options.method, path:url.pathname, query:url.searchParams, body:options.body && JSON.parse(options.body)};
     calls.push(call);
     const data = await respond(call);

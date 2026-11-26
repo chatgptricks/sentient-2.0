@@ -24,7 +24,7 @@ async function requestPipedrive(token, path, {query, body} = {}) {
       headers: {'x-api-token': token, 'Content-Type': 'application/json'},
       method: body ? 'POST' : 'GET',
       body: body ? JSON.stringify(body) : undefined,
-      redirect: 'error',
+      redirect: 'manual',
       signal: AbortSignal.timeout(5000),
     });
   } catch {
